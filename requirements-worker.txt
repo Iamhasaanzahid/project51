@@ -5,7 +5,7 @@ torch==2.3.1
 torchvision==0.18.1
 --extra-index-url https://download.pytorch.org/whl/cu121
 diffusers==0.29.2
-transformers==4.42.3
+transformers==5.20.2
 accelerate==0.31.0
 safetensors==0.4.3
 numpy==1.26.4
