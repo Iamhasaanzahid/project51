@@ -16,8 +16,8 @@ import uuid
 from datetime import UTC, datetime
 
 import httpx
-
 import streamlit as st
+
 from ui.image_ops import (
     ImageValidationError,
     demo_render,
@@ -175,7 +175,7 @@ def _render_sidebar(demo_mode: bool) -> None:
         st.markdown("## 🧵 AI Fabric Studio")
         if demo_mode:
             st.warning("DEMO MODE\n\nNo backend connected.")
-            identity = st.session_state.get("demo_user", {})
+            identity = st.session_state.get("demo_user") or {}
             st.write(f"**Tenant:** `{identity.get('tenant_id', '-')}`")
             st.write(f"**User:** `{identity.get('user_id', '-')}`")
         else:
