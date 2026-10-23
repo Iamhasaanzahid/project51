@@ -35,7 +35,7 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - name: Pytest
         run: pytest -q --cov=app --cov-report=xml --cov-fail-under=60
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage
@@ -128,7 +128,7 @@ jobs:
           image: aifabric-api:ci
           format: spdx-json
           output-file: sbom-api.spdx.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sbom
           path: sbom-api.spdx.json
@@ -158,7 +158,7 @@ jobs:
             -v /var/lib:/var/lib:ro -v /var/run/docker.sock:/var/run/docker.sock:ro \
             -v /etc:/etc:ro --label docker_bench_security \
             docker/docker-bench-security > docker-bench.txt 2>&1 || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: docker-bench
           path: docker-bench.txt
