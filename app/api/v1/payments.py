@@ -15,7 +15,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 
 from app.core.config import settings
@@ -34,6 +34,19 @@ _IDEMP_RE = re.compile(r"^[A-Za-z0-9_\-]{16,128}$")
 
 
 class CheckoutRequest(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "sku": "render_pack_100",
+                    "quantity": 1,
+                    "success_url": "https://app.aifabric.retail/billing/success",
+                    "cancel_url": "https://app.aifabric.retail/billing/cancel",
+                }
+            ]
+        }
+    )
+
     sku: str = Field(..., min_length=1, max_length=64)
     quantity: int = Field(1, ge=1, le=100)
     success_url: str = Field(..., max_length=2048)

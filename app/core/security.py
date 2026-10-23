@@ -18,12 +18,15 @@ from typing import Any
 import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
 from app.core.config import settings
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_PREFIX}/auth/token")
+bearer_scheme = HTTPBearer(
+    auto_error=False,
+    description="JWT access token issued by POST /api/v1/auth/login",
+)
 
 ADMIN_SCOPE = "admin:all"
 
@@ -128,8 +131,16 @@ def decode_token(token: str, expected_type: str = "access") -> dict[str, Any]:
     return payload
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
-    payload = decode_token(token, expected_type="access")
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> TokenData:
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    payload = decode_token(credentials.credentials, expected_type="access")
     user_id = payload.get("sub")
     tenant_id = payload.get("tenant_id")
     if not user_id or not tenant_id:

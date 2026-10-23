@@ -14,12 +14,11 @@ docs
 security
 observability
 deploy
-scripts
 *.md
 *.png
 *.log
 .env
 .env.*
 !.env.example
-deploy/certs
-deploy/secrets
+!.env.production.example
+.streamlit/secrets.toml

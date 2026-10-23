@@ -28,7 +28,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: worker
-          image: ghcr.io/iamhasaanzahid/aifabric-worker:2.0.0
+          image: ghcr.io/iamhasaanzahid/project51-worker:2.0.0
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false

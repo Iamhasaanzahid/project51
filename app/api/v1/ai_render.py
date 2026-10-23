@@ -6,7 +6,7 @@ import re
 import uuid
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.core.database import tenant_session
 from app.core.security import TokenData, enforce_tenant_ownership, require_scopes
@@ -34,6 +34,19 @@ class RenderSubmitted(BaseModel):
 
 
 class RenderStatus(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "job_id": "3f0c2f9e-6f7a-4f4e-9a5b-1f9d2f6c8b11",
+                    "status": "queued",
+                    "result_url": None,
+                    "error_code": None,
+                }
+            ]
+        }
+    )
+
     job_id: str
     status: str
     result_url: str | None = None
@@ -44,7 +57,11 @@ class RenderStatus(BaseModel):
 async def submit_render(
     request: Request,
     fabric_image: UploadFile = File(..., description="Fabric image (JPEG/PNG/WEBP)"),
-    prompt: str = Form("", max_length=2000),
+    prompt: str = Form(
+        "",
+        max_length=2000,
+        description="Text prompt. Control characters are stripped; max 2000 chars.",
+    ),
     current: TokenData = Depends(require_scopes("ai:render")),
 ):
     enforce_tenant_ownership(current.tenant_id, current)

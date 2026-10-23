@@ -16,6 +16,7 @@ import asyncio
 import getpass
 import os
 import re
+import ssl
 import sys
 
 import asyncpg
@@ -32,13 +33,26 @@ def _hash_password(password: str) -> str:
     return bcrypt.hashpw(digest, bcrypt.gensalt(rounds=12)).decode("ascii")
 
 
-def _dsn() -> str:
-    return (
-        f"postgresql://{os.environ['POSTGRES_USER']}:{os.environ['POSTGRES_PASSWORD']}"
-        f"@{os.environ.get('POSTGRES_HOST', 'localhost')}:{os.environ.get('POSTGRES_PORT', '5432')}"
-        f"/{os.environ.get('POSTGRES_DB', 'aifabric_prod')}"
-        f"?sslmode={os.environ.get('POSTGRES_SSL_MODE', 'require')}"
-    )
+def _ssl_context() -> ssl.SSLContext | None:
+    mode = os.getenv("POSTGRES_SSL_MODE", "require")
+    if mode == "disable":
+        return None
+    ctx = ssl.create_default_context(cafile=os.getenv("POSTGRES_SSL_CA_FILE") or None)
+    if mode == "require":
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
+
+def _connect_kwargs() -> dict:
+    return {
+        "host": os.getenv("POSTGRES_HOST", "localhost"),
+        "port": int(os.getenv("POSTGRES_PORT", "5432")),
+        "user": os.getenv("POSTGRES_ADMIN_USER") or os.getenv("POSTGRES_USER", "aifabric_admin"),
+        "password": os.getenv("POSTGRES_ADMIN_PASSWORD") or os.getenv("POSTGRES_PASSWORD", ""),
+        "database": os.getenv("POSTGRES_DB", "aifabric_prod"),
+        "ssl": _ssl_context(),
+    }
 
 
 async def main() -> int:
@@ -59,7 +73,7 @@ async def main() -> int:
         print("error: password must be at least 12 characters", file=sys.stderr)
         return 2
 
-    conn = await asyncpg.connect(_dsn())
+    conn = await asyncpg.connect(**_connect_kwargs())
     try:
         try:
             await conn.execute("SELECT provision_tenant($1, $2, $3, $4)", args.slug, args.name, args.plan, schema)
@@ -67,9 +81,12 @@ async def main() -> int:
         except asyncpg.UniqueViolationError:
             print(f"tenant already exists: {args.slug} (continuing)")
 
+        # FORCE ROW LEVEL SECURITY also applies to the table owner.
+        await conn.execute("SELECT set_config('app.current_tenant', $1, false)", args.slug)
+        await conn.execute("SELECT set_config('search_path', $1, false)", f'"{schema}", public')
         await conn.execute(
-            f"""
-            INSERT INTO "{schema}".users
+            """
+            INSERT INTO users
                 (tenant_id, email, full_name, password_hash, roles, scopes, is_active, is_system_admin)
             VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, true, true)
             ON CONFLICT (email) DO NOTHING

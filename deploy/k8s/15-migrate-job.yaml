@@ -1,0 +1,57 @@
+# One-shot migration Job.
+#
+# Apply it BEFORE rolling the API/worker Deployments, and delete the previous
+# completed Job first:
+#
+#   kubectl -n aifabric delete job aifabric-migrate --ignore-not-found
+#   kubectl apply -f deploy/k8s/15-migrate-job.yaml
+#   kubectl -n aifabric wait --for=condition=complete job/aifabric-migrate --timeout=10m
+#
+# The Job uses the administrative role from `aifabric/prod/migrate`. The runtime
+# API/worker use the least-privilege `aifabric_app` role.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: aifabric-migrate
+  namespace: aifabric
+  labels: { app: aifabric-migrate }
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels: { app: aifabric-migrate }
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: migrate
+          image: ghcr.io/iamhasaanzahid/project51-api:2.0.0
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "alembic upgrade head && python scripts/migrate_tenants.py"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+          envFrom:
+            - configMapRef: { name: aifabric-config }
+            # Later source wins, so the admin POSTGRES_USER/PASSWORD override
+            # the app-role values from the ConfigMap.
+            - secretRef: { name: aifabric-migrate-secrets }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+            - { name: tls, mountPath: /etc/aifabric/tls, readOnly: true }
+      volumes:
+        - name: tmp
+          emptyDir: { medium: Memory, sizeLimit: 64Mi }
+        - name: tls
+          secret: { secretName: aifabric-tls-ca, optional: false }

@@ -3,6 +3,8 @@
 *.env
 .env.*
 !.env.example
+!.env.production.example
+.streamlit/secrets.toml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -106,6 +108,8 @@ trivy-image.sarif
 sbom-*.json
 coverage.xml
 docker-bench.txt
+loadtest/results/
+test-results/
 
 # Model / HF caches (never commit weights)
 .cache/

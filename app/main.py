@@ -49,6 +49,25 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version="2.0.0",
+    description=(
+        "Multi-tenant AI fabric rendering and retail payments API.\n\n"
+        "**Security model**: short-lived JWT access tokens, scope-based RBAC, "
+        "schema-per-tenant PostgreSQL with row-level security, server-authoritative "
+        "pricing, Stripe hosted Checkout (PCI SAQ A), HMAC-verified local-gateway "
+        "webhooks, magic-byte + ClamAV media ingestion, and an atomic Redis "
+        "leaky-bucket shield in front of GPU work.\n\n"
+        "Interactive docs are disabled in production (`ENVIRONMENT=production`). "
+        "Export the schema with `python scripts/export_openapi.py` and publish it "
+        "to an authenticated developer portal."
+    ),
+    contact={"name": "AI Fabric Platform Security", "url": "https://github.com/Iamhasaanzahid/project51"},
+    license_info={"name": "Proprietary"},
+    openapi_tags=[
+        {"name": "auth", "description": "Login, refresh, and identity. Access tokens expire in 15 minutes."},
+        {"name": "ai-render", "description": "Tenant-scoped fabric rendering. GPU-bound and rate limited."},
+        {"name": "payments", "description": "Hosted checkout and signed gateway webhooks. Amounts are never client-supplied."},
+        {"name": "admin", "description": "System-administrator tenant provisioning and audit access."},
+    ],
     lifespan=lifespan,
     docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
     redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None,

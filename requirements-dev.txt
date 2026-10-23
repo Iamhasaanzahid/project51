@@ -1,4 +1,4 @@
--r requirements.txt
+-r requirements-api.txt
 
 pytest==8.2.2
 pytest-asyncio==0.23.7
@@ -7,3 +7,5 @@ bandit[toml]==1.7.9
 pip-audit==2.7.3
 semgrep==1.79.0
 ruff==0.5.0
+fakeredis==2.23.1
+testcontainers[postgres]==4.8.2

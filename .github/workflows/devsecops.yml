@@ -34,12 +34,26 @@ jobs:
           cache: pip
       - run: pip install -r requirements-dev.txt
       - name: Pytest
-        run: pytest -q --cov=app --cov-report=xml --cov-fail-under=60
+        run: pytest -q -m "not integration" --cov=app --cov-report=xml --cov-fail-under=60
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage
           path: coverage.xml
+
+  # ------------------------------------------------------------ integration
+  integration:
+    name: Integration (PostgreSQL + fakeredis)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Integration tests (testcontainers)
+        run: pytest -q -m integration
 
   # -------------------------------------------------------------------- sast
   sast:
@@ -74,8 +88,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      - run: pip install pip-audit==2.7.3 -r requirements.txt
-      - name: pip-audit
+      - run: pip install pip-audit==2.7.3
+      - name: pip-audit (API/worker runtime)
+        run: pip-audit -r requirements-api.txt --strict --desc
+      - name: pip-audit (UI runtime)
         run: pip-audit -r requirements.txt --strict --desc
       - name: Trivy filesystem (vuln + secret + config)
         uses: aquasecurity/trivy-action@0.24.0

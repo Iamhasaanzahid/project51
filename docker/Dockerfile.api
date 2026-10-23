@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # ---------------------------------------------------------------------------
 # API image - multi-stage, non-root, no compilers in the final layer.
+# Also used by the one-shot migration job/service.
 # ---------------------------------------------------------------------------
 FROM python:3.11-slim AS builder
 
@@ -13,8 +14,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-COPY requirements.txt .
-RUN pip wheel --wheel-dir /wheels -r requirements.txt
+COPY requirements-api.txt ./
+RUN pip wheel --wheel-dir /wheels -r requirements-api.txt
 
 # ---------------------------------------------------------------------------
 FROM python:3.11-slim AS runtime
@@ -31,12 +32,16 @@ RUN apt-get update \
     && useradd --uid 10001 --gid app --no-create-home --shell /usr/sbin/nologin app
 
 COPY --from=builder /wheels /wheels
-COPY requirements.txt .
-RUN pip install --no-index --find-links=/wheels -r requirements.txt \
-    && rm -rf /wheels requirements.txt
+COPY requirements-api.txt ./
+RUN pip install --no-index --find-links=/wheels -r requirements-api.txt \
+    && rm -rf /wheels requirements-api.txt
 
 WORKDIR /app
 COPY --chown=app:app app ./app
+COPY --chown=app:app migrations ./migrations
+COPY --chown=app:app alembic.ini ./
+COPY --chown=app:app scripts/migrate_tenants.py ./scripts/migrate_tenants.py
+COPY --chown=app:app scripts/bootstrap_admin.py ./scripts/bootstrap_admin.py
 
 USER 10001:10001
 EXPOSE 8000

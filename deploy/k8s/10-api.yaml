@@ -32,7 +32,7 @@ spec:
             matchLabels: { app: aifabric-api }
       containers:
         - name: api
-          image: ghcr.io/iamhasaanzahid/aifabric-api:2.0.0
+          image: ghcr.io/iamhasaanzahid/project51-api:2.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - { name: http, containerPort: 8000 }

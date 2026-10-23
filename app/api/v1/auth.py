@@ -5,7 +5,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,6 +32,18 @@ LOCKOUT_MINUTES = 15
 
 
 class LoginRequest(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "tenant_slug": "acme",
+                    "email": "owner@acme.retail",
+                    "password": "CorrectHorseBattery9!",
+                }
+            ]
+        }
+    )
+
     tenant_slug: str = Field(..., min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=256)

@@ -1,5 +1,5 @@
 # GPU worker dependencies (CUDA 12.1 wheels)
--r requirements.txt
+-r requirements-api.txt
 
 torch==2.3.1
 torchvision==0.18.1

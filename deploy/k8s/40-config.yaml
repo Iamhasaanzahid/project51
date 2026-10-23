@@ -13,6 +13,7 @@ data:
   POSTGRES_HOST: "postgres.aifabric.svc.cluster.local"
   POSTGRES_PORT: "5432"
   POSTGRES_DB: "aifabric_prod"
+  POSTGRES_USER: "aifabric_app"
   POSTGRES_SSL_MODE: "verify-full"
   POSTGRES_SSL_CA_FILE: "/etc/aifabric/tls/ca.crt"
   REDIS_HOST: "redis.aifabric.svc.cluster.local"
@@ -45,6 +46,25 @@ spec:
   dataFrom:
     - extract:
         key: aifabric/prod/secrets
+---
+# Administrative credentials used ONLY by the migration Job. Never mount this
+# Secret into the API or worker pods.
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: aifabric-migrate-secrets
+  namespace: aifabric
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: ClusterSecretStore
+  target:
+    name: aifabric-migrate-secrets
+    creationPolicy: Owner
+  dataFrom:
+    - extract:
+        key: aifabric/prod/migrate
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ClusterSecretStore

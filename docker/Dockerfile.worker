@@ -10,7 +10,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-COPY requirements-worker.txt requirements.txt ./
+COPY requirements-worker.txt requirements-api.txt ./
 RUN pip wheel --wheel-dir /wheels -r requirements-worker.txt
 
 # ---------------------------------------------------------------------------
@@ -31,9 +31,9 @@ RUN apt-get update \
     && chown -R app:app /cache /tmp
 
 COPY --from=builder /wheels /wheels
-COPY requirements-worker.txt requirements.txt ./
+COPY requirements-worker.txt requirements-api.txt ./
 RUN pip install --no-index --find-links=/wheels -r requirements-worker.txt \
-    && rm -rf /wheels requirements-worker.txt
+    && rm -rf /wheels requirements-worker.txt requirements-api.txt
 
 WORKDIR /app
 COPY --chown=app:app app ./app

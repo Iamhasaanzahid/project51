@@ -1,0 +1,133 @@
+name: Publish images
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      build_worker:
+        description: "Also build the large GPU worker image"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            dockerfile: docker/Dockerfile.api
+            always: true
+          - name: ui
+            dockerfile: docker/Dockerfile.streamlit
+            always: true
+          - name: worker
+            dockerfile: docker/Dockerfile.worker
+            always: false
+
+    steps:
+      - name: Decide whether to build this image
+        id: gate
+        run: |
+          if [ "${{ matrix.always }}" = "true" ] \
+             || [ "${{ github.event.inputs.build_worker }}" = "true" ] \
+             || [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.enabled == 'true'
+
+      - name: Resolve lowercase image name
+        id: image
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          REPO="${GITHUB_REPOSITORY#*/}"
+          echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${REPO,,}-${{ matrix.name }}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.gate.outputs.enabled == 'true'
+
+      - uses: docker/login-action@v3
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        if: steps.gate.outputs.enabled == 'true'
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=sha,format=short,prefix=sha-
+            type=ref,event=tag
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build (loaded locally, not yet pushed)
+        id: build
+        if: steps.gate.outputs.enabled == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          load: true
+          push: false
+          provenance: false
+          tags: ${{ steps.image.outputs.name }}:ci-${{ github.run_id }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Trivy scan (blocks the push)
+        if: steps.gate.outputs.enabled == 'true'
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ steps.image.outputs.name }}:ci-${{ github.run_id }}
+          format: sarif
+          output: trivy-${{ matrix.name }}.sarif
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+
+      - name: Upload Trivy SARIF
+        if: always() && steps.gate.outputs.enabled == 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.name }}.sarif
+
+      - name: Push scanned image
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          LOCAL_IMAGE: ${{ steps.image.outputs.name }}:ci-${{ github.run_id }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          echo "$TAGS" | while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            docker tag "$LOCAL_IMAGE" "$tag"
+            docker push "$tag"
+          done
+
+      - name: Image digest
+        if: steps.gate.outputs.enabled == 'true'
+        run: |
+          echo "Pushed: ${{ steps.image.outputs.name }}"
+          echo "${{ steps.meta.outputs.tags }}"
