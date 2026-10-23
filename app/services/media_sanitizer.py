@@ -1,125 +1,157 @@
+"""
+Media ingestion hardening.
+
+Pipeline for every uploaded fabric image:
+  1. size limit (streamed, never trusting Content-Length)
+  2. libmagic binary signature check  -> blocks extension/polyglot spoofing
+  3. Pillow decode + verify           -> blocks malformed/crafted images
+  4. ClamAV scan of the raw buffer    -> blocks known malware
+  5. EXIF/GPS/device metadata strip   -> re-encodes from raw pixels only
+  6. decompression-bomb guard         -> bounds GPU memory use
+
+No upload ever reaches PyTorch / OpenCV before all six checks pass.
+"""
+from __future__ import annotations
+
 import io
 import logging
-from typing import Tuple
+
+import magic
+from fastapi import HTTPException, UploadFile, status
 from PIL import Image, ImageOps
-import python_magic as magic
-from fastapi import HTTPException, status, UploadFile
+
 from app.core.config import settings
 
-logger = logging.getLogger("aifabric.sanitizer")
+logger = logging.getLogger("aifabric.media")
 
-# Known Magic Byte signatures
-ALLOWED_MAGIC_MIME_MAP = {
-    "image/jpeg": [b"\xFF\xD8\xFF"],
-    "image/png": [b"\x89PNG\r\n\x1a\n"],
-    "image/webp": [b"RIFF"],
+# Hard ceiling before we even look at the pixels.
+MAX_UPLOAD_BYTES = 15 * 1024 * 1024          # 15 MiB
+MAX_PIXELS = 50_000_000                       # ~50 MP decompression-bomb guard
+Image.MAX_IMAGE_PIXELS = MAX_PIXELS
+
+ALLOWED_MIME_SIGNATURES = {
+    "image/jpeg": (b"\xff\xd8\xff",),
+    "image/png": (b"\x89PNG\r\n\x1a\n",),
+    "image/webp": (b"RIFF",),
 }
+ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
 
-MAX_ALLOWED_FILE_SIZE = 15 * 1024 * 1024  # 15 MB limit per fabric scan
 
 class FabricMediaSanitizer:
+    # ------------------------------------------------------------------ 1+2
     @staticmethod
-    async def validate_magic_bytes(file: UploadFile) -> Tuple[bytes, str]:
-        """
-        Reads binary header magic bytes to verify actual file payload format,
-        rejecting spoofed image extensions (e.g., polyglot PHP/JS executable scripts renamed to .jpg).
-        """
-        header_sample = await file.read(2048)
+    async def validate_magic_bytes(file: UploadFile) -> tuple[bytes, str]:
+        header = await file.read(2048)
         await file.seek(0)
 
-        if not header_sample:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Empty file upload payload received.",
-            )
+        if not header:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty upload")
 
-        # Detect true MIME type via libmagic magic bytes
-        detected_mime = magic.from_buffer(header_sample, mime=True)
-
-        if detected_mime not in ALLOWED_MAGIC_MIME_MAP:
-            logger.warning(f"Malicious file upload attempt rejected. Claimed content-type: {file.content_type}, detected MIME: {detected_mime}")
+        detected_mime = magic.from_buffer(header, mime=True)
+        if detected_mime not in ALLOWED_MIME_SIGNATURES:
+            logger.warning("Rejected upload: detected MIME %s", detected_mime)
             raise HTTPException(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail=f"Security Validation Failed: Unsupported binary file header signature ({detected_mime}). Allowed types: JPEG, PNG, WEBP.",
+                detail="Unsupported file type",
             )
 
-        # Verify magic binary prefix
-        valid_header = any(
-            header_sample.startswith(signature)
-            for signature in ALLOWED_MAGIC_MIME_MAP[detected_mime]
-        )
-        if not valid_header:
+        if not any(header.startswith(sig) for sig in ALLOWED_MIME_SIGNATURES[detected_mime]):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Security Validation Failed: Binary header structure does not match MIME format specification.",
+                detail="File signature mismatch",
             )
 
-        content = await file.read()
-        if len(content) > MAX_ALLOWED_FILE_SIZE:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"Uploaded fabric image exceeds maximum permitted size limit of {MAX_ALLOWED_FILE_SIZE // (1024 * 1024)}MB.",
-            )
+        # Read in bounded chunks so a lying Content-Length cannot exhaust RAM.
+        chunks, total = [], 0
+        while True:
+            chunk = await file.read(1024 * 1024)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > MAX_UPLOAD_BYTES:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f"Upload exceeds {MAX_UPLOAD_BYTES // (1024 * 1024)} MiB",
+                )
+            chunks.append(chunk)
+        return b"".join(chunks), detected_mime
 
-        return content, detected_mime
-
+    # -------------------------------------------------------------------- 3
     @staticmethod
-    def strip_exif_and_metadata(image_bytes: bytes) -> bytes:
-        """
-        Pillow EXIF Scrubbing:
-        Creates a clean pixel-data canvas and strips all EXIF, GPS coordinates, device IDs, and hidden steganographic payload metadata.
-        """
+    def _open_verified(image_bytes: bytes) -> Image.Image:
         try:
-            with Image.open(io.BytesIO(image_bytes)) as img:
-                # Correct orientation before stripping metadata if EXIF tag exists
-                img = ImageOps.exif_transpose(img)
+            probe = Image.open(io.BytesIO(image_bytes))
+            if probe.format not in ALLOWED_FORMATS:
+                raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Unsupported image format")
+            if getattr(probe, "n_frames", 1) != 1:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Multi-frame images are not accepted")
+            probe.verify()  # structure check; consumes the object
+        except HTTPException:
+            raise
+        except Image.DecompressionBombError as exc:
+            raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Image dimensions too large") from exc
+        except Exception as exc:
+            logger.warning("Malformed image rejected: %s", exc)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Malformed image") from exc
 
-                # Re-construct pure pixel canvas without carrying over original info/EXIF dict
-                clean_img = Image.new(img.mode, img.size)
-                clean_img.putdata(list(img.getdata()))
+        try:
+            return Image.open(io.BytesIO(image_bytes))
+        except Exception as exc:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Malformed image") from exc
 
-                output = io.BytesIO()
-                target_format = img.format if img.format in ["JPEG", "PNG", "WEBP"] else "PNG"
-                clean_img.save(output, format=target_format, optimize=True, quality=95)
-                
-                logger.info(f"Successfully scrubbed EXIF and device metadata from uploaded fabric image ({img.size[0]}x{img.size[1]}).")
-                return output.getvalue()
-        except Exception as e:
-            logger.error(f"Failed to scrub EXIF metadata from image stream: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Failed to parse image payload during EXIF metadata scrubbing.",
-            )
-
+    # -------------------------------------------------------------------- 4
     @staticmethod
     def scan_for_malware_clamav(image_bytes: bytes) -> None:
-        """
-        ClamAV Malware Sandbox:
-        Streams binary buffer directly to ClamAV network daemon socket to verify zero viral/malicious signatures.
-        """
         try:
             import clamd
-            cd = clamd.ClamdNetworkSocket(
-                host=settings.CLAMAV_HOST, port=settings.CLAMAV_PORT, timeout=10.0
+
+            client = clamd.ClamdNetworkSocket(
+                host=settings.CLAMAV_HOST,
+                port=settings.CLAMAV_PORT,
+                timeout=settings.CLAMAV_TIMEOUT_SECONDS,
             )
-            result = cd.instream(io.BytesIO(image_bytes))
-            
-            # Result format: {'stream': ('OK', None)} or {'stream': ('FOUND', 'Eicar-Test-Signature')}
-            status_res, virus_name = result.get("stream", ("UNKNOWN", None))
-            if status_res == "FOUND":
-                logger.critical(f"ClamAV Sandbox DETECTED MALWARE: {virus_name}")
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Security Alert: Malware threat detected in uploaded image payload ({virus_name}).",
-                )
-            logger.info("ClamAV Sandbox scan passed clean.")
-        except clamd.ClamError as ce:
-            logger.warning(f"ClamAV daemon connection warning: {ce}")
-            if settings.ENVIRONMENT == "production":
-                # In production, enforce strict virus scanning failure policy
+            result = client.instream(io.BytesIO(image_bytes))
+            verdict, signature = result.get("stream", ("UNKNOWN", None))
+            if verdict == "FOUND":
+                logger.critical("ClamAV malware detected: %s", signature)
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Upload rejected by malware scanner")
+            if verdict != "OK":
+                raise clamd.ClamError(f"unexpected verdict {verdict}")
+        except HTTPException:
+            raise
+        except Exception as exc:
+            logger.error("ClamAV scan failed: %s", exc)
+            if settings.CLAMAV_FAIL_CLOSED:
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Security Sandbox: Antivirus inspection service unavailable.",
-                )
-        except Exception as e:
-            logger.error(f"ClamAV sandbox scan error: {e}")
+                    detail="Malware scanning unavailable",
+                ) from exc
+
+    # -------------------------------------------------------------------- 5
+    @staticmethod
+    def strip_exif_and_metadata(image_bytes: bytes) -> tuple[bytes, int, int]:
+        img = FabricMediaSanitizer._open_verified(image_bytes)
+        source_format = img.format
+        try:
+            img = ImageOps.exif_transpose(img)  # bake orientation, then drop EXIF
+            clean = Image.new(img.mode, img.size)
+            clean.putdata(list(img.getdata()))
+
+            out = io.BytesIO()
+            target = source_format if source_format in ALLOWED_FORMATS else "PNG"
+            save_kwargs = {"optimize": True}
+            if target == "JPEG":
+                save_kwargs.update(quality=95, subsampling="4:2:0", progressive=False)
+            clean.save(out, format=target, **save_kwargs)
+            return out.getvalue(), img.size[0], img.size[1]
+        finally:
+            img.close()
+
+    # ------------------------------------------------------------- orchestr.
+    @classmethod
+    async def sanitize_upload(cls, file: UploadFile) -> tuple[bytes, str, int, int]:
+        raw, mime = await cls.validate_magic_bytes(file)
+        cls.scan_for_malware_clamav(raw)
+        clean, width, height = cls.strip_exif_and_metadata(raw)
+        logger.info("Fabric image sanitised (%s, %dx%d)", mime, width, height)
+        return clean, mime, width, height

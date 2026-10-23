@@ -1,36 +1,164 @@
-name: AI Fabric DevSecOps Pipeline
+name: DevSecOps
 
 on:
   push:
-    branches: [ main, staging ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  schedule:
+    - cron: "0 3 * * 1"   # weekly drift/dependency scan
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+
+concurrency:
+  group: devsecops-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+  SECRET_KEY: "ci-only-not-a-real-secret-0000000000000000"
 
 jobs:
-  security-audit-and-scan:
+  # ------------------------------------------------------------------ tests
+  test:
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run Bandit Static Application Security Testing (SAST)
-        run: |
-          bandit -r app/ -ll -ii
-
-      - name: Run Trivy Vulnerability Scanner for Filesystem & Dependencies
-        uses: aquasecurity/trivy-action@master
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - name: Pytest
+        run: pytest -q --cov=app --cov-report=xml --cov-fail-under=60
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          scan-type: 'fs'
-          security-checks: 'vuln,config,secret'
-          severity: 'HIGH,CRITICAL'
-          exit-code: '1'
+          name: coverage
+          path: coverage.xml
+
+  # -------------------------------------------------------------------- sast
+  sast:
+    name: SAST + secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install bandit[toml]==1.7.9 semgrep==1.79.0
+      - name: Bandit
+        run: bandit -r app -c pyproject.toml -ll -ii
+      - name: Semgrep
+        run: semgrep --config security/semgrep.yml --error --sarif --output semgrep.sarif app
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with: { sarif_file: semgrep.sarif }
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: security/.gitleaks.toml
+
+  # ---------------------------------------------------------- dependencies
+  dependencies:
+    name: Dependency scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install pip-audit==2.7.3 -r requirements.txt
+      - name: pip-audit
+        run: pip-audit -r requirements.txt --strict --desc
+      - name: Trivy filesystem (vuln + secret + config)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+      - name: Snyk (optional)
+        if: ${{ secrets.SNYK_TOKEN != '' }}
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+  # ------------------------------------------------------------- containers
+  containers:
+    name: Container scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -f docker/Dockerfile.api -t aifabric-api:ci .
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: aifabric-api:ci
+          format: sarif
+          output: trivy-image.sarif
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with: { sarif_file: trivy-image.sarif }
+      - name: Docker Scout
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: aifabric-api:ci
+          only-severities: critical,high
+          exit-code: true
+      - name: SBOM (Syft)
+        uses: anchore/sbom-action@v0
+        with:
+          image: aifabric-api:ci
+          format: spdx-json
+          output-file: sbom-api.spdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom-api.spdx.json
+
+  # ------------------------------------------------------------------- iac
+  iac:
+    name: IaC + CIS benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy config (Docker/K8s)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: config
+          scan-ref: deploy
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+      - name: kube-score
+        run: |
+          curl -sSLo kube-score https://github.com/zegl/kube-score/releases/download/v1.18.0/kube-score_1.18.0_linux_amd64
+          chmod +x kube-score
+          ./kube-score score deploy/k8s/*.yaml --output-format ci --exit-one-on-warning
+      - name: Docker Bench Security (report only)
+        run: |
+          docker run --rm --net host --pid host --userns host --cap-add audit_control \
+            -e DOCKER_CONTENT_TRUST=$DOCKER_CONTENT_TRUST \
+            -v /var/lib:/var/lib:ro -v /var/run/docker.sock:/var/run/docker.sock:ro \
+            -v /etc:/etc:ro --label docker_bench_security \
+            docker/docker-bench-security > docker-bench.txt 2>&1 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docker-bench
+          path: docker-bench.txt

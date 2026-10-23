@@ -1,0 +1,74 @@
+groups:
+  - name: aifabric-security
+    rules:
+      - alert: AuthFailureSpike
+        expr: increase(aifabric_auth_failures_total[5m]) > 20
+        for: 2m
+        labels: { severity: high, category: auth }
+        annotations:
+          summary: "Authentication failure spike"
+          description: "{{ $value }} failed logins in the last 5 minutes (possible credential stuffing)."
+
+      - alert: AccountLockoutBurst
+        expr: increase(aifabric_auth_failures_total{reason="locked"}[10m]) > 5
+        for: 1m
+        labels: { severity: high, category: auth }
+        annotations:
+          summary: "Multiple account lockouts"
+          description: "Repeated lockouts suggest targeted brute force."
+
+      - alert: WebhookIPBlocked
+        expr: increase(aifabric_security_violations_total{kind="webhook_ip_blocked"}[5m]) > 0
+        for: 1m
+        labels: { severity: critical, category: payment }
+        annotations:
+          summary: "Payment webhook from unauthorized IP"
+          description: "A webhook was rejected by the subnet allow-list — possible spoofed payment callback."
+
+      - alert: PaymentFailureSpike
+        expr: increase(aifabric_payment_events_total{status="failed"}[10m]) > 10
+        for: 2m
+        labels: { severity: high, category: payment }
+        annotations:
+          summary: "Payment failure spike"
+          description: "Elevated failed payments; check gateway health and fraud signals."
+
+      - alert: PaymentAmountMismatch
+        expr: increase(aifabric_payment_events_total{event="amount_mismatch"}[5m]) > 0
+        for: 0m
+        labels: { severity: critical, category: payment }
+        annotations:
+          summary: "Payment amount mismatch detected"
+          description: "A gateway reported an amount that does not match the server ledger."
+
+      - alert: GPUJobRejections
+        expr: increase(aifabric_render_requests_total{status="rejected"}[10m]) > 0
+        for: 0m
+        labels: { severity: high, category: media }
+        annotations:
+          summary: "Malware/render rejection"
+          description: "Uploads are being rejected by the media security pipeline."
+
+      - alert: UploadRejectionSpike
+        expr: increase(aifabric_upload_rejections_total[5m]) > 25
+        for: 2m
+        labels: { severity: medium, category: media }
+        annotations:
+          summary: "Upload rejection spike"
+          description: "Possible malicious upload campaign or misconfigured client."
+
+      - alert: ApiDown
+        expr: up{job="aifabric-api"} == 0
+        for: 2m
+        labels: { severity: critical, category: availability }
+        annotations:
+          summary: "API instance down"
+          description: "Prometheus cannot scrape the API."
+
+      - alert: RateLimitSaturation
+        expr: rate(aifabric_render_requests_total{status="rate_limited"}[5m]) > 1
+        for: 5m
+        labels: { severity: high, category: dos }
+        annotations:
+          summary: "GPU rate limiting sustained"
+          description: "Sustained throttling may indicate a GPU DoS attempt."

@@ -87,3 +87,36 @@ venv.bak/
 /tmp/*
 *.log
 routersploit.log
+
+# Deployment secrets & generated certificates
+deploy/certs/
+deploy/secrets/
+*.pem
+*.crt
+*.key
+*.csr
+*.srl
+
+# Tooling caches / reports
+.ruff_cache/
+.mypy_cache/
+.pyright/
+semgrep.sarif
+trivy-image.sarif
+sbom-*.json
+coverage.xml
+docker-bench.txt
+
+# Model / HF caches (never commit weights)
+.cache/
+modelcache/
+huggingface/
+torch/
+
+# Local desktop/workspace assets unrelated to the platform
+/macosify-*.sh
+/dock-check.png
+/finalwall*.png
+/lvnow*.png
+/pc.png
+/pickcheck.png

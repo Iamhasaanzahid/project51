@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aifabric-config
+  namespace: aifabric
+data:
+  ENVIRONMENT: "production"
+  DEBUG: "false"
+  API_V1_PREFIX: "/api/v1"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "15"
+  JWT_ISSUER: "aifabric-auth"
+  JWT_AUDIENCE: "aifabric-api"
+  POSTGRES_HOST: "postgres.aifabric.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "aifabric_prod"
+  POSTGRES_SSL_MODE: "verify-full"
+  POSTGRES_SSL_CA_FILE: "/etc/aifabric/tls/ca.crt"
+  REDIS_HOST: "redis.aifabric.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_SSL: "true"
+  CLAMAV_HOST: "clamav.aifabric.svc.cluster.local"
+  CLAMAV_PORT: "3310"
+  CLAMAV_FAIL_CLOSED: "true"
+  PRESIGNED_URL_TTL_SECONDS: "900"
+  RENDER_BUCKET_CAPACITY: "10"
+  RENDER_LEAK_RATE_PER_SEC: "0.5"
+  GPU_QUEUE_NAME: "gpu_render"
+  CPU_QUEUE_NAME: "cpu_media"
+---
+# Secrets are synced from AWS Secrets Manager by the External Secrets Operator.
+# No plaintext Secret objects are committed to git.
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: aifabric-api-secrets
+  namespace: aifabric
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: ClusterSecretStore
+  target:
+    name: aifabric-api-secrets
+    creationPolicy: Owner
+  dataFrom:
+    - extract:
+        key: aifabric/prod/secrets
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: aws-secrets-manager
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: us-east-1
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: external-secrets
+            namespace: external-secrets

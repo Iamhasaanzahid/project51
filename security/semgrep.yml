@@ -1,0 +1,87 @@
+rules:
+  - id: aifabric-hardcoded-secret
+    languages: [python]
+    message: >-
+      Possible hardcoded credential. Load secrets from the environment or
+      AWS Secrets Manager instead.
+    severity: ERROR
+    patterns:
+      - pattern: $VAR = "$VAL"
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i).*(secret|password|passwd|token|api_key|apikey|private_key|merchant_key).*
+      - metavariable-regex:
+          metavariable: $VAL
+          regex: .{8,}
+    metadata:
+      category: security
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+
+  - id: aifabric-sql-fstring
+    languages: [python]
+    message: >-
+      SQL built with an f-string. Use bound parameters or validated identifiers
+      (see tenant_schema()) to prevent SQL injection.
+    severity: ERROR
+    patterns:
+      - pattern-either:
+          - pattern: text(f"...")
+          - pattern: $CONN.execute(f"...")
+          - pattern: $CONN.executemany(f"...")
+    metadata:
+      category: security
+      cwe: "CWE-89: SQL Injection"
+
+  - id: aifabric-jwt-verify-disabled
+    languages: [python]
+    message: "JWT signature verification disabled."
+    severity: ERROR
+    patterns:
+      - pattern: 'jwt.decode(..., options={"verify_signature": False}, ...)'
+    metadata:
+      category: security
+      cwe: "CWE-347: Improper Verification of Cryptographic Signature"
+
+  - id: aifabric-tls-verify-disabled
+    languages: [python]
+    message: "TLS certificate verification disabled."
+    severity: ERROR
+    patterns:
+      - pattern-either:
+          - pattern: $C.get(..., verify=False, ...)
+          - pattern: $C.post(..., verify=False, ...)
+          - pattern: $C.request(..., verify=False, ...)
+    metadata:
+      category: security
+      cwe: "CWE-295: Improper Certificate Validation"
+
+  - id: aifabric-eval-exec
+    languages: [python]
+    message: "eval/exec on dynamic input enables code injection."
+    severity: ERROR
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: exec(...)
+    metadata:
+      category: security
+      cwe: "CWE-95: Code Injection"
+
+  - id: aifabric-unsafe-yaml
+    languages: [python]
+    message: "yaml.load without SafeLoader."
+    severity: ERROR
+    pattern: yaml.load(...)
+    metadata:
+      category: security
+      cwe: "CWE-502: Deserialization of Untrusted Data"
+
+  - id: aifabric-md5-sha1
+    languages: [python]
+    message: "MD5/SHA1 are not suitable for security-sensitive hashing."
+    severity: WARNING
+    pattern-either:
+      - pattern: hashlib.md5(...)
+      - pattern: hashlib.sha1(...)
+    metadata:
+      category: security
+      cwe: "CWE-327: Use of a Broken or Risky Cryptographic Algorithm"

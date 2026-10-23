@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-worker
+  namespace: aifabric
+  labels: { app: aifabric-worker }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: aifabric-worker }
+  template:
+    metadata:
+      labels: { app: aifabric-worker }
+    spec:
+      serviceAccountName: aifabric-worker
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: { type: RuntimeDefault }
+      nodeSelector:
+        nvidia.com/gpu.present: "true"
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: worker
+          image: ghcr.io/iamhasaanzahid/aifabric-worker:2.0.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          resources:
+            requests: { cpu: "2", memory: "8Gi" }
+            limits:
+              cpu: "8"
+              memory: "24Gi"
+              nvidia.com/gpu: "1"
+          envFrom:
+            - secretRef: { name: aifabric-api-secrets }
+            - configMapRef: { name: aifabric-config }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+            - { name: cache, mountPath: /cache }
+            - { name: tls, mountPath: /etc/aifabric/tls, readOnly: true }
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "celery -A app.workers.celery_app inspect ping -d celery@$(hostname)"]
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "celery -A app.workers.celery_app inspect ping -d celery@$(hostname)"]
+            initialDelaySeconds: 120
+            periodSeconds: 60
+      volumes:
+        - name: tmp
+          emptyDir: { medium: Memory, sizeLimit: 1Gi }
+        - name: cache
+          persistentVolumeClaim: { claimName: model-cache }
+        - name: tls
+          secret: { secretName: aifabric-tls-ca }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-cache
+  namespace: aifabric
+spec:
+  accessModes: [ReadWriteMany]
+  resources:
+    requests:
+      storage: 200Gi

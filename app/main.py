@@ -1,162 +1,121 @@
-from fastapi import FastAPI, UploadFile, File, Form, Depends, HTTPException, status, Request
+"""
+Application entrypoint.
+
+Middleware order (outermost first):
+    CORS -> RateLimiter -> SecurityHeaders -> RequestContext -> ErrorMasking
+"""
+from __future__ import annotations
+
+import logging
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+from fastapi.responses import JSONResponse
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from redis.asyncio import Redis
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.responses import Response
 
+from app.api.v1 import admin, ai_render, auth, payments
 from app.core.config import settings
+from app.core.database import engine, healthcheck
 from app.core.logging_config import setup_logging
-from app.core.security import (
-    hash_password, verify_password, create_access_token,
-    get_current_user, SecurityScopeChecker, enforce_tenant_ownership, TokenData
-)
-from app.middleware.rate_limiter import LeakyBucketRateLimiter
 from app.middleware.error_handler import ProductionErrorMaskingMiddleware
-from app.middleware.ip_whitelist import enforce_payment_webhook_ip_whitelist
-from app.services.media_sanitizer import FabricMediaSanitizer
-from app.services.payment_service import PaymentSecurityService
-from app.services.storage_service import S3StorageService
+from app.middleware.rate_limiter import LeakyBucketRateLimiter
+from app.middleware.request_context import RequestContextMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.services.idempotency import IdempotencyStore
 
-# Initialize Structured Logging
 setup_logging(settings.ENVIRONMENT)
+logger = logging.getLogger("aifabric.main")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    redis = Redis.from_url(settings.redis_url, decode_responses=True)
+    app.state.redis = redis
+    app.state.idempotency = IdempotencyStore(redis, ttl_seconds=settings.IDEMPOTENCY_TTL_SECONDS)
+    logger.info("Startup complete environment=%s", settings.ENVIRONMENT)
+    try:
+        yield
+    finally:
+        await redis.aclose()
+        await engine.dispose()
+        logger.info("Shutdown complete")
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version="2.0.0",
+    lifespan=lifespan,
     docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
     redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None,
+    openapi_url="/openapi.json" if settings.ENVIRONMENT != "production" else None,
 )
 
-# CORS Security Policy
+# --- middleware (added in inner->outer order) -------------------------------
+app.add_middleware(ProductionErrorMaskingMiddleware)
+app.add_middleware(RequestContextMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(
+    LeakyBucketRateLimiter,
+    redis_client=Redis.from_url(settings.redis_url, decode_responses=True),
+    capacity=settings.RENDER_BUCKET_CAPACITY,
+    leak_rate_per_sec=settings.RENDER_LEAK_RATE_PER_SEC,
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://aifabric.retail", "https://app.aifabric.retail"],
+    allow_origins=settings.allowed_origins_list,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["Authorization", "Content-Type", "X-Tenant-ID", "X-Idempotency-Key"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "Idempotency-Key", "X-Request-ID"],
+    max_age=600,
 )
+_allowed_hosts = settings.allowed_hosts_list if settings.ENVIRONMENT == "production" else ["*"]
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts)
 
-# Error Masking Middleware
-app.add_middleware(ProductionErrorMaskingMiddleware)
 
-# Redis Connection for Rate Limiting
-redis_client = Redis.from_url(settings.redis_url, decode_responses=True)
+# --- validation errors must not echo secrets --------------------------------
+@app.exception_handler(RequestValidationError)
+async def validation_handler(request: Request, exc: RequestValidationError):
+    safe_errors = [
+        {"loc": err.get("loc", []), "msg": err.get("msg", "invalid"), "type": err.get("type", "value_error")}
+        for err in exc.errors()
+    ]
+    return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content={"error": "validation_error", "details": safe_errors})
 
-# GPU Rate Limiting Middleware
-app.add_middleware(LeakyBucketRateLimiter, redis_client=redis_client, capacity=10, leak_rate_per_sec=0.5)
 
-# Initialize Storage
-storage_service = S3StorageService()
+# --- routers ----------------------------------------------------------------
+app.include_router(auth.router, prefix=settings.API_V1_PREFIX)
+app.include_router(ai_render.router, prefix=settings.API_V1_PREFIX)
+app.include_router(payments.router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin.router, prefix=settings.API_V1_PREFIX)
 
-# Pydantic Schemas for API Requests
-class UserLoginRequest(BaseModel):
-    email: EmailStr
-    password: str
 
-class CheckoutRequest(BaseModel):
-    item_sku: str
-    render_count: int = 1
-    is_annual: bool = False
-    tenant_id: str
+# --- operational endpoints --------------------------------------------------
+@app.get("/healthz", include_in_schema=False)
+async def healthz():
+    return {"status": "ok"}
 
-@app.get("/healthz")
-async def health_check():
-    return {"status": "healthy", "environment": settings.ENVIRONMENT, "security_shield": "active"}
 
-@app.post("/api/v1/auth/login")
-async def login(form_data: UserLoginRequest):
-    # Simulated authentication check against multi-tenant DB
-    if form_data.email == "admin@aifabric.retail" and form_data.password == "SecureAdminPass2026!":
-        token = create_access_token({
-            "sub": "usr_admin_01",
-            "tenant_id": "tenant_master",
-            "roles": ["SystemAdmin"],
-            "scopes": ["admin:all"]
-        })
-        return {"access_token": token, "token_type": "bearer"}
-    elif form_data.email == "retailer@brandx.com" and form_data.password == "SecureRetailerPass2026!":
-        token = create_access_token({
-            "sub": "usr_retailer_02",
-            "tenant_id": "tenant_brandx",
-            "roles": ["Retailer"],
-            "scopes": ["retailer:read", "retailer:write", "ai:render"]
-        })
-        return {"access_token": token, "token_type": "bearer"}
-    
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Incorrect email or password",
+@app.get("/readyz", include_in_schema=False)
+async def readyz():
+    db_ok = await healthcheck()
+    try:
+        redis_ok = bool(await app.state.redis.ping())
+    except Exception:
+        redis_ok = False
+    ok = db_ok and redis_ok
+    return JSONResponse(
+        status_code=status.HTTP_200_OK if ok else status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={"status": "ready" if ok else "degraded", "database": db_ok, "redis": redis_ok},
     )
 
-@app.post("/api/v1/ai/render", dependencies=[Depends(SecurityScopeChecker(["ai:render"]))])
-async def render_fabric_ai(
-    tenant_id: str = Form(...),
-    fabric_image: UploadFile = File(...),
-    current_user: TokenData = Depends(get_current_user)
-):
-    """
-    Advanced AI Engine & Media Ingestion Endpoint:
-    1. Enforces tenant ownership (IDOR prevention).
-    2. Validates binary Magic Bytes.
-    3. Scrubs EXIF / GPS metadata via Pillow.
-    4. Runs ClamAV malware sandbox check.
-    5. Protected by Leaky Bucket GPU DoS rate limiter.
-    """
-    enforce_tenant_ownership(tenant_id, current_user)
 
-    # 1. Validate Magic Bytes & Size
-    image_bytes, detected_mime = await FabricMediaSanitizer.validate_magic_bytes(fabric_image)
-
-    # 2. ClamAV Malware Scan Sandbox
-    FabricMediaSanitizer.scan_for_malware_clamav(image_bytes)
-
-    # 3. Pillow EXIF & Metadata Scrubbing
-    clean_image_bytes = FabricMediaSanitizer.strip_exif_and_metadata(image_bytes)
-
-    # 4. Generate S3 secure presigned URL for processed fabric asset
-    object_key = f"tenants/{tenant_id}/renders/scrubbed_{fabric_image.filename}"
-    
-    # In production, upload clean_image_bytes to S3 here...
-    presigned_url = storage_service.generate_presigned_preview_url(object_key, expiration_seconds=900)
-
-    return {
-        "status": "success",
-        "message": "Fabric image successfully sanitized, scrubbed of EXIF metadata, scanned for malware, and queued for GPU AI rendering.",
-        "detected_mime": detected_mime,
-        "secure_preview_url": presigned_url,
-    }
-
-@app.post("/api/v1/payments/checkout", dependencies=[Depends(SecurityScopeChecker(["retailer:write"]))])
-async def create_checkout_session(
-    checkout: CheckoutRequest,
-    current_user: TokenData = Depends(get_current_user)
-):
-    """
-    Bulletproof Financial Checkout Endpoint:
-    Enforces absolute server-side price calculation. Zero trust in client payloads.
-    """
-    enforce_tenant_ownership(checkout.tenant_id, current_user)
-
-    # Server-Side Calculation Mandate
-    exact_amount = PaymentSecurityService.calculate_server_side_pricing(
-        checkout.item_sku, checkout.render_count, checkout.is_annual
-    )
-
-    return {
-        "status": "checkout_initialized",
-        "item_sku": checkout.item_sku,
-        "calculated_amount_cents": exact_amount,
-        "currency": "PKR",
-        "pci_compliance": "Level 4 Tokenized Hosted Fields",
-        "idempotency_enforced": True,
-    }
-
-@app.post("/api/v1/payments/jazzcash/webhook", dependencies=[Depends(enforce_payment_webhook_ip_whitelist)])
-async def jazzcash_webhook(request: Request):
-    """
-    Local Gateway Webhook Endpoint (JazzCash):
-    Strict IP whitelisting + HMAC-SHA256 signature verification.
-    """
-    body_bytes = await request.body()
-    # Verification logic executed with middleware IP check and signature validator
-    return {"status": "webhook_received_and_verified"}
+@app.get("/metrics", include_in_schema=False)
+async def metrics():
+    if not settings.METRICS_ENABLED:
+        return Response(status_code=404)
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)

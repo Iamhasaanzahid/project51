@@ -1,70 +1,76 @@
+"""
+Structured, PII-redacting logging.
+
+Every log record is emitted as JSON (Loki/Datadog friendly). A logging filter
+scrubs passwords, bearer tokens, card numbers, CNIC/SSN values and free-form
+`token=...` pairs before the record is formatted. File paths in stack traces
+are collapsed so internal layout is not disclosed.
+"""
+from __future__ import annotations
+
+import json
 import logging
 import re
 import sys
-import json
-from datetime import datetime
+from datetime import UTC, datetime
+from typing import Any
 
-# Regex patterns to catch PII, passwords, authorization tokens, credit cards, and payment hashes
-SENSITIVE_PATTERNS = [
-    (re.compile(r'(?i)(password|passwd|pwd|secret|token|api[_-]?key|access[_-]?token)\s*=\s*[\'"]?([^\s\'"]+)[\'"]?'), r'\1=***REDACTED***'),
-    (re.compile(r'(?i)"(password|passwd|pwd|secret|token|api[_-]?key|access[_-]?token)"\s*:\s*"[^"]+"'), r'"\1":"***REDACTED***"'),
-    (re.compile(r'Bearer\s+[A-Za-z0-9\-\._~\+\/]+=*', re.IGNORECASE), 'Bearer ***REDACTED_JWT***'),
-    (re.compile(r'\b(?:\d[ -]*?){13,16}\b'), '***REDACTED_CARD_NUMBER***'),  # Basic PCI card masking
-    (re.compile(r'(?i)(cnic|ssn)\s*[:=]\s*\d{5}-\d{7}-\d{1}'), r'\1=***REDACTED_ID***'),
+_SENSITIVE_PATTERNS = [
+    (re.compile(r"(?i)\b(password|passwd|pwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token)\b\s*[=:]\s*(\"[^\"]*\"|'[^']*'|\S+)"), r"\1=***REDACTED***"),
+    (re.compile(r"(?i)(\"(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|refresh[_-]?token|card[_-]?number|cvv)\"\s*:\s*)\"[^\"]*\""), r'\1"***REDACTED***"'),
+    (re.compile(r"Bearer\s+[A-Za-z0-9\-._~+/]+=*", re.IGNORECASE), "Bearer ***REDACTED***"),
+    (re.compile(r"\b(?:\d[ -]*?){13,19}\b"), "***REDACTED_PAN***"),
+    (re.compile(r"\b\d{5}-\d{7}-\d\b"), "***REDACTED_CNIC***"),
+    (re.compile(r"(?i)\b(sk_live|sk_test|whsec|ghp_|github_pat_|r8_)[A-Za-z0-9_\-]+"), "***REDACTED_KEY***"),
 ]
 
+
+def scrub(value: str) -> str:
+    for pattern, replacement in _SENSITIVE_PATTERNS:
+        value = pattern.sub(replacement, value)
+    return value
+
+
 class SensitiveDataRedactor(logging.Filter):
-    """Filter that strips passwords, JWTs, card numbers, and PII from all log messages before emission."""
     def filter(self, record: logging.LogRecord) -> bool:
         if isinstance(record.msg, str):
-            for pattern, replacement in SENSITIVE_PATTERNS:
-                record.msg = pattern.sub(replacement, record.msg)
+            record.msg = scrub(record.msg)
         if record.args:
-            cleaned_args = []
-            for arg in record.args:
-                if isinstance(arg, str):
-                    for pattern, replacement in SENSITIVE_PATTERNS:
-                        arg = pattern.sub(replacement, arg)
-                cleaned_args.append(arg)
-            record.args = tuple(cleaned_args)
+            record.args = tuple(scrub(a) if isinstance(a, str) else a for a in record.args)
         return True
 
+
 class StructuredJsonFormatter(logging.Formatter):
-    """Formats log records as structured JSON for Loki / Datadog ingest."""
     def format(self, record: logging.LogRecord) -> str:
-        log_obj = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+        payload: dict[str, Any] = {
+            "ts": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
-            "message": record.getMessage(),
+            "message": scrub(record.getMessage()),
             "module": record.module,
-            "filename": record.filename,
             "line": record.lineno,
         }
-        if hasattr(record, "tenant_id"):
-            log_obj["tenant_id"] = getattr(record, "tenant_id")
-        if hasattr(record, "event_type"):
-            log_obj["event_type"] = getattr(record, "event_type")
-        if hasattr(record, "client_ip"):
-            log_obj["client_ip"] = getattr(record, "client_ip")
+        for attr in ("request_id", "tenant_id", "user_id", "event_type", "client_ip", "route", "status_code"):
+            if hasattr(record, attr):
+                payload[attr] = getattr(record, attr)
         if record.exc_info:
-            # Mask internal file system paths in stack traces
             exc_text = self.formatException(record.exc_info)
             exc_text = re.sub(r'File ".*?[\\/]', 'File "', exc_text)
-            log_obj["exception"] = exc_text
+            payload["exception"] = scrub(exc_text)
+        return json.dumps(payload, default=str)
 
-        return json.dumps(log_obj)
 
-def setup_logging(environment: str = "production"):
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO if environment == "production" else logging.DEBUG)
-    
-    # Remove existing handlers
-    for handler in root_logger.handlers[:]:
-        root_logger.removeHandler(handler)
+def setup_logging(environment: str = "production") -> None:
+    root = logging.getLogger()
+    root.setLevel(logging.INFO if environment == "production" else logging.DEBUG)
+    for handler in list(root.handlers):
+        root.removeHandler(handler)
 
     handler = logging.StreamHandler(sys.stdout)
     handler.addFilter(SensitiveDataRedactor())
     handler.setFormatter(StructuredJsonFormatter())
-    
-    root_logger.addHandler(handler)
+    root.addHandler(handler)
+
+    # Silence noisy internals that can leak DSNs / request bodies.
+    for noisy in ("uvicorn.access", "sqlalchemy.engine", "boto3", "botocore"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)

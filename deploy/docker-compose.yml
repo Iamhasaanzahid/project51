@@ -1,0 +1,293 @@
+# ===========================================================================
+# Hardened local/staging topology.
+#
+# Every service:
+#   * drops ALL Linux capabilities
+#   * sets no-new-privileges
+#   * runs with a read-only root filesystem (writable paths are tmpfs/volumes)
+#   * applies the custom seccomp profile where supported
+# ===========================================================================
+name: aifabric
+
+x-hardening: &hardening
+  security_opt:
+    - no-new-privileges:true
+    - seccomp:../docker/seccomp-aifabric.json
+  cap_drop:
+    - ALL
+  restart: unless-stopped
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    image: postgres:16.3-alpine
+    <<: [*hardening, *logging]
+    user: "70:70"                     # postgres uid/gid in alpine
+    read_only: true
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command:
+      - postgres
+      - -c
+      - ssl=on
+      - -c
+      - ssl_cert_file=/etc/postgresql/tls/tls.crt
+      - -c
+      - ssl_key_file=/etc/postgresql/tls/tls.key
+      - -c
+      - ssl_min_protocol_version=TLSv1.3
+      - -c
+      - password_encryption=scram-sha-256
+      - -c
+      - log_statement=ddl
+      - -c
+      - idle_in_transaction_session_timeout=30s
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+      - ./certs:/etc/postgresql/tls:ro
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.2.5-alpine
+    <<: [*hardening, *logging]
+    user: "999:999"
+    read_only: true
+    command:
+      - redis-server
+      - --port
+      - "0"
+      - --tls-port
+      - "6379"
+      - --tls-cert-file
+      - /etc/redis/tls/tls.crt
+      - --tls-key-file
+      - /etc/redis/tls/tls.key
+      - --tls-ca-cert-file
+      - /etc/redis/tls/ca.crt
+      - --tls-auth-clients
+      - "no"
+      - --requirepass
+      - ${REDIS_PASSWORD}
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - 512mb
+      - --maxmemory-policy
+      - allkeys-lru
+    volumes:
+      - ./certs:/etc/redis/tls:ro
+    tmpfs:
+      - /tmp
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --tls --cacert /etc/redis/tls/ca.crt -a $$REDIS_PASSWORD ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  clamav:
+    image: clamav/clamav:1.3
+    <<: [*hardening, *logging]
+    read_only: true
+    volumes:
+      - clamdb:/var/lib/clamav
+    tmpfs:
+      - /tmp
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    <<: [*hardening, *logging]
+    read_only: true
+    user: "10001:10001"
+    env_file: ../.env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_SSL_MODE: verify-full
+      POSTGRES_SSL_CA_FILE: /etc/aifabric/tls/ca.crt
+      REDIS_HOST: redis
+      REDIS_SSL: "true"
+      CLAMAV_HOST: clamav
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+    volumes:
+      - ./certs:/etc/aifabric/tls:ro
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    networks: [frontend, backend]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      clamav: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  worker-gpu:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    <<: [*hardening, *logging]
+    read_only: true
+    user: "10001:10001"
+    group_add: ["video"]
+    env_file: ../.env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_SSL_MODE: verify-full
+      POSTGRES_SSL_CA_FILE: /etc/aifabric/tls/ca.crt
+      REDIS_HOST: redis
+      REDIS_SSL: "true"
+      CLAMAV_HOST: clamav
+      HF_HOME: /cache/huggingface
+      TORCH_HOME: /cache/torch
+    volumes:
+      - ./certs:/etc/aifabric/tls:ro
+      - modelcache:/cache
+    tmpfs:
+      - /tmp:size=1g,noexec,nosuid
+    networks: [backend]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      clamav: { condition: service_healthy }
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  streamlit:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.streamlit
+    <<: [*hardening, *logging]
+    read_only: true
+    user: "10001:10001"
+    environment:
+      API_BASE_URL: https://api.internal
+      STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION: "true"
+      STREAMLIT_SERVER_ENABLE_CORS: "false"
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
+    tmpfs:
+      - /tmp:size=64m
+    networks: [frontend]
+
+  nginx:
+    image: nginx:1.27-alpine
+    <<: [*hardening, *logging]
+    read_only: true
+    ports:
+      - "8443:443"
+      - "8080:80"
+    volumes:
+      - ../docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/tls:ro
+    tmpfs:
+      - /tmp
+    networks: [frontend]
+    depends_on: [api]
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    <<: [*hardening, *logging]
+    read_only: true
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle=false
+    volumes:
+      - ../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../observability/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - promdata:/prometheus
+    tmpfs:
+      - /tmp
+    networks: [monitoring]
+    depends_on: [api]
+
+  loki:
+    image: grafana/loki:3.1.0
+    <<: [*hardening, *logging]
+    read_only: true
+    command: ["-config.file=/etc/loki/loki-config.yml"]
+    volumes:
+      - ../observability/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - lokidata:/loki
+    tmpfs:
+      - /tmp
+    networks: [monitoring]
+
+  promtail:
+    image: grafana/promtail:3.1.0
+    <<: [*hardening, *logging]
+    read_only: true
+    command: ["-config.file=/etc/promtail/promtail-config.yml"]
+    volumes:
+      - ../observability/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    tmpfs:
+      - /tmp
+    networks: [monitoring]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    <<: [*hardening, *logging]
+    read_only: true
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafanadata:/var/lib/grafana
+      - ./secrets/grafana_admin:/run/secrets/grafana_admin:ro
+    tmpfs:
+      - /tmp
+    networks: [monitoring]
+    depends_on: [loki, prometheus]
+
+networks:
+  frontend:
+  backend:
+    internal: true          # no route to the internet for data services
+  monitoring:
+
+volumes:
+  pgdata:
+  clamdb:
+  modelcache:
+  promdata:
+  lokidata:
+  grafanadata:

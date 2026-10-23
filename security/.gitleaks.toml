@@ -1,0 +1,41 @@
+title = "AI Fabric secret scanning"
+[extend]
+useDefault = true
+
+[[rules]]
+id = "stripe-live-key"
+description = "Stripe live secret key"
+regex = '''sk_live_[0-9a-zA-Z]{24,}'''
+tags = ["key", "stripe", "payment"]
+
+[[rules]]
+id = "github-pat"
+description = "GitHub personal access token"
+regex = '''github_pat_[0-9a-zA-Z_]{40,}'''
+tags = ["key", "github"]
+
+[[rules]]
+id = "aws-access-key"
+description = "AWS access key id"
+regex = '''AKIA[0-9A-Z]{16}'''
+tags = ["key", "aws"]
+
+[[rules]]
+id = "private-key"
+description = "PEM private key"
+regex = '''-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----'''
+tags = ["key"]
+
+[allowlist]
+description = "Documented placeholders and test corpus"
+paths = [
+  '''\.env\.example''',
+  '''tests/fixtures/.*''',
+  '''docs/.*''',
+]
+regexes = [
+  '''AKIAEXAMPLESECRETKEYID''',
+  '''sk_live_example''',
+  '''github_pat_11AULKPEQ0''',
+  '''r8_example''',
+]

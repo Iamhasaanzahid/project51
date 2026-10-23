@@ -1,102 +1,174 @@
-from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
+"""
+Authentication & authorisation primitives.
+
+* OAuth2 password flow backed by short-lived JWT access tokens (15 min).
+* Refresh tokens carry a distinct `typ` claim and are never accepted as access.
+* Scope-based RBAC distinguishes retailers from system administrators.
+* `require_scopes` is the only sanctioned way to protect a route.
+"""
+from __future__ import annotations
+
+import base64
+import hashlib
+import uuid
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
+import bcrypt
 import jwt
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
+
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_PREFIX}/auth/token")
+
+ADMIN_SCOPE = "admin:all"
+
 
 class TokenData(BaseModel):
     user_id: str
     tenant_id: str
-    roles: List[str]
-    scopes: List[str]
+    roles: list[str] = []
+    scopes: list[str] = []
+    token_id: str = ""
+
+
+# --------------------------------------------------------------------- passwords
+def _prehash(password: str) -> bytes:
+    """SHA-256 + base64 before bcrypt.
+
+    bcrypt only consumes 72 bytes; pre-hashing removes the truncation cliff and
+    supports arbitrary-length passphrases without silent collisions.
+    """
+    return base64.b64encode(hashlib.sha256(password.encode("utf-8")).digest())
+
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(_prehash(password), bcrypt.gensalt(rounds=12)).decode("ascii")
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(_prehash(plain_password), hashed_password.encode("ascii"))
+    except (ValueError, TypeError, UnicodeError):
+        return False
+
+
+# ------------------------------------------------------------------------- JWT
+def _base_claims(subject: str, tenant_id: str, roles: list[str], scopes: list[str], typ: str) -> dict[str, Any]:
+    now = datetime.now(UTC)
+    return {
+        "sub": subject,
+        "tenant_id": tenant_id,
+        "roles": roles,
+        "scopes": scopes,
+        "typ": typ,
+        "iss": settings.JWT_ISSUER,
+        "aud": settings.JWT_AUDIENCE,
+        "iat": now,
+        "nbf": now,
+        "jti": str(uuid.uuid4()),
+    }
+
 
 def create_access_token(
-    data: dict, expires_delta: Optional[timedelta] = None
+    tenant_id: str,
+    user_id: str,
+    roles: list[str] | None = None,
+    scopes: list[str] | None = None,
+    expires_delta: timedelta | None = None,
 ) -> str:
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
-    to_encode.update({
-        "exp": expire,
-        "iat": datetime.utcnow(),
-        "nbf": datetime.utcnow(),
-    })
-    encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    expire = datetime.now(UTC) + (
+        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
-    return encoded_jwt
+    claims = _base_claims(user_id, tenant_id, roles or [], scopes or [], "access")
+    claims["exp"] = expire
+    return jwt.encode(claims, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
-def decode_access_token(token: str) -> Dict[str, Any]:
+
+def create_refresh_token(tenant_id: str, user_id: str, roles: list[str] | None = None, scopes: list[str] | None = None) -> str:
+    expire = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    claims = _base_claims(user_id, tenant_id, roles or [], scopes or [], "refresh")
+    claims["exp"] = expire
+    return jwt.encode(claims, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_token(token: str, expected_type: str = "access") -> dict[str, Any]:
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+            audience=settings.JWT_AUDIENCE,
+            issuer=settings.JWT_ISSUER,
+            options={"require": ["exp", "iat", "nbf", "sub", "jti", "typ"]},
         )
-        return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
     except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
-    payload = decode_access_token(token)
-    user_id = payload.get("sub")
-    tenant_id = payload.get("tenant_id")
-    roles = payload.get("roles", [])
-    scopes = payload.get("scopes", [])
-
-    if not user_id or not tenant_id:
+    if payload.get("typ") != expected_type:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid security token claims",
+            detail="Invalid token type",
+            headers={"WWW-Authenticate": "Bearer"},
         )
+    return payload
+
+
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
+    payload = decode_token(token, expected_type="access")
+    user_id = payload.get("sub")
+    tenant_id = payload.get("tenant_id")
+    if not user_id or not tenant_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token claims")
     return TokenData(
         user_id=str(user_id),
         tenant_id=str(tenant_id),
-        roles=roles,
-        scopes=scopes,
+        roles=list(payload.get("roles", [])),
+        scopes=list(payload.get("scopes", [])),
+        token_id=str(payload.get("jti", "")),
     )
 
+
+# ----------------------------------------------------------------------- RBAC
 class SecurityScopeChecker:
-    """Enforces scope-based Role-Based Access Control (RBAC) (e.g. 'retailer:read', 'admin:write')."""
-    def __init__(self, required_scopes: List[str]):
+    """Dependency enforcing a set of OAuth2 scopes (admin:all bypasses all)."""
+
+    def __init__(self, required_scopes: list[str]):
         self.required_scopes = required_scopes
 
     def __call__(self, current_user: TokenData = Depends(get_current_user)) -> TokenData:
-        for scope in self.required_scopes:
-            if scope not in current_user.scopes and "admin:all" not in current_user.scopes:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Insufficient security scope privileges. Required: {scope}",
-                )
+        if ADMIN_SCOPE in current_user.scopes:
+            return current_user
+        missing = [s for s in self.required_scopes if s not in current_user.scopes]
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient privileges",
+            )
         return current_user
 
+
+def require_scopes(*scopes: str) -> Callable[..., TokenData]:
+    return SecurityScopeChecker(list(scopes))
+
+
+# --------------------------------------------------------------- tenant guard
 def enforce_tenant_ownership(resource_tenant_id: str, current_user: TokenData) -> None:
-    """IDOR prevention check: Ensures caller can only access assets belonging strictly to their tenant_id."""
-    if current_user.tenant_id != resource_tenant_id and "admin:all" not in current_user.scopes:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access Denied: Tenant ID mismatch (IDOR violation attempt logged).",
-        )
+    """IDOR guard: the caller may only touch resources of its own tenant."""
+    if current_user.tenant_id != resource_tenant_id and ADMIN_SCOPE not in current_user.scopes:
+        # Deliberately do not reveal whether the resource exists.
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found")
