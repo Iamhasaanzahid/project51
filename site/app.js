@@ -662,6 +662,20 @@ initFabric();
     return { palette: mappedPalette, contrast, saturation, averageLum, pattern, tone, drape, weight };
   }
 
+  function createFabricTexture(sourceCanvas) {
+    const size = 144;
+    const tile = document.createElement("canvas");
+    tile.width = size;
+    tile.height = size;
+    const context = tile.getContext("2d");
+    if (!context) return "";
+    const side = Math.max(1, Math.min(sourceCanvas.width, sourceCanvas.height));
+    const sx = Math.max(0, (sourceCanvas.width - side) / 2);
+    const sy = Math.max(0, (sourceCanvas.height - side) / 2);
+    context.drawImage(sourceCanvas, sx, sy, side, side, 0, 0, size, size);
+    return tile.toDataURL("image/jpeg", 0.86);
+  }
+
   function readFabricPixels(source) {
     const element = source.element;
     const width = element.videoWidth || element.naturalWidth || element.width || 0;
@@ -678,7 +692,8 @@ initFabric();
     const context = canvas.getContext("2d", { willReadFrequently: true });
     if (!context) throw new Error("canvas is unavailable");
     context.drawImage(element, 0, 0, canvas.width, canvas.height);
-    return analyzeCanvas(context, canvas.width, canvas.height);
+    const analysis = analyzeCanvas(context, canvas.width, canvas.height);
+    return { ...analysis, textureUrl: createFabricTexture(canvas) };
   }
 
   function buildGarments(analysis) {
@@ -855,6 +870,7 @@ initFabric();
       summary,
       palette: analysis.palette,
       pattern: analysis.pattern,
+      textureUrl: analysis.textureUrl || "",
       facts: [
         { label: "Tone", value: analysis.tone },
         { label: "Surface", value: analysis.pattern },
@@ -869,7 +885,7 @@ initFabric();
     };
   }
 
-  function garmentSvg(id, palette, pattern) {
+  function garmentSvg(id, palette, pattern, textureUrl = "") {
     const base = palette[0]?.hex || "#334155";
     const accent = palette[1]?.hex || base;
     const highlight = palette[2]?.hex || accent;
@@ -877,7 +893,9 @@ initFabric();
     const solid = pattern === "Solid";
     const defs = solid
       ? `<linearGradient id="${uid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${highlight}"/><stop offset="0.55" stop-color="${base}"/><stop offset="1" stop-color="${accent}"/></linearGradient>`
-      : `<pattern id="${uid}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${base}"/><path d="M0 0V7" stroke="${accent}" stroke-opacity=".55" stroke-width="1.2"/><path d="M0 0H7" stroke="${highlight}" stroke-opacity=".18" stroke-width="1"/></pattern>`;
+      : textureUrl
+        ? `<pattern id="${uid}" width="22" height="22" patternUnits="userSpaceOnUse"><image href="${textureUrl}" width="22" height="22" preserveAspectRatio="xMidYMid slice"/></pattern>`
+        : `<pattern id="${uid}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${base}"/><path d="M0 0V7" stroke="${accent}" stroke-opacity=".55" stroke-width="1.2"/><path d="M0 0H7" stroke="${highlight}" stroke-opacity=".18" stroke-width="1"/></pattern>`;
     const path = GARMENT_PATHS[id] || GARMENT_PATHS.dress;
     const details = GARMENT_DETAILS[id] || "";
     const label = GARMENT_LABELS[id] || id;
@@ -919,73 +937,97 @@ initFabric();
     return { base, accent, highlight };
   }
 
-  function buildLookFigure(model = "her") {
+  function buildLookFigure(model = "her", uid = "look") {
     const her = model === "her";
-    const skin = "#f0c6a8";
-    const skinShade = "#d9a98c";
-    const hair = her ? "#241a2f" : "#1c2438";
-    const hairLight = her ? "#3b2540" : "#29344d";
-    const eye = "#2a1b3d";
-    const lip = "#b05b6a";
-    const eyeRx = her ? 2.6 : 2.3;
-    const eyeRy = her ? 3.6 : 2.9;
+    const skin = `url(#${uid}-skin)`;
+    const limb = `url(#${uid}-limb)`;
+    const hair = `url(#${uid}-hair)`;
+    const skinShade = "#b97f63";
+    const skinLine = "rgba(120,70,50,.28)";
+    const lip = "#a95f6a";
+    const eye = "#4a2c31";
 
-    const shadow = '<ellipse cx="210" cy="466" rx="94" ry="11" fill="rgba(0,0,0,.46)"/>';
-    const head = `<ellipse cx="210" cy="78" rx="${her ? 24 : 23}" ry="${her ? 27 : 26}" fill="${skin}" stroke="rgba(255,255,255,.2)" stroke-width="1.2"/>`;
+    const shadow = '<ellipse cx="210" cy="430" rx="92" ry="12" fill="rgba(0,0,0,.5)"/><ellipse cx="210" cy="430" rx="54" ry="6" fill="rgba(0,0,0,.28)"/>';
+    const head = her
+      ? `<path d="M188 70 Q188 47 210 44 Q232 47 232 70 L230 86 Q225 104 210 108 Q195 104 190 86 Z" fill="${skin}" stroke="rgba(255,255,255,.16)" stroke-width="1.2"/>`
+      : `<path d="M186 68 Q186 45 210 42 Q234 45 234 68 L233 84 Q230 100 220 108 Q214 112 210 112 Q206 112 200 108 Q190 100 187 84 Z" fill="${skin}" stroke="rgba(255,255,255,.16)" stroke-width="1.2"/>`;
+    const ears = `<path d="M188 76 Q182 78 184 86 Q187 92 191 89" fill="${skin}" stroke="rgba(255,255,255,.1)" stroke-width="1"/><path d="M232 76 Q238 78 236 86 Q233 92 229 89" fill="${skin}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>`;
     const neck = her
-      ? `<path d="M200 103 L200 124 Q210 131 220 124 L220 103 Z" fill="${skin}" stroke="rgba(255,255,255,.14)" stroke-width="1"/><path d="M200 104 Q210 113 220 104 L220 110 Q210 119 200 110 Z" fill="${skinShade}" opacity=".34"/>`
-      : `<path d="M198 103 L198 126 Q210 134 222 126 L222 103 Z" fill="${skin}" stroke="rgba(255,255,255,.14)" stroke-width="1"/><path d="M198 104 Q210 114 222 104 L222 110 Q210 120 198 110 Z" fill="${skinShade}" opacity=".34"/>`;
+      ? `<path d="M201 102 L201 126 Q210 132 219 126 L219 102 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M201 104 Q210 114 219 104 L219 111 Q210 120 201 111 Z" fill="${skinShade}" opacity=".3"/>`
+      : `<path d="M199 102 L199 128 Q210 135 221 128 L221 102 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M199 104 Q210 115 221 104 L221 112 Q210 122 199 112 Z" fill="${skinShade}" opacity=".3"/>`;
     const torso = her
-      ? `<path d="M170 143 Q210 124 250 143 L256 180 L244 232 Q238 252 236 300 L184 300 Q182 252 176 232 L164 180 Z" fill="#f2ded0" stroke="rgba(255,255,255,.14)" stroke-width="1"/><path d="M238 154 Q248 204 236 300 L184 300 Q198 250 206 154 Z" fill="rgba(2,6,23,.07)"/>`
-      : `<path d="M164 143 Q210 122 256 143 L264 180 L252 236 L248 300 L172 300 L168 236 L156 180 Z" fill="#f2ded0" stroke="rgba(255,255,255,.14)" stroke-width="1"/><path d="M244 156 Q254 206 248 300 L172 300 Q186 252 196 156 Z" fill="rgba(2,6,23,.07)"/>`;
+      ? `<path d="M170 142 Q190 128 210 128 Q230 128 250 142 L258 174 L250 210 L244 240 Q252 260 248 276 Q244 290 236 300 L184 300 Q176 290 172 276 Q168 260 176 240 L170 210 L162 174 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M184 176 Q196 166 206 184 Q197 198 184 192 Z" fill="rgba(255,255,255,.09)"/><path d="M236 176 Q224 166 214 184 Q223 198 236 192 Z" fill="rgba(255,255,255,.08)"/><path d="M184 202 Q210 216 236 202" fill="none" stroke="${skinLine}" stroke-width="1.1" stroke-linecap="round"/><path d="M174 222 Q188 244 190 300 L184 300 Q180 244 170 224 Z" fill="rgba(2,6,23,.14)"/><path d="M246 222 Q232 244 230 300 L236 300 Q240 244 250 224 Z" fill="rgba(2,6,23,.14)"/><path d="M192 136 Q210 143 228 136" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1" stroke-linecap="round"/><path d="M210 232 V276" fill="none" stroke="${skinLine}" stroke-width="1" stroke-linecap="round" opacity=".65"/>`
+      : `<path d="M186 132 Q198 124 210 124 Q222 124 234 132 L246 176 L252 224 L248 300 L172 300 L168 224 L174 176 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M172 166 Q192 158 208 178 Q194 192 174 184 Z" fill="rgba(255,255,255,.10)"/><path d="M248 166 Q228 158 212 178 Q226 192 246 184 Z" fill="rgba(255,255,255,.09)"/><path d="M210 188 V278" fill="none" stroke="${skinLine}" stroke-width="1.1" stroke-linecap="round"/><path d="M188 208 Q210 216 232 208" fill="none" stroke="${skinLine}" stroke-width="1.1" stroke-linecap="round"/><path d="M188 228 Q210 236 232 228" fill="none" stroke="${skinLine}" stroke-width="1.1" stroke-linecap="round"/><path d="M190 248 Q210 256 230 248" fill="none" stroke="${skinLine}" stroke-width="1.1" stroke-linecap="round"/><path d="M192 266 Q210 272 228 266" fill="none" stroke="${skinLine}" stroke-width="1.1" stroke-linecap="round"/><path d="M158 160 Q166 220 172 300 L184 300 Q176 220 170 160 Z" fill="rgba(2,6,23,.18)"/><path d="M262 160 Q254 220 248 300 L236 300 Q244 220 250 160 Z" fill="rgba(2,6,23,.18)"/><path d="M190 136 Q210 144 230 136" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1" stroke-linecap="round"/>`;
     const arms = her
-      ? `<path d="M170 148 Q150 194 156 246 L168 246 Q164 202 180 160 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M250 148 Q270 194 264 246 L252 246 Q256 202 240 160 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/>`
-      : `<path d="M164 146 Q144 194 150 248 L164 248 Q160 204 176 158 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M256 146 Q276 194 270 248 L256 248 Q260 204 244 158 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/>`;
+      ? `<path d="M170 146 Q150 180 154 216 Q158 238 164 252 L176 250 Q170 226 170 208 Q170 184 186 158 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M250 146 Q270 180 266 216 Q262 238 256 252 L244 250 Q250 226 250 208 Q250 184 234 158 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M170 160 Q164 178 166 196" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1" stroke-linecap="round"/><path d="M250 160 Q256 178 254 196" fill="none" stroke="rgba(255,255,255,.13)" stroke-width="1" stroke-linecap="round"/>`
+      : `<path d="M158 146 Q146 186 148 220 Q150 240 156 252 L170 250 Q166 228 164 208 Q164 184 176 158 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M262 146 Q274 186 272 220 Q270 240 264 252 L250 250 Q254 228 256 208 Q256 184 244 158 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M160 158 Q150 176 154 194" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1.2" stroke-linecap="round"/><path d="M158 192 Q154 210 160 228" fill="none" stroke="${skinLine}" stroke-width="1" stroke-linecap="round"/><path d="M260 158 Q270 176 266 194" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="1.2" stroke-linecap="round"/><path d="M262 192 Q266 210 260 228" fill="none" stroke="${skinLine}" stroke-width="1" stroke-linecap="round"/>`;
     const hands = her
-      ? '<circle cx="160" cy="253" r="6.5" fill="#f0c6a8"/><circle cx="260" cy="253" r="6.5" fill="#f0c6a8"/>'
-      : '<circle cx="156" cy="255" r="7" fill="#f0c6a8"/><circle cx="264" cy="255" r="7" fill="#f0c6a8"/>';
+      ? `<path d="M164 250 Q158 256 160 264 Q163 271 170 268 L176 258 L174 250 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M256 250 Q262 256 260 264 Q257 271 250 268 L244 258 L246 250 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/>`
+      : `<path d="M154 250 Q147 256 150 266 Q154 274 162 270 L172 258 L170 250 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M266 250 Q273 256 270 266 Q266 274 258 270 L248 258 L250 250 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/>`;
     const legs = her
-      ? '<path d="M186 300 L180 408 L193 408 L202 306 Z" fill="#f2ded0" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M234 300 L240 408 L227 408 L218 306 Z" fill="#f2ded0" stroke="rgba(255,255,255,.12)" stroke-width="1"/>'
-      : '<path d="M184 300 L176 406 L191 406 L201 306 Z" fill="#f2ded0" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M236 300 L244 406 L229 406 L219 306 Z" fill="#f2ded0" stroke="rgba(255,255,255,.12)" stroke-width="1"/>';
+      ? `<path d="M184 300 Q178 332 172 366 L178 414 L194 414 L202 366 L204 310 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M236 300 Q242 332 248 366 L242 414 L226 414 L218 366 L216 310 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M182 366 Q188 372 194 366" fill="none" stroke="${skinLine}" stroke-width="1" stroke-linecap="round"/><path d="M238 366 Q232 372 226 366" fill="none" stroke="${skinLine}" stroke-width="1" stroke-linecap="round"/>`
+      : `<path d="M182 300 Q174 332 168 362 L160 414 L184 414 L196 366 L204 312 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M238 300 Q246 332 252 362 L260 414 L236 414 L224 366 L216 312 Z" fill="${limb}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M174 362 Q184 368 192 362" fill="none" stroke="${skinLine}" stroke-width="1" stroke-linecap="round"/><path d="M246 362 Q236 368 228 362" fill="none" stroke="${skinLine}" stroke-width="1" stroke-linecap="round"/>`;
     const shoes = her
-      ? '<path d="M174 407 H196 L193 414 L170 414 Z" fill="#111827" stroke="rgba(255,255,255,.15)" stroke-width="1"/><path d="M190 413 H194 L192 424 H188 Z" fill="#111827"/><path d="M228 407 H250 L250 414 L227 414 Z" fill="#111827" stroke="rgba(255,255,255,.15)" stroke-width="1"/><path d="M228 413 H232 L230 424 H226 Z" fill="#111827"/>'
-      : '<ellipse cx="181" cy="412" rx="19" ry="7" fill="#111827" stroke="rgba(255,255,255,.15)" stroke-width="1"/><ellipse cx="239" cy="412" rx="19" ry="7" fill="#111827" stroke="rgba(255,255,255,.15)" stroke-width="1"/>';
-
+      ? `<path d="M174 410 L194 410 L198 416 L174 421 L168 416 Z" fill="#0b1220" stroke="rgba(255,255,255,.16)" stroke-width="1"/><path d="M190 419 L194 419 L192 431 L188 431 Z" fill="#0b1220"/><path d="M226 410 L246 410 L252 416 L226 421 L222 416 Z" fill="#0b1220" stroke="rgba(255,255,255,.16)" stroke-width="1"/><path d="M228 419 L232 419 L230 431 L226 431 Z" fill="#0b1220"/>`
+      : `<path d="M148 416 Q148 410 158 410 L182 410 L190 420 Q182 426 160 424 L148 420 Z" fill="#0b1220" stroke="rgba(255,255,255,.16)" stroke-width="1"/><path d="M272 416 Q272 410 262 410 L238 410 L230 420 Q238 426 260 424 L272 420 Z" fill="#0b1220" stroke="rgba(255,255,255,.16)" stroke-width="1"/>`;
     const hairBack = her
-      ? `<path d="M181 66 Q178 40 210 36 Q242 40 239 66 L246 182 Q238 198 231 164 L229 116 Q220 126 210 126 Q200 126 191 116 L189 164 Q182 198 174 182 Z" fill="${hair}"/><circle cx="210" cy="42" r="8" fill="${hair}"/>`
-      : "";
+      ? `<path d="M187 60 Q186 38 210 35 Q234 38 233 60 L239 142 Q238 184 230 192 Q226 170 228 138 L225 100 Q218 112 210 112 Q202 112 195 100 L192 138 Q194 170 190 192 Q182 184 181 142 Z" fill="${hair}"/><path d="M190 108 Q184 144 188 180" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1.2" stroke-linecap="round"/><path d="M230 108 Q236 144 232 180" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1.2" stroke-linecap="round"/>`
+      : `<path d="M184 68 Q182 40 210 37 Q238 40 236 68 L234 94 Q230 78 210 76 Q190 78 186 94 Z" fill="${hair}"/><path d="M186 68 Q180 80 184 96 L190 92 Q186 80 192 66 Z" fill="${hair}"/><path d="M234 68 Q240 80 236 96 L230 92 Q234 80 228 66 Z" fill="${hair}"/><path d="M190 50 Q204 42 220 48" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.2" stroke-linecap="round"/>`;
     const hairFront = her
-      ? `<path d="M184 76 Q182 48 210 43 Q238 48 236 76 Q230 58 210 57 Q190 58 184 76 Z" fill="${hair}"/><path d="M186 64 Q198 50 216 57 Q204 61 198 72 Z" fill="${hairLight}" opacity=".9"/><path d="M184 74 Q180 92 188 104 Q184 86 190 68 Z" fill="${hair}"/><path d="M236 74 Q240 92 232 104 Q236 86 230 68 Z" fill="${hair}"/><path d="M192 52 Q204 46 218 51" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.2" stroke-linecap="round"/>`
-      : `<path d="M182 78 Q180 46 210 41 Q240 46 238 78 L232 68 L228 76 L220 60 L212 76 L204 60 L196 76 L190 68 Z" fill="${hair}"/><path d="M184 74 Q181 92 188 102 Q185 86 190 70 Z" fill="${hair}"/><path d="M236 74 Q239 92 232 102 Q235 86 230 70 Z" fill="${hair}"/><path d="M192 51 Q204 45 218 50" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1.1" stroke-linecap="round"/>`;
+      ? `<path d="M188 72 Q186 46 210 42 Q234 46 232 72 Q228 56 212 54 Q206 66 200 70 Q196 58 188 72 Z" fill="${hair}"/><path d="M188 68 Q184 88 190 104 Q186 86 194 64 Z" fill="${hair}"/><path d="M232 68 Q236 88 230 104 Q234 86 226 64 Z" fill="${hair}"/><path d="M194 52 Q204 46 216 50" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1.3" stroke-linecap="round"/><path d="M203 70 Q208 58 216 55" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1" stroke-linecap="round"/><path d="M186 58 Q178 76 184 98 Q180 78 192 60 Z" fill="${hair}"/><path d="M234 58 Q242 76 236 98 Q240 78 228 60 Z" fill="${hair}"/><path d="M196 46 Q208 40 222 46" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.4" stroke-linecap="round"/>`
+      : `<path d="M186 74 Q184 44 210 40 Q236 44 234 74 Q228 58 210 56 Q192 58 186 74 Z" fill="${hair}"/><path d="M187 72 L178 56 L194 62 L189 46 L202 56 L205 40 L214 54 L222 42 L224 58 L236 50 L230 68 Q228 56 218 54 Q204 56 198 70 Q194 58 187 72 Z" fill="${hair}"/><path d="M190 66 Q196 52 210 51 Q204 60 202 72 Q196 62 190 66 Z" fill="rgba(255,255,255,.12)"/><path d="M190 74 Q187 88 192 98 Q188 84 196 68 Z" fill="${hair}"/><path d="M230 74 Q233 88 228 98 Q232 84 224 68 Z" fill="${hair}"/><path d="M196 50 Q206 45 218 49" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.2" stroke-linecap="round"/><path d="M200 58 Q208 54 216 58" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1" stroke-linecap="round"/>`;
     const earrings = her
-      ? '<circle cx="186" cy="91" r="1.8" fill="#fbbf24" opacity=".86"/><circle cx="234" cy="91" r="1.8" fill="#fbbf24" opacity=".86"/>'
+      ? '<circle cx="187" cy="87" r="2" fill="none" stroke="#f3c76a" stroke-width="1.2"/><circle cx="233" cy="87" r="2" fill="none" stroke="#f3c76a" stroke-width="1.2"/>'
       : "";
+    const eyeR = her ? 3.0 : 2.0;
+    const browW = her ? 1.2 : 1.9;
+    const lipShape = her ? "M204 98 Q210 101 216 98 Q210 105 204 98 Z" : "M204 99 Q210 101 216 99 Q210 104 204 99 Z";
+    const eyeLiner = her
+      ? '<path d="M191 74 Q198 67 205 74 L208 71" fill="none" stroke="#2a1a20" stroke-width="1.7" stroke-linecap="round"/><path d="M215 74 Q222 67 229 74 L226 71" fill="none" stroke="#2a1a20" stroke-width="1.7" stroke-linecap="round"/>'
+      : "";
+    const stubble = her
+      ? '<ellipse cx="191" cy="90" rx="5" ry="2.2" fill="#e88b8b" opacity=".22"/><ellipse cx="229" cy="90" rx="5" ry="2.2" fill="#e88b8b" opacity=".22"/>'
+      : '<path d="M192 94 Q200 108 210 110 Q220 108 228 94 Q224 104 210 106 Q196 104 192 94 Z" fill="rgba(30,20,20,.08)"/>';
     const face = `
-      <circle cx="199" cy="82" r="4.1" fill="#fff"/>
-      <circle cx="221" cy="82" r="4.1" fill="#fff"/>
-      <ellipse cx="200" cy="82" rx="${eyeRx}" ry="${eyeRy}" fill="${eye}"/>
-      <ellipse cx="222" cy="82" rx="${eyeRx}" ry="${eyeRy}" fill="${eye}"/>
-      <circle cx="201" cy="80.5" r="1.1" fill="#fff"/>
-      <circle cx="223" cy="80.5" r="1.1" fill="#fff"/>
-      <path d="M194 77 Q199 74 204 77" fill="none" stroke="#3a2a35" stroke-width="1.1" stroke-linecap="round"/>
-      <path d="M216 77 Q221 74 226 77" fill="none" stroke="#3a2a35" stroke-width="1.1" stroke-linecap="round"/>
-      <path d="M194 73 Q199 70 203 73" fill="none" stroke="#3a2a35" stroke-width="1" stroke-linecap="round"/>
-      <path d="M217 73 Q221 70 225 73" fill="none" stroke="#3a2a35" stroke-width="1" stroke-linecap="round"/>
-      <path d="M210 84 L210 90" fill="none" stroke="${skinShade}" stroke-width="1.1" stroke-linecap="round"/>
-      <path d="M206 95 Q210 97 214 95" fill="none" stroke="${lip}" stroke-width="1.1" stroke-linecap="round"/>
-      ${her ? '<ellipse cx="191" cy="92" rx="4" ry="2" fill="#e88b8b" opacity=".22"/><ellipse cx="229" cy="92" rx="4" ry="2" fill="#e88b8b" opacity=".22"/>' : ""}
+      <path d="M191 79 Q198 70 205 79 Q198 86 191 79 Z" fill="#fff8f2"/>
+      <path d="M215 79 Q222 70 229 79 Q222 86 215 79 Z" fill="#fff8f2"/>
+      <circle cx="198" cy="79" r="${eyeR}" fill="${eye}"/>
+      <circle cx="222" cy="79" r="${eyeR}" fill="${eye}"/>
+      <circle cx="198" cy="79" r="${eyeR * 0.55}" fill="#1b1014"/>
+      <circle cx="222" cy="79" r="${eyeR * 0.55}" fill="#1b1014"/>
+      <circle cx="196.8" cy="77.2" r="1.1" fill="#fff"/>
+      <circle cx="220.8" cy="77.2" r="1.1" fill="#fff"/>
+      <circle cx="199.6" cy="81" r=".55" fill="#fff" opacity=".8"/>
+      <circle cx="223.6" cy="81" r=".55" fill="#fff" opacity=".8"/>
+      <path d="M191 75 Q198 68 205 75" fill="none" stroke="#2a1a20" stroke-width="${her ? 1.7 : 1.3}" stroke-linecap="round"/>
+      <path d="M215 75 Q222 68 229 75" fill="none" stroke="#2a1a20" stroke-width="${her ? 1.7 : 1.3}" stroke-linecap="round"/>
+      <path d="M192 69 Q198 66 204 69" fill="none" stroke="#3a2428" stroke-width="${browW}" stroke-linecap="round"/>
+      <path d="M216 69 Q222 66 228 69" fill="none" stroke="#3a2428" stroke-width="${browW}" stroke-linecap="round"/>
+      <path d="M210 82 Q208 88 211 91" fill="none" stroke="${skinShade}" stroke-width="1" stroke-linecap="round"/>
+      <path d="${lipShape}" fill="${lip}" opacity=".92"/>
+      <path d="M206 99 Q210 101 214 99" fill="none" stroke="rgba(255,255,255,.35)" stroke-width=".8" stroke-linecap="round"/>
+      ${eyeLiner}
+      ${her ? '<circle cx="210" cy="64" r="1.25" fill="#a33b5a"/><circle cx="210" cy="64" r=".45" fill="#f3c76a"/>' : ""}
+      ${stubble}
+      <path d="M188 56 Q183 70 187 88" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.1" stroke-linecap="round"/>
     `;
+    const rimLight = '<path d="M172 148 Q160 178 162 208" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1.4" stroke-linecap="round"/><path d="M184 306 Q178 342 170 382" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1.2" stroke-linecap="round"/>';
 
-    return `${shadow}${hairBack}${head}${hairFront}${earrings}${face}${neck}${torso}${arms}${hands}${legs}${shoes}`;
+    const headGroup = `<g transform="translate(210 76) scale(${her ? 1.0 : 0.96}) translate(-210 -76)">${hairBack}${head}${ears}${hairFront}${earrings}${face}</g>`;
+    const jewelry = her ? '<path d="M197 132 Q210 141 223 132" fill="none" stroke="#f3c76a" stroke-width="1.1" stroke-linecap="round"/><circle cx="210" cy="140" r="1.4" fill="#f3c76a"/><path d="M164 252 Q170 256 176 252" fill="none" stroke="#f3c76a" stroke-width="1" stroke-linecap="round"/>' : '';
+    const bodySkin = her ? `${torso}${legs}` : "";
+    return `${shadow}${rimLight}${headGroup}${neck}${bodySkin}${jewelry}${arms}${hands}${shoes}`;
   }
 
-  function buildLookSvg(garmentId, palette, pattern, colorway = "detected", model = "her") {
+  function buildLookSvg(garmentId, palette, pattern, colorway = "detected", model = "her", textureUrl = "") {
     const { base, accent, highlight } = getLookColors(palette, colorway);
     const uid = `look-${garmentId}-${Math.random().toString(36).slice(2, 8)}`;
     const solid = pattern === "Solid";
-    const fabricFill = solid ? `url(#${uid}-fabric)` : `url(#${uid}-weave)`;
-    const accentFill = colorway === "monochrome" ? fabricFill : colorway === "contrast" ? accent : `url(#${uid}-accent)`;
+    const photoFill = textureUrl && !solid ? `url(#${uid}-photo)` : "";
+    const fabricFill = photoFill || (solid ? `url(#${uid}-fabric)` : `url(#${uid}-weave)`);
+    const accentFill = colorway === "monochrome" ? fabricFill : colorway === "contrast" ? accent : (photoFill || `url(#${uid}-accent)`);
     const bottomFill = colorway === "contrast" ? accentFill : fabricFill;
+    const skinFill = `url(#${uid}-skin)`;
 
     const defs = `
       <linearGradient id="${uid}-bg" x1="0" y1="0" x2="0.85" y2="1">
@@ -1010,12 +1052,42 @@ initFabric();
         <path d="M0 0V8" stroke="${accent}" stroke-opacity=".55" stroke-width="1.4"/>
         <path d="M0 0H8" stroke="${highlight}" stroke-opacity=".2" stroke-width="1"/>
       </pattern>
+      <pattern id="${uid}-texture" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <path d="M0 0V5" stroke="rgba(255,255,255,.22)" stroke-width=".55"/>
+        <path d="M0 0H5" stroke="rgba(0,0,0,.18)" stroke-width=".55"/>
+      </pattern>
+      ${textureUrl ? `<pattern id="${uid}-photo" width="96" height="96" patternUnits="userSpaceOnUse"><image href="${textureUrl}" width="96" height="96" preserveAspectRatio="xMidYMid slice"/></pattern>` : ""}
+      <radialGradient id="${uid}-skin" cx="34%" cy="24%" r="84%">
+        <stop stop-color="#f8dcc8"/>
+        <stop offset=".52" stop-color="#e9b99e"/>
+        <stop offset="1" stop-color="#c58a70"/>
+      </radialGradient>
+      <linearGradient id="${uid}-limb" x1="0" y1="0" x2="1" y2="0">
+        <stop stop-color="#f4d2bb"/>
+        <stop offset=".55" stop-color="#e2ae92"/>
+        <stop offset="1" stop-color="#ba7d66"/>
+      </linearGradient>
+      <linearGradient id="${uid}-hair" x1="0" y1="0" x2="1" y2="1">
+        ${model === "her"
+          ? '<stop stop-color="#56394f"/><stop offset=".55" stop-color="#28182b"/><stop offset="1" stop-color="#0c0911"/>'
+          : '<stop stop-color="#3a4661"/><stop offset=".55" stop-color="#182034"/><stop offset="1" stop-color="#060911"/>'}
+      </linearGradient>
+      <radialGradient id="${uid}-floor" cx="50%" cy="50%" r="58%">
+        <stop stop-color="rgba(34, 211, 238, 0.22)"/>
+        <stop offset=".62" stop-color="rgba(34, 211, 238, 0.08)"/>
+        <stop offset="1" stop-color="rgba(34, 211, 238, 0)"/>
+      </radialGradient>
+      <filter id="${uid}-model-shadow" x="-24%" y="-18%" width="148%" height="148%">
+        <feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#000" flood-opacity=".42"/>
+      </filter>
+      <clipPath id="${uid}-shirt-chest"><path d="M188 142 L210 242 L232 142 Z"/></clipPath>
+      <clipPath id="${uid}-jacket-chest"><path d="M184 142 L210 292 L236 142 Z"/></clipPath>
     `;
 
-    const figure = buildLookFigure(model);
+    const figure = buildLookFigure(model, uid);
 
-    const jacket = "M162 142 Q210 122 258 142 L272 184 L258 252 L246 248 L246 318 L174 318 L174 248 L162 252 L148 184 Z";
-    const trousers = "M174 310 H246 L252 410 H232 L210 340 L188 410 H168 Z";
+    const jacket = "M158 142 Q210 120 262 142 L266 180 L252 252 L246 248 L246 318 L174 318 L174 248 L168 252 L154 180 Z";
+    const trousers = "M170 302 H250 L262 414 H238 L210 342 L182 414 H158 Z";
     const dress = "M180 142 Q210 124 240 142 L248 200 L238 250 L266 410 L154 410 L182 250 L172 200 Z";
     const shirt = "M166 142 Q210 124 254 142 L260 172 L248 180 L248 302 L172 302 L172 180 L160 172 Z";
     const top = "M168 142 Q210 124 252 142 L258 174 L246 182 L246 302 L174 302 L174 182 L162 174 Z";
@@ -1024,6 +1096,10 @@ initFabric();
     const sleeveR = "M254 142 L274 184 L260 192 L240 158 Z";
     const wSleeveL = "M172 144 L154 184 L166 194 L180 160 Z";
     const wSleeveR = "M248 144 L266 184 L254 194 L240 160 Z";
+    const sleeveLongL = "M156 144 Q142 186 144 220 Q146 242 152 254 L172 252 Q166 228 164 208 Q164 184 178 156 Z";
+    const sleeveLongR = "M264 144 Q278 186 276 220 Q274 242 268 254 L248 252 Q254 228 256 208 Q256 184 242 156 Z";
+    const sleeveLongLHer = "M168 142 Q148 158 148 190 Q148 218 160 248 L174 250 Q166 224 166 204 Q168 178 184 156 Z";
+    const sleeveLongRHer = "M252 142 Q272 158 272 190 Q272 218 260 248 L246 250 Q254 224 254 204 Q252 178 236 156 Z";
     const wKurta = "M170 142 Q210 124 250 142 L260 172 L252 210 L248 332 L172 332 L168 210 L160 172 Z";
     const wKurtaPants = "M184 332 L178 414 L192 414 L202 344 L218 344 L228 414 L242 414 L236 332 Z";
     const wKurtaDupatta = "M164 144 Q210 116 256 144 L248 170 L210 156 L172 170 Z M246 158 Q282 214 262 358 L248 354 Q264 222 236 168 Z";
@@ -1048,50 +1124,71 @@ initFabric();
     const mWaistcoat = "M174 148 L198 136 L210 160 L222 136 L246 148 L252 244 L246 252 L244 330 L210 336 L176 330 L174 252 L168 244 Z";
     const stroke = 'stroke="rgba(255,255,255,.3)" stroke-width="1.3" stroke-linejoin="round"';
     const detail = 'fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.2" stroke-linecap="round"';
-    const add = (path, fill) => `<path d="${path}" fill="${fill}" ${stroke}/>`;
+    const add = (path, fill) => `<path d="${path}" fill="${fill}" ${stroke}/><path d="${path}" fill="url(#${uid}-texture)" opacity="${solid ? 0.42 : 0.22}"/>`;
     const addSoft = (path, fill, opacity = 0.45) => `<path d="${path}" fill="${fill}" fill-opacity="${opacity}" stroke="rgba(255,255,255,.22)" stroke-width="1"/>`;
+    const longSleeves = (fill) => {
+      const left = model === "her" ? sleeveLongLHer : sleeveLongL;
+      const right = model === "her" ? sleeveLongRHer : sleeveLongR;
+      const folds = model === "her"
+        ? '<path d="M154 178 Q160 202 156 232" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.1" stroke-linecap="round"/><path d="M266 178 Q260 202 264 232" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.1" stroke-linecap="round"/><path d="M160 246 Q166 252 174 248" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1" stroke-linecap="round"/><path d="M260 246 Q254 252 246 248" fill="none" stroke="rgba(255,255,255,.26)" stroke-width="1" stroke-linecap="round"/>'
+        : '<path d="M146 178 Q152 202 148 232" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.1" stroke-linecap="round"/><path d="M274 178 Q268 202 272 232" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.1" stroke-linecap="round"/><path d="M152 250 Q158 256 166 252" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1" stroke-linecap="round"/><path d="M268 250 Q262 256 254 252" fill="none" stroke="rgba(255,255,255,.26)" stroke-width="1" stroke-linecap="round"/>';
+      return `${add(left, fill)}${add(right, fill)}${folds}`;
+    };
+    const absLines = `<path d="M190 158 Q200 152 209 176 Q198 184 187 174 Z" fill="rgba(112,64,46,.18)"/><path d="M190 160 Q198 156 206 174 Q198 180 188 174 Z" fill="rgba(255,255,255,.07)"/><path d="M230 158 Q220 152 211 176 Q222 184 233 174 Z" fill="rgba(112,64,46,.18)"/><path d="M230 160 Q222 156 214 174 Q222 180 232 174 Z" fill="rgba(255,255,255,.06)"/><path d="M210 184 V278" fill="none" stroke="rgba(112,64,46,.44)" stroke-width="1.4" stroke-linecap="round"/><path d="M198 192 Q204 188 209 194 L208 206 Q203 210 198 204 Z" fill="rgba(112,64,46,.22)" stroke="rgba(112,64,46,.46)" stroke-width="1"/><path d="M212 192 Q218 188 223 194 L222 206 Q217 210 212 204 Z" fill="rgba(112,64,46,.22)" stroke="rgba(112,64,46,.46)" stroke-width="1"/><path d="M199 212 Q204 208 209 214 L208 226 Q203 230 199 224 Z" fill="rgba(112,64,46,.20)" stroke="rgba(112,64,46,.42)" stroke-width="1"/><path d="M211 212 Q216 208 221 214 L220 226 Q215 230 211 224 Z" fill="rgba(112,64,46,.20)" stroke="rgba(112,64,46,.42)" stroke-width="1"/><path d="M201 232 Q205 228 209 234 L208 246 Q204 250 201 244 Z" fill="rgba(112,64,46,.17)" stroke="rgba(112,64,46,.36)" stroke-width=".9"/><path d="M211 232 Q215 228 219 234 L218 246 Q214 250 211 244 Z" fill="rgba(112,64,46,.17)" stroke="rgba(112,64,46,.36)" stroke-width=".9"/><path d="M188 182 Q210 196 232 182" fill="none" stroke="rgba(112,64,46,.32)" stroke-width="1.3" stroke-linecap="round"/><path d="M210 148 V184" fill="none" stroke="rgba(112,64,46,.22)" stroke-width="1.1" stroke-linecap="round"/><path d="M194 188 Q202 194 209 204" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1.4" stroke-linecap="round"/><path d="M226 188 Q218 194 211 204" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.3" stroke-linecap="round"/><path d="M188 148 Q200 154 210 152 Q220 154 232 148" fill="none" stroke="rgba(112,64,46,.22)" stroke-width="1.1" stroke-linecap="round"/><path d="M210 270 Q214 272 212 276" fill="none" stroke="rgba(112,64,46,.35)" stroke-width="1.2" stroke-linecap="round"/><path d="M184 142 L210 292 L198 292 L184 142 Z" fill="rgba(2,6,23,.12)"/><path d="M236 142 L210 292 L222 292 L236 142 Z" fill="rgba(2,6,23,.1)"/>`;
+    const maleShirtChest = model === "him" ? `<path d="M190 142 L210 166 L230 142 L222 136 L210 148 L198 136 Z" fill="${fabricFill}" ${stroke}/><path d="M210 148 V302" ${detail}/><path d="M198 142 L210 158 L222 142" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1"/><path d="M204 160 L216 160" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>` : "";
+    const maleJacketChest = model === "him" ? `<path d="M190 142 L210 180 L230 142 L222 136 L210 154 L198 136 Z" fill="#f4f1e8" opacity=".94"/><path d="M210 154 L205 196 L210 208 L215 196 Z" fill="${accent}" opacity=".95"/><path d="M184 142 L210 230 L202 240 L172 150 Z" fill="${fabricFill}" ${stroke}/><path d="M236 142 L210 230 L218 240 L248 150 Z" fill="${fabricFill}" ${stroke}/><path d="M184 142 L210 230 L198 230 L172 150 Z" fill="rgba(255,255,255,.06)"/><path d="M236 142 L210 230 L222 230 L248 150 Z" fill="rgba(0,0,0,.08)"/>` : "";
+    const jacketShade = `<path d="M166 150 Q158 190 164 246 L176 248 Q170 198 178 156 Z" fill="rgba(0,0,0,.20)"/><path d="M254 150 Q262 190 256 246 L244 248 Q250 198 242 156 Z" fill="rgba(0,0,0,.16)"/><path d="M184 258 Q190 290 188 304" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1.2" stroke-linecap="round"/><path d="M236 258 Q230 290 232 304" fill="none" stroke="rgba(0,0,0,.16)" stroke-width="1.2" stroke-linecap="round"/><path d="M196 252 Q210 260 224 252" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1" stroke-linecap="round"/><path d="M176 146 Q186 138 198 140" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.1" stroke-linecap="round"/><path d="M176 154 Q168 202 174 250" fill="none" stroke="rgba(0,0,0,.26)" stroke-width="1.4" stroke-linecap="round"/><path d="M244 154 Q252 202 246 250" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.4" stroke-linecap="round"/>`;
+    const dressShade = `<path d="M184 150 Q174 220 164 404 L154 404 Q168 220 178 150 Z" fill="rgba(0,0,0,.18)"/><path d="M236 150 Q246 220 256 404 L266 404 Q252 220 242 150 Z" fill="rgba(0,0,0,.15)"/><path d="M198 254 Q194 330 186 404" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1.2" stroke-linecap="round"/><path d="M222 254 Q226 330 234 404" fill="none" stroke="rgba(0,0,0,.16)" stroke-width="1.2" stroke-linecap="round"/><path d="M210 250 V404" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1.1" stroke-linecap="round"/>`;
+    const skirtShade = `<path d="M174 300 Q168 350 160 404 L156 404 Q166 350 170 300 Z" fill="rgba(0,0,0,.16)"/><path d="M246 300 Q252 350 260 404 L264 404 Q254 350 250 300 Z" fill="rgba(0,0,0,.14)"/><path d="M190 304 L180 404 M230 304 L240 404" fill="none" stroke="rgba(0,0,0,.16)" stroke-width="1.1" stroke-linecap="round"/><path d="M210 300 V404" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1.1" stroke-linecap="round"/>`;
+    const trouserShade = `<path d="M176 314 L168 406 L160 406 L168 314 Z" fill="rgba(0,0,0,.18)"/><path d="M244 314 L252 406 L260 406 L252 314 Z" fill="rgba(0,0,0,.15)"/><path d="M190 316 L184 406 M230 316 L236 406" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1.1" stroke-linecap="round"/><path d="M210 342 V410" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1" stroke-linecap="round"/>`;
+    const topShade = `<path d="M168 150 Q162 190 166 230 L176 232 Q172 190 178 154 Z" fill="rgba(0,0,0,.16)"/><path d="M252 150 Q258 190 254 230 L244 232 Q248 190 242 154 Z" fill="rgba(0,0,0,.14)"/><path d="M210 160 V300" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1" stroke-linecap="round"/>`;
+    const kurtaShade = `<path d="M174 150 Q166 220 168 330 L178 332 Q174 230 182 154 Z" fill="rgba(0,0,0,.18)"/><path d="M246 150 Q254 220 252 330 L242 332 Q246 230 238 154 Z" fill="rgba(0,0,0,.15)"/><path d="M192 168 L190 328 M228 168 L230 328" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="1.1" stroke-linecap="round"/><path d="M210 162 V332" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.1" stroke-linecap="round"/>`;
+    const anarkaliShade = `<path d="M180 150 Q172 220 168 250 L174 252 Q180 220 186 150 Z" fill="rgba(0,0,0,.16)"/><path d="M240 150 Q248 220 252 250 L246 252 Q240 220 234 150 Z" fill="rgba(0,0,0,.14)"/><path d="M190 260 Q184 330 174 404 M230 260 Q236 330 246 404" fill="none" stroke="rgba(0,0,0,.16)" stroke-width="1.1" stroke-linecap="round"/><path d="M210 252 V404" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1.1" stroke-linecap="round"/>`;
+    const lehengaShade = `<path d="M182 236 Q170 320 150 404 L140 404 Q164 320 178 236 Z" fill="rgba(0,0,0,.16)"/><path d="M238 236 Q250 320 270 404 L280 404 Q256 320 242 236 Z" fill="rgba(0,0,0,.14)"/><path d="M190 246 L174 404 M210 246 V404 M230 246 L246 404" fill="none" stroke="rgba(0,0,0,.15)" stroke-width="1.1" stroke-linecap="round"/>`;
+    const sareeShade = `<path d="M184 226 Q176 320 160 404 L156 404 Q174 320 180 226 Z" fill="rgba(0,0,0,.16)"/><path d="M236 226 Q244 320 260 404 L264 404 Q246 320 240 226 Z" fill="rgba(0,0,0,.14)"/><path d="M192 230 L178 400 M210 230 V400 M228 230 L242 400" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="1.1" stroke-linecap="round"/>`;
+    const waistcoatShade = `<path d="M176 150 L196 140 L198 244 L176 252 Z" fill="rgba(0,0,0,.14)"/><path d="M244 150 L224 140 L222 244 L244 252 Z" fill="rgba(0,0,0,.12)"/><path d="M210 164 V330" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1.1" stroke-linecap="round"/>`;
 
     let layers = "";
     if (garmentId === "dress") {
-      layers = `${add(dress, fabricFill)}<path d="M184 250 H236" fill="none" stroke="${accent}" stroke-width="2.4" stroke-linecap="round" opacity=".85"/><path d="M210 142 V250" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/>`;
+      layers = `${add(dress, fabricFill)}${dressShade}<path d="M184 250 H236" fill="none" stroke="${accent}" stroke-width="2.4" stroke-linecap="round" opacity=".85"/><path d="M210 142 V250" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/>`;
     } else if (garmentId === "shirt") {
-      layers = `${add(shirt, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, accentFill)}<path d="M210 142 V302" ${detail}/><circle cx="210" cy="186" r="1.8" fill="rgba(255,255,255,.7)"/><circle cx="210" cy="204" r="1.8" fill="rgba(255,255,255,.7)"/><circle cx="210" cy="222" r="1.8" fill="rgba(255,255,255,.7)"/>`;
+      layers = `${add(shirt, fabricFill)}${longSleeves(fabricFill)}${add(trousers, accentFill)}${jacketShade}<path d="M210 142 V302" ${detail}/><circle cx="210" cy="186" r="1.8" fill="rgba(255,255,255,.7)"/><circle cx="210" cy="204" r="1.8" fill="rgba(255,255,255,.7)"/><circle cx="210" cy="222" r="1.8" fill="rgba(255,255,255,.7)"/>${maleShirtChest}`;
     } else if (garmentId === "jacket") {
-      layers = `${add(jacket, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, accentFill)}<path d="M190 142 L210 185 L230 142" ${detail}/><path d="M210 142 V318" ${detail}/><circle cx="210" cy="224" r="1.8" fill="rgba(255,255,255,.7)"/>`;
+      layers = `${add(jacket, fabricFill)}${longSleeves(fabricFill)}${add(trousers, accentFill)}${jacketShade}<path d="M190 142 L210 185 L230 142" ${detail}/><path d="M210 142 V318" ${detail}/><circle cx="210" cy="224" r="1.8" fill="rgba(255,255,255,.7)"/>${maleJacketChest}`;
     } else if (garmentId === "trousers") {
-      layers = `${add(top, accentFill)}${add(sleeveL, accentFill)}${add(sleeveR, accentFill)}${add(trousers, fabricFill)}<path d="M210 182 V302" ${detail}/><path d="M210 310 V410" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/>`;
+      layers = `${add(top, accentFill)}${longSleeves(accentFill)}${add(trousers, fabricFill)}${trouserShade}<path d="M210 182 V302" ${detail}/><path d="M210 310 V410" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/>`;
     } else if (garmentId === "skirt") {
-      layers = `${add(top, accentFill)}${add(sleeveL, accentFill)}${add(sleeveR, accentFill)}${add(skirt, fabricFill)}<path d="M184 300 H236" ${detail}/><path d="M202 300 L196 410 M218 300 L224 410" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/>`;
+      layers = `${add(top, accentFill)}${add(sleeveL, accentFill)}${add(sleeveR, accentFill)}${add(skirt, fabricFill)}${skirtShade}<path d="M184 300 H236" ${detail}/><path d="M202 300 L196 410 M218 300 L224 410" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/>`;
     } else if (garmentId === "co-ord") {
-      layers = `${add(top, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, bottomFill)}<path d="M210 182 V410" ${detail}/><path d="M184 300 H236" fill="none" stroke="${accent}" stroke-width="2" stroke-linecap="round" opacity=".8"/>`;
+      layers = `${add(top, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${topShade}${add(trousers, bottomFill)}<path d="M210 182 V410" ${detail}/><path d="M184 300 H236" fill="none" stroke="${accent}" stroke-width="2" stroke-linecap="round" opacity=".8"/>`;
     } else if (garmentId === "blazer") {
-      layers = `${add(jacket, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, accentFill)}<path d="M190 142 L210 185 L230 142" ${detail}/><circle cx="210" cy="224" r="1.8" fill="rgba(255,255,255,.7)"/>`;
+      layers = `${add(jacket, fabricFill)}${longSleeves(fabricFill)}${add(trousers, accentFill)}${jacketShade}<path d="M190 142 L210 185 L230 142" ${detail}/><circle cx="210" cy="224" r="1.8" fill="rgba(255,255,255,.7)"/>`;
     } else if (garmentId === "w-kurta") {
-      layers = `${add(wKurta, fabricFill)}${add(wSleeveL, fabricFill)}${add(wSleeveR, fabricFill)}${add(wKurtaPants, accentFill)}${addSoft(wKurtaDupatta, highlight, 0.48)}<path d="M196 142 L210 162 L224 142" ${detail}/><path d="M210 162 V332" ${detail}/><path d="M174 324 H246" fill="none" stroke="${accent}" stroke-width="2.2" opacity=".9"/><path d="M174 260 H186 M234 260 H246" ${detail}/>`;
+      layers = `${add(wKurta, fabricFill)}${longSleeves(fabricFill)}${add(wKurtaPants, accentFill)}${kurtaShade}${addSoft(wKurtaDupatta, highlight, 0.48)}<path d="M196 142 L210 162 L224 142" ${detail}/><path d="M210 162 V332" ${detail}/><path d="M174 324 H246" fill="none" stroke="${accent}" stroke-width="2.2" opacity=".9"/><path d="M174 260 H186 M234 260 H246" ${detail}/>`;
     } else if (garmentId === "w-anarkali") {
-      layers = `${add(wAnarkaliTop, fabricFill)}${add(wAnarkaliSkirt, fabricFill)}${add(wSleeveL, fabricFill)}${add(wSleeveR, fabricFill)}<path d="M184 252 H236" fill="none" stroke="${accent}" stroke-width="2.4" opacity=".9"/><path d="M210 142 V410" ${detail}/><path d="M158 404 H262" fill="none" stroke="${accent}" stroke-width="2" opacity=".8"/>`;
+      layers = `${add(wAnarkaliTop, fabricFill)}${add(wAnarkaliSkirt, fabricFill)}${anarkaliShade}${longSleeves(fabricFill)}<path d="M184 252 H236" fill="none" stroke="${accent}" stroke-width="2.4" opacity=".9"/><path d="M210 142 V410" ${detail}/><path d="M158 404 H262" fill="none" stroke="${accent}" stroke-width="2" opacity=".8"/>`;
     } else if (garmentId === "w-salwar") {
-      layers = `${add(wSalwarTop, fabricFill)}${add(wSleeveL, fabricFill)}${add(wSleeveR, fabricFill)}${add(wSalwarPants, accentFill)}${addSoft(wKurtaDupatta, highlight, 0.34)}<path d="M196 142 L210 160 L224 142" ${detail}/><path d="M210 160 V342" ${detail}/><path d="M176 334 H244" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><path d="M184 400 H198 M222 400 H236" fill="none" stroke="${accent}" stroke-width="1.6" opacity=".8"/>`;
+      layers = `${add(wSalwarTop, fabricFill)}${longSleeves(fabricFill)}${add(wSalwarPants, accentFill)}${kurtaShade}${addSoft(wKurtaDupatta, highlight, 0.34)}<path d="M196 142 L210 160 L224 142" ${detail}/><path d="M210 160 V342" ${detail}/><path d="M176 334 H244" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><path d="M184 400 H198 M222 400 H236" fill="none" stroke="${accent}" stroke-width="1.6" opacity=".8"/>`;
     } else if (garmentId === "w-lehenga") {
-      layers = `${add(wLehengaSkirt, fabricFill)}${add(wLehengaTop, fabricFill)}${add(wSleeveL, fabricFill)}${add(wSleeveR, fabricFill)}${addSoft(wLehengaDupatta, highlight, 0.55)}<path d="M182 232 H238" fill="none" stroke="${accent}" stroke-width="2.8" opacity=".9"/><path d="M190 246 L174 404 M210 246 V404 M230 246 L246 404" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/><path d="M140 404 H280" fill="none" stroke="${accent}" stroke-width="2" opacity=".8"/>`;
+      layers = `${add(wLehengaSkirt, fabricFill)}${add(wLehengaTop, fabricFill)}${add(wSleeveL, fabricFill)}${add(wSleeveR, fabricFill)}${lehengaShade}${addSoft(wLehengaDupatta, highlight, 0.55)}<path d="M182 232 H238" fill="none" stroke="${accent}" stroke-width="2.8" opacity=".9"/><path d="M190 246 L174 404 M210 246 V404 M230 246 L246 404" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/><path d="M140 404 H280" fill="none" stroke="${accent}" stroke-width="2" opacity=".8"/>`;
     } else if (garmentId === "w-saree") {
-      layers = `${add(wSareeSkirt, fabricFill)}${add(wSareeTop, fabricFill)}${addSoft(wSareeWrap, fabricFill, 0.5)}${addSoft(wSareePallu, highlight, 0.58)}<path d="M186 142 Q210 158 234 142" ${detail}/><path d="M166 398 H254" fill="none" stroke="${accent}" stroke-width="2.2" opacity=".8"/><path d="M192 230 L178 400 M210 230 V400 M228 230 L242 400" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1"/>`;
+      layers = `${add(wSareeSkirt, fabricFill)}${add(wSareeTop, fabricFill)}${sareeShade}${addSoft(wSareeWrap, fabricFill, 0.5)}${addSoft(wSareePallu, highlight, 0.58)}<path d="M186 142 Q210 158 234 142" ${detail}/><path d="M166 398 H254" fill="none" stroke="${accent}" stroke-width="2.2" opacity=".8"/><path d="M192 230 L178 400 M210 230 V400 M228 230 L242 400" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1"/>`;
     } else if (garmentId === "w-sharara") {
-      layers = `${add(wShararaTop, fabricFill)}${add(wSleeveL, fabricFill)}${add(wSleeveR, fabricFill)}${add(wShararaPants, accentFill)}<path d="M196 142 L210 160 L224 142" ${detail}/><path d="M210 160 V286" ${detail}/><path d="M176 278 H244" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><path d="M176 398 H192 M228 398 H244" fill="none" stroke="${accent}" stroke-width="1.6" opacity=".8"/>`;
+      layers = `${add(wShararaTop, fabricFill)}${longSleeves(fabricFill)}${add(wShararaPants, accentFill)}${kurtaShade}<path d="M196 142 L210 160 L224 142" ${detail}/><path d="M210 160 V286" ${detail}/><path d="M176 278 H244" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><path d="M176 398 H192 M228 398 H244" fill="none" stroke="${accent}" stroke-width="1.6" opacity=".8"/>`;
     } else if (garmentId === "m-kurta") {
-      layers = `${add(mKurta, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(mKurtaPants, accentFill)}<path d="M196 142 L210 158 L224 142" ${detail}/><path d="M210 158 V336" ${detail}/><path d="M168 328 H252" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><circle cx="210" cy="184" r="1.5" fill="rgba(255,255,255,.6)"/><circle cx="210" cy="198" r="1.5" fill="rgba(255,255,255,.6)"/>`;
+      layers = `${add(mKurta, fabricFill)}${longSleeves(fabricFill)}${add(mKurtaPants, accentFill)}${kurtaShade}<path d="M196 142 L210 158 L224 142" ${detail}/><path d="M210 158 V336" ${detail}/><path d="M168 328 H252" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><circle cx="210" cy="184" r="1.5" fill="rgba(255,255,255,.6)"/><circle cx="210" cy="198" r="1.5" fill="rgba(255,255,255,.6)"/>`;
     } else if (garmentId === "m-shalwar") {
-      layers = `${add(mKurta, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(mShalwar, accentFill)}<path d="M196 142 L210 158 L224 142" ${detail}/><path d="M210 158 V336" ${detail}/><path d="M168 328 H252" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><path d="M168 398 H190 M230 398 H252" fill="none" stroke="${accent}" stroke-width="1.6" opacity=".8"/>`;
+      layers = `${add(mKurta, fabricFill)}${longSleeves(fabricFill)}${add(mShalwar, accentFill)}${kurtaShade}<path d="M196 142 L210 158 L224 142" ${detail}/><path d="M210 158 V336" ${detail}/><path d="M168 328 H252" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><path d="M168 398 H190 M230 398 H252" fill="none" stroke="${accent}" stroke-width="1.6" opacity=".8"/>`;
     } else if (garmentId === "m-sherwani") {
-      layers = `${add(mSherwani, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(mSherwaniPants, accentFill)}<path d="M196 142 L210 164 L224 142" ${detail}/><path d="M210 164 V342" ${detail}/><path d="M170 334 H250" fill="none" stroke="${accent}" stroke-width="2.2" opacity=".9"/><circle cx="210" cy="192" r="1.6" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="208" r="1.6" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="224" r="1.6" fill="rgba(255,255,255,.58)"/>`;
+      layers = `${add(mSherwani, fabricFill)}${longSleeves(fabricFill)}${add(mSherwaniPants, accentFill)}${kurtaShade}<path d="M196 142 L210 164 L224 142" ${detail}/><path d="M210 164 V342" ${detail}/><path d="M170 334 H250" fill="none" stroke="${accent}" stroke-width="2.2" opacity=".9"/><circle cx="210" cy="192" r="1.6" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="208" r="1.6" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="224" r="1.6" fill="rgba(255,255,255,.58)"/>`;
     } else if (garmentId === "m-waistcoat") {
-      layers = `${addSoft(mKurta, "#f4f1e8", 0.44)}${addSoft(sleeveL, "#f4f1e8", 0.44)}${addSoft(sleeveR, "#f4f1e8", 0.44)}${add(mKurtaPants, accentFill)}${add(mWaistcoat, fabricFill)}<path d="M196 136 L210 164 L224 136" ${detail}/><path d="M210 164 V330" ${detail}/><path d="M178 250 H196 M224 250 H242" ${detail}/><circle cx="210" cy="196" r="1.5" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="212" r="1.5" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="228" r="1.5" fill="rgba(255,255,255,.58)"/>`;
+      layers = `${add(mKurta, "#f4f1e8")}${longSleeves("#f4f1e8")}${add(mKurtaPants, accentFill)}${kurtaShade}${add(mWaistcoat, fabricFill)}${waistcoatShade}<path d="M196 136 L210 164 L224 136" ${detail}/><path d="M210 164 V330" ${detail}/><path d="M178 250 H196 M224 250 H242" ${detail}/><circle cx="210" cy="196" r="1.5" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="212" r="1.5" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="228" r="1.5" fill="rgba(255,255,255,.58)"/>`;
     } else {
-      layers = `${add(jacket, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, bottomFill)}<path d="M190 142 L210 185 L230 142" ${detail}/><path d="M210 142 V318" ${detail}/><circle cx="210" cy="224" r="1.8" fill="rgba(255,255,255,.7)"/><path d="M206 146 L214 146 L210 196 Z" fill="${highlight}" opacity=".82"/>`;
+      layers = `${add(jacket, fabricFill)}${longSleeves(fabricFill)}${add(trousers, bottomFill)}<path d="M190 142 L210 185 L230 142" ${detail}/><path d="M210 142 V318" ${detail}/><circle cx="210" cy="224" r="1.8" fill="rgba(255,255,255,.7)"/><path d="M206 146 L214 146 L210 196 Z" fill="${highlight}" opacity=".82"/>${maleJacketChest}`;
     }
 
     const lookLabel = (GARMENT_LABELS[garmentId] || garmentId).toUpperCase();
-    return `<svg viewBox="0 0 420 520" role="img" aria-label="${GARMENT_LABELS[garmentId] || garmentId} look preview"><defs>${defs}</defs><rect width="420" height="520" fill="url(#${uid}-bg)"/><circle cx="210" cy="220" r="184" fill="url(#${uid}-glow)"/><path d="M92 470 V210 Q92 62 210 62 Q328 62 328 210 V470" fill="none" stroke="rgba(34,211,238,.12)" stroke-width="1.2"/><path d="M112 470 V220 Q112 82 210 82 Q308 82 308 220 V470" fill="none" stroke="rgba(255,255,255,.045)" stroke-width="1"/><path d="M210 70 L120 470 H300 Z" fill="rgba(34,211,238,.022)"/>${figure}${layers}<path d="M150 470 H270" stroke="rgba(34,211,238,.22)" stroke-width="1.2" stroke-linecap="round"/><text x="210" y="502" text-anchor="middle" fill="rgba(226,232,240,.42)" font-family="Arial, Helvetica, sans-serif" font-size="9" letter-spacing="1.8">AI FABRIC STUDIO · ${lookLabel}</text></svg>`;
+    return `<svg viewBox="0 0 420 480" role="img" aria-label="${GARMENT_LABELS[garmentId] || garmentId} Anime fit preview"><defs>${defs}</defs><rect width="420" height="480" fill="url(#${uid}-bg)"/><circle cx="210" cy="220" r="184" fill="url(#${uid}-glow)"/><path d="M92 448 V210 Q92 62 210 62 Q328 62 328 210 V448" fill="none" stroke="rgba(34,211,238,.12)" stroke-width="1.2"/><path d="M112 448 V220 Q112 82 210 82 Q308 82 308 220 V448" fill="none" stroke="rgba(255,255,255,.045)" stroke-width="1"/><path d="M210 70 L120 448 H300 Z" fill="rgba(34,211,238,.022)"/><ellipse cx="210" cy="430" rx="150" ry="28" fill="url(#${uid}-floor)"/><ellipse cx="210" cy="430" rx="106" ry="17" fill="rgba(0,0,0,.3)"/><ellipse cx="210" cy="430" rx="120" ry="22" fill="none" stroke="rgba(34,211,238,.14)" stroke-width="1"/>${figure}<g filter="url(#${uid}-model-shadow)">${layers}</g><path d="M150 448 H270" stroke="rgba(34,211,238,.22)" stroke-width="1.2" stroke-linecap="round"/><text x="210" y="466" text-anchor="middle" fill="rgba(226,232,240,.42)" font-family="Arial, Helvetica, sans-serif" font-size="9" letter-spacing="1.8">AI FABRIC STUDIO · ANIME FIT · ${lookLabel}</text></svg>`;
   }
 
   function getLookNote(garment, analysis) {
@@ -1173,8 +1270,8 @@ initFabric();
     const garment = options.find((item) => item.id === selectedLook) || options[0];
     if (!garment) return;
     selectedLook = garment.id;
-    fabricLookSvgWrap.innerHTML = buildLookSvg(garment.id, brief.palette, brief.pattern, lookColorway, lookModel);
-    if (fabricLookTag) fabricLookTag.textContent = `AI look preview · ${lookModel === "her" ? "Her" : "Him"} · ${lookCollection === "desi" ? "Desi" : "Modern"}`;
+    fabricLookSvgWrap.innerHTML = buildLookSvg(garment.id, brief.palette, brief.pattern, lookColorway, lookModel, brief.textureUrl);
+    if (fabricLookTag) fabricLookTag.textContent = `Anime fit preview · ${lookModel === "her" ? "Her" : "Him"} · ${lookCollection === "desi" ? "Desi" : "Modern"}`;
     if (fabricLookTitle) fabricLookTitle.textContent = garment.name;
     if (fabricLookNote) fabricLookNote.textContent = getLookNote(garment, brief);
     if (fabricLookPills) {
@@ -1206,7 +1303,7 @@ initFabric();
     image.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = 840;
-      canvas.height = 1040;
+      canvas.height = 960;
       const context = canvas.getContext("2d");
       if (!context) {
         URL.revokeObjectURL(url);
@@ -1259,9 +1356,9 @@ initFabric();
     selectedLook = getLookOptions(brief)[0]?.id || brief.garments[0]?.id || "suit";
     fabricPalette.innerHTML = brief.palette.map((color) => `<span class="swatch"><i style="background:${color.hex}"></i>${escapeHtml(color.name)} <span>${color.hex}</span></span>`).join("");
     fabricFacts.innerHTML = brief.facts.map((fact) => `<div class="fact"><span>${escapeHtml(fact.label)}</span><strong>${escapeHtml(fact.value)}</strong></div>`).join("");
-    fabricGarmentGrid.innerHTML = brief.garments.map((garment) => `<article class="garment-card ${garment.id === selectedLook ? "is-selected" : ""}" data-look="${garment.id}" tabindex="0" role="button" aria-label="Preview ${escapeHtml(garment.name)}"><div class="garment-visual">${garmentSvg(garment.id, brief.palette, brief.pattern)}</div><div class="garment-copy"><h4>${escapeHtml(garment.name)}</h4><p>${escapeHtml(garment.note)}</p></div></article>`).join("");
+    fabricGarmentGrid.innerHTML = brief.garments.map((garment) => `<article class="garment-card ${garment.id === selectedLook ? "is-selected" : ""}" data-look="${garment.id}" tabindex="0" role="button" aria-label="Preview ${escapeHtml(garment.name)}"><div class="garment-visual">${garmentSvg(garment.id, brief.palette, brief.pattern, brief.textureUrl)}</div><div class="garment-copy"><h4>${escapeHtml(garment.name)}</h4><p>${escapeHtml(garment.note)}</p></div></article>`).join("");
     if (fabricDesiGrid) {
-      fabricDesiGrid.innerHTML = brief.desiGarments.map((garment) => `<article class="garment-card desi-card ${garment.id === selectedLook ? "is-selected" : ""}" data-look="${garment.id}" tabindex="0" role="button" aria-label="Preview ${escapeHtml(garment.name)}"><div class="garment-visual">${garmentSvg(garment.id, brief.palette, brief.pattern)}</div><div class="garment-copy"><span class="desi-gender">${garment.gender === "her" ? "Women" : "Men"}</span><h4>${escapeHtml(garment.name)}</h4><p>${escapeHtml(garment.note)}</p></div></article>`).join("");
+      fabricDesiGrid.innerHTML = brief.desiGarments.map((garment) => `<article class="garment-card desi-card ${garment.id === selectedLook ? "is-selected" : ""}" data-look="${garment.id}" tabindex="0" role="button" aria-label="Preview ${escapeHtml(garment.name)}"><div class="garment-visual">${garmentSvg(garment.id, brief.palette, brief.pattern, brief.textureUrl)}</div><div class="garment-copy"><span class="desi-gender">${garment.gender === "her" ? "Women" : "Men"}</span><h4>${escapeHtml(garment.name)}</h4><p>${escapeHtml(garment.note)}</p></div></article>`).join("");
     }
     fabricArticle.innerHTML = `<h3>${escapeHtml(brief.article.heading)}</h3>${brief.article.paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}<div class="styling-note">${escapeHtml(brief.article.note)}</div>`;
     renderLookPreview(brief);

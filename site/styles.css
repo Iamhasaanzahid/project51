@@ -2091,9 +2091,9 @@ input {
 
 .look-preview {
   display: grid;
-  grid-template-columns: minmax(190px, 0.88fr) minmax(0, 1.12fr);
-  gap: 12px;
-  margin: 12px 0 16px;
+  grid-template-columns: minmax(300px, 1.15fr) minmax(0, 0.85fr);
+  gap: 14px;
+  margin: 12px 0 18px;
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -2105,14 +2105,14 @@ input {
 .look-stage {
   position: relative;
   display: grid;
-  min-height: 304px;
+  min-height: 480px;
   place-items: center;
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 12px;
   background:
-    radial-gradient(circle at 50% 35%, rgba(34, 211, 238, 0.12), transparent 62%),
-    #05070f;
+    radial-gradient(circle at 50% 30%, rgba(34, 211, 238, 0.16), transparent 58%),
+    linear-gradient(180deg, #08101f 0%, #05070f 72%, #03050a 100%);
 }
 
 .look-stage::before {
@@ -2267,7 +2267,7 @@ input {
   }
 
   .look-stage {
-    min-height: 330px;
+    min-height: 430px;
   }
 }
 
