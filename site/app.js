@@ -316,12 +316,16 @@ initFabric();
   const fabricCopyBtn = document.querySelector("#copy-brief");
   const fabricSampleButtons = document.querySelectorAll("[data-sample]");
   const fabricLookSvgWrap = document.querySelector("#look-svg-wrap");
+  const fabricLookTag = document.querySelector("#look-tag");
   const fabricLookTitle = document.querySelector("#look-title");
   const fabricLookNote = document.querySelector("#look-note");
   const fabricLookPills = document.querySelector("#look-pills");
+  const fabricLookModelSwitch = document.querySelector("#look-model-switch");
+  const fabricLookCollectionSwitch = document.querySelector("#look-collection-switch");
   const fabricLookOccasion = document.querySelector("#look-occasion");
   const fabricLookFinish = document.querySelector("#look-finish");
   const fabricLookColorway = document.querySelector("#look-colorway");
+  const fabricDesiGrid = document.querySelector("#desi-grid");
   const fabricSaveLookBtn = document.querySelector("#save-look");
   const fabricSurpriseBtn = document.querySelector("#surprise-look");
 
@@ -352,6 +356,16 @@ initFabric();
     trousers: "M34 17 H66 L73 105 H55 L50 55 L45 105 H27 Z",
     skirt: "M36 17 H64 L79 105 H21 Z",
     "co-ord": "M34 21 L44 13 L56 13 L66 21 L78 31 L72 44 L68 40 L68 70 L32 70 L32 40 L28 44 L22 31 Z M36 74 H64 L70 105 H54 L50 88 L46 105 H30 Z",
+    "w-kurta": "M34 20 L42 13 L58 13 L66 20 L79 32 L73 43 L68 39 L68 86 L32 86 L32 39 L27 43 L21 32 Z M37 89 H63 L68 113 H54 L50 100 L46 113 H32 Z",
+    "w-anarkali": "M38 14 L44 28 L34 40 L20 113 L80 113 L66 40 L56 28 L62 14 Z",
+    "w-salwar": "M34 20 L42 13 L58 13 L66 20 L78 32 L72 43 L68 39 L68 82 L32 82 L32 39 L28 43 L22 32 Z M36 85 H64 L72 113 H54 L50 98 L46 113 H28 Z",
+    "w-lehenga": "M38 17 L44 30 L56 30 L62 17 L58 42 L42 42 Z M40 46 H60 L82 113 H18 Z",
+    "w-saree": "M38 14 Q50 22 62 14 L66 32 L58 44 L80 113 H20 L42 44 L34 32 Z M62 20 Q82 38 74 78 L66 74 Q72 44 56 28 Z",
+    "w-sharara": "M34 20 L42 13 L58 13 L66 20 L76 32 L70 43 L68 39 L68 66 L32 66 L32 39 L30 43 L24 32 Z M36 70 H64 L84 113 H54 L50 86 L46 113 H16 Z",
+    "m-kurta": "M34 20 L42 13 L58 13 L66 20 L79 32 L73 43 L68 39 L68 88 L32 88 L32 39 L27 43 L21 32 Z M38 92 H62 L68 113 H54 L50 100 L46 113 H32 Z",
+    "m-shalwar": "M34 20 L42 13 L58 13 L66 20 L78 32 L72 43 L68 39 L68 84 L32 84 L32 39 L28 43 L22 32 Z M36 87 H64 L74 113 H54 L50 98 L46 113 H26 Z",
+    "m-sherwani": "M34 18 L42 12 L58 12 L66 18 L80 34 L72 44 L68 40 L68 98 L32 98 L32 40 L28 44 L20 34 Z M38 100 H62 L66 113 H54 L50 104 L46 113 H34 Z",
+    "m-waistcoat": "M38 17 L46 13 L54 13 L62 17 L64 74 L56 78 L50 70 L44 78 L36 74 Z",
   };
 
   const GARMENT_LABELS = {
@@ -363,6 +377,16 @@ initFabric();
     trousers: "Wide-leg trousers",
     skirt: "Bias skirt",
     "co-ord": "Co-ord set",
+    "w-kurta": "Straight kurta",
+    "w-anarkali": "Anarkali",
+    "w-salwar": "Salwar kameez",
+    "w-lehenga": "Lehenga choli",
+    "w-saree": "Saree drape",
+    "w-sharara": "Sharara set",
+    "m-kurta": "Men's kurta",
+    "m-shalwar": "Shalwar kameez",
+    "m-sherwani": "Sherwani",
+    "m-waistcoat": "Nehru waistcoat",
   };
 
   const GARMENT_DETAILS = {
@@ -374,6 +398,16 @@ initFabric();
     trousers: '<path d="M50 17 V55" fill="none" stroke="rgba(255,255,255,.26)" stroke-width="1"/><path d="M37 28 H63" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>',
     skirt: '<path d="M42 17 L38 105 M58 17 L62 105" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1"/>',
     "co-ord": '<path d="M50 13 V70" fill="none" stroke="rgba(255,255,255,.26)" stroke-width="1"/><path d="M34 74 H66" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>',
+    "w-kurta": '<path d="M42 13 L50 34 L58 13" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.1" stroke-linecap="round"/><path d="M50 34 V86" fill="none" stroke="rgba(255,255,255,.26)" stroke-width="1"/><path d="M34 82 H66" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.4"/>',
+    "w-anarkali": '<path d="M42 40 H58" fill="none" stroke="rgba(255,255,255,.32)" stroke-width="1.1"/><path d="M50 14 V113" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1"/><path d="M24 108 H76" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1.2"/>',
+    "w-salwar": '<path d="M42 13 L50 32 L58 13" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.1" stroke-linecap="round"/><path d="M50 32 V82" fill="none" stroke="rgba(255,255,255,.24)" stroke-width="1"/><path d="M34 78 H66" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.2"/>',
+    "w-lehenga": '<path d="M40 46 H60" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.3"/><path d="M50 46 L38 113 M50 46 L62 113" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1"/>',
+    "w-saree": '<path d="M50 14 Q64 50 56 113" fill="none" stroke="rgba(255,255,255,.26)" stroke-width="1.1"/><path d="M40 44 L32 113" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>',
+    "w-sharara": '<path d="M42 13 L50 32 L58 13" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.1" stroke-linecap="round"/><path d="M36 70 H64" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.2"/><path d="M46 70 L36 113 M54 70 L64 113" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/>',
+    "m-kurta": '<path d="M42 13 L50 24 L58 13" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.1" stroke-linecap="round"/><path d="M50 24 V88" fill="none" stroke="rgba(255,255,255,.26)" stroke-width="1"/><path d="M34 84 H66" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1.2"/>',
+    "m-shalwar": '<path d="M42 13 L50 24 L58 13" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.1" stroke-linecap="round"/><path d="M50 24 V84" fill="none" stroke="rgba(255,255,255,.24)" stroke-width="1"/><path d="M34 80 H66" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1.2"/>',
+    "m-sherwani": '<path d="M42 12 L50 30 L58 12" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.1" stroke-linecap="round"/><path d="M50 30 V98" fill="none" stroke="rgba(255,255,255,.24)" stroke-width="1"/><circle cx="50" cy="46" r="1.4" fill="rgba(255,255,255,.58)"/><circle cx="50" cy="58" r="1.4" fill="rgba(255,255,255,.58)"/><circle cx="50" cy="70" r="1.4" fill="rgba(255,255,255,.58)"/>',
+    "m-waistcoat": '<path d="M42 13 L50 34 L58 13" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.1" stroke-linecap="round"/><path d="M50 34 V72" fill="none" stroke="rgba(255,255,255,.24)" stroke-width="1"/><circle cx="50" cy="46" r="1.4" fill="rgba(255,255,255,.58)"/><circle cx="50" cy="56" r="1.4" fill="rgba(255,255,255,.58)"/>',
   };
 
   const SAMPLES = {
@@ -404,6 +438,8 @@ initFabric();
   let fabricLastBrief = null;
   let fabricAnalyzing = false;
   let selectedLook = "suit";
+  let lookModel = "her";
+  let lookCollection = "modern";
   let lookOccasion = "office";
   let lookFinish = "tailored";
   let lookColorway = "detected";
@@ -467,9 +503,12 @@ initFabric();
     releaseFabricSource();
     resetBrief();
     selectedLook = "suit";
+    lookModel = "her";
+    lookCollection = "modern";
     lookOccasion = "office";
     lookFinish = "tailored";
     lookColorway = "detected";
+    syncLookSwitches();
     if (fabricLookOccasion) fabricLookOccasion.value = lookOccasion;
     if (fabricLookFinish) fabricLookFinish.value = lookFinish;
     if (fabricLookColorway) fabricLookColorway.value = lookColorway;
@@ -696,7 +735,78 @@ initFabric();
     ];
   }
 
-  function buildArticle(analysis, garments, title) {
+  function buildDesiGarments(analysis) {
+    const names = analysis.palette.map((color) => color.name.toLowerCase());
+    const primary = names[0] || "tonal";
+    const secondary = names[1] || primary;
+    const accent = names[2] || secondary;
+    const surface = analysis.pattern.toLowerCase();
+
+    return [
+      {
+        id: "w-kurta",
+        name: "Straight kurta",
+        gender: "her",
+        note: `A clean ${primary} straight kurta with side slits, a matching churidar and a soft ${secondary} dupatta.`,
+      },
+      {
+        id: "w-anarkali",
+        name: "Anarkali",
+        gender: "her",
+        note: `A fitted ${primary} bodice that opens into a floor-sweeping anarkali flare; keep the dupatta light.`,
+      },
+      {
+        id: "w-salwar",
+        name: "Salwar kameez",
+        gender: "her",
+        note: `A ${primary} kameez over a relaxed salwar — the most wearable version of this ${surface} cloth.`,
+      },
+      {
+        id: "w-lehenga",
+        name: "Lehenga choli",
+        gender: "her",
+        note: `A ${primary} choli with a full lehenga skirt; let the ${surface} surface do the decoration.`,
+      },
+      {
+        id: "w-saree",
+        name: "Saree drape",
+        gender: "her",
+        note: `A pre-draped ${primary} saree with a ${secondary} blouse and a clean, modern pallu.`,
+      },
+      {
+        id: "w-sharara",
+        name: "Sharara set",
+        gender: "her",
+        note: `A short ${primary} kurta with wide sharara pants — festive, but easy to move in.`,
+      },
+      {
+        id: "m-kurta",
+        name: "Men's kurta",
+        gender: "him",
+        note: `A ${primary} men's kurta with a mandarin collar, side slits and a straight churidar.`,
+      },
+      {
+        id: "m-shalwar",
+        name: "Shalwar kameez",
+        gender: "him",
+        note: `A ${primary} shalwar kameez with a clean collar and a relaxed, traditional cut.`,
+      },
+      {
+        id: "m-sherwani",
+        name: "Sherwani",
+        gender: "him",
+        note: `A ${primary} sherwani with a structured front, tonal buttons and a narrow churidar.`,
+      },
+      {
+        id: "m-waistcoat",
+        name: "Nehru waistcoat",
+        gender: "him",
+        note: `A ${primary} Nehru waistcoat over a ${accent} kurta — an easy layer for weddings and evenings.`,
+      },
+    ];
+  }
+
+  function buildArticle(analysis, garments, title, desiGarments = []) {
     const names = analysis.palette.map((color) => color.name.toLowerCase());
     const primary = names[0] || "tonal";
     const secondary = names[1] || primary;
@@ -709,6 +819,9 @@ initFabric();
       `The most direct first piece is a ${garments[0].name.toLowerCase()}. ${garments[0].note} ${garments[2].name} keeps the same ${surfaceWord} in a softer silhouette, while a ${garments[4].name.toLowerCase()} turns the cloth into an outerwear statement.`,
       `For the rest of the wardrobe, ${garments[1].name.toLowerCase()}, ${garments[3].name.toLowerCase()}, ${garments[5].name.toLowerCase()}, a ${garments[6].name.toLowerCase()} and a ${garments[7].name.toLowerCase()} round out the board. The through-line is ${analysis.drape === "Structured" ? "clean lines and a little structure" : "soft volume and an easy hand-feel"} — the fabric should stay the loudest thing in the look.`,
     ];
+    if (desiGarments.length) {
+      paragraphs.push(`For an Indian or Pakistani wardrobe, the same ${primary} cloth also reads as a ${desiGarments[0].name.toLowerCase()}, a ${desiGarments[1].name.toLowerCase()} or a ${desiGarments[2].name.toLowerCase()}. Keep the dupatta in ${secondary} and let the ${surfaceWord} stay visible at the hem and cuffs.`);
+    }
     const note = `Styling note. Keep the palette close: ${primary} with ${secondary}${names[2] ? ` and a small ${accent} accent` : ""}. Let one silhouette carry the texture; everything else can stay quiet.`;
     return { heading: `${title}: the story`, paragraphs, note };
   }
@@ -719,7 +832,8 @@ initFabric();
     const title = `${primary.name} ${analysis.pattern === "Solid" ? "minimal" : analysis.pattern === "Patterned" ? "statement" : "textured"} edit`;
     const summary = `A ${analysis.tone.toLowerCase()}, ${analysis.pattern.toLowerCase()} fabric with a ${analysis.drape.toLowerCase()} hand-feel. ${primary.name} leads the palette, with ${secondary.name.toLowerCase()} tones underneath. The studio reads it as a ${analysis.weight.toLowerCase()} cloth for ${analysis.drape === "Structured" ? "clean tailoring and outerwear" : analysis.drape === "Fluid" ? "soft dresses, shirts and fluid separates" : "easy separates and relaxed tailoring"}.`;
     const garments = buildGarments(analysis);
-    const article = buildArticle(analysis, garments, title);
+    const desiGarments = buildDesiGarments(analysis);
+    const article = buildArticle(analysis, garments, title, desiGarments);
     const paletteText = analysis.palette.map((color) => `${color.name} ${color.hex}`).join(", ");
     const plain = [
       `AI FABRIC BRIEF — ${title}`,
@@ -727,8 +841,10 @@ initFabric();
       summary,
       `Palette: ${paletteText}`,
       `Tone: ${analysis.tone} | Surface: ${analysis.pattern} | Drape: ${analysis.drape} | Weight: ${analysis.weight}`,
-      "Garment directions:",
+      "Modern garment directions:",
       ...garments.map((garment) => `- ${garment.name}: ${garment.note}`),
+      "Desi atelier (India & Pakistan):",
+      ...desiGarments.map((garment) => `- ${garment.name}: ${garment.note}`),
       article.heading,
       ...article.paragraphs,
       article.note,
@@ -746,6 +862,7 @@ initFabric();
         { label: "Suggested weight", value: analysis.weight },
       ],
       garments,
+      desiGarments,
       article,
       plain,
       tag: `${analysis.palette.length} colour read`,
@@ -802,7 +919,67 @@ initFabric();
     return { base, accent, highlight };
   }
 
-  function buildLookSvg(garmentId, palette, pattern, colorway = "detected") {
+  function buildLookFigure(model = "her") {
+    const her = model === "her";
+    const skin = "#f0c6a8";
+    const skinShade = "#d9a98c";
+    const hair = her ? "#241a2f" : "#1c2438";
+    const hairLight = her ? "#3b2540" : "#29344d";
+    const eye = "#2a1b3d";
+    const lip = "#b05b6a";
+    const eyeRx = her ? 2.6 : 2.3;
+    const eyeRy = her ? 3.6 : 2.9;
+
+    const shadow = '<ellipse cx="210" cy="466" rx="94" ry="11" fill="rgba(0,0,0,.46)"/>';
+    const head = `<ellipse cx="210" cy="78" rx="${her ? 24 : 23}" ry="${her ? 27 : 26}" fill="${skin}" stroke="rgba(255,255,255,.2)" stroke-width="1.2"/>`;
+    const neck = her
+      ? `<path d="M200 103 L200 124 Q210 131 220 124 L220 103 Z" fill="${skin}" stroke="rgba(255,255,255,.14)" stroke-width="1"/><path d="M200 104 Q210 113 220 104 L220 110 Q210 119 200 110 Z" fill="${skinShade}" opacity=".34"/>`
+      : `<path d="M198 103 L198 126 Q210 134 222 126 L222 103 Z" fill="${skin}" stroke="rgba(255,255,255,.14)" stroke-width="1"/><path d="M198 104 Q210 114 222 104 L222 110 Q210 120 198 110 Z" fill="${skinShade}" opacity=".34"/>`;
+    const torso = her
+      ? `<path d="M170 143 Q210 124 250 143 L256 180 L244 232 Q238 252 236 300 L184 300 Q182 252 176 232 L164 180 Z" fill="#f2ded0" stroke="rgba(255,255,255,.14)" stroke-width="1"/><path d="M238 154 Q248 204 236 300 L184 300 Q198 250 206 154 Z" fill="rgba(2,6,23,.07)"/>`
+      : `<path d="M164 143 Q210 122 256 143 L264 180 L252 236 L248 300 L172 300 L168 236 L156 180 Z" fill="#f2ded0" stroke="rgba(255,255,255,.14)" stroke-width="1"/><path d="M244 156 Q254 206 248 300 L172 300 Q186 252 196 156 Z" fill="rgba(2,6,23,.07)"/>`;
+    const arms = her
+      ? `<path d="M170 148 Q150 194 156 246 L168 246 Q164 202 180 160 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M250 148 Q270 194 264 246 L252 246 Q256 202 240 160 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/>`
+      : `<path d="M164 146 Q144 194 150 248 L164 248 Q160 204 176 158 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M256 146 Q276 194 270 248 L256 248 Q260 204 244 158 Z" fill="${skin}" stroke="rgba(255,255,255,.12)" stroke-width="1"/>`;
+    const hands = her
+      ? '<circle cx="160" cy="253" r="6.5" fill="#f0c6a8"/><circle cx="260" cy="253" r="6.5" fill="#f0c6a8"/>'
+      : '<circle cx="156" cy="255" r="7" fill="#f0c6a8"/><circle cx="264" cy="255" r="7" fill="#f0c6a8"/>';
+    const legs = her
+      ? '<path d="M186 300 L180 408 L193 408 L202 306 Z" fill="#f2ded0" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M234 300 L240 408 L227 408 L218 306 Z" fill="#f2ded0" stroke="rgba(255,255,255,.12)" stroke-width="1"/>'
+      : '<path d="M184 300 L176 406 L191 406 L201 306 Z" fill="#f2ded0" stroke="rgba(255,255,255,.12)" stroke-width="1"/><path d="M236 300 L244 406 L229 406 L219 306 Z" fill="#f2ded0" stroke="rgba(255,255,255,.12)" stroke-width="1"/>';
+    const shoes = her
+      ? '<path d="M174 407 H196 L193 414 L170 414 Z" fill="#111827" stroke="rgba(255,255,255,.15)" stroke-width="1"/><path d="M190 413 H194 L192 424 H188 Z" fill="#111827"/><path d="M228 407 H250 L250 414 L227 414 Z" fill="#111827" stroke="rgba(255,255,255,.15)" stroke-width="1"/><path d="M228 413 H232 L230 424 H226 Z" fill="#111827"/>'
+      : '<ellipse cx="181" cy="412" rx="19" ry="7" fill="#111827" stroke="rgba(255,255,255,.15)" stroke-width="1"/><ellipse cx="239" cy="412" rx="19" ry="7" fill="#111827" stroke="rgba(255,255,255,.15)" stroke-width="1"/>';
+
+    const hairBack = her
+      ? `<path d="M181 66 Q178 40 210 36 Q242 40 239 66 L246 182 Q238 198 231 164 L229 116 Q220 126 210 126 Q200 126 191 116 L189 164 Q182 198 174 182 Z" fill="${hair}"/><circle cx="210" cy="42" r="8" fill="${hair}"/>`
+      : "";
+    const hairFront = her
+      ? `<path d="M184 76 Q182 48 210 43 Q238 48 236 76 Q230 58 210 57 Q190 58 184 76 Z" fill="${hair}"/><path d="M186 64 Q198 50 216 57 Q204 61 198 72 Z" fill="${hairLight}" opacity=".9"/><path d="M184 74 Q180 92 188 104 Q184 86 190 68 Z" fill="${hair}"/><path d="M236 74 Q240 92 232 104 Q236 86 230 68 Z" fill="${hair}"/><path d="M192 52 Q204 46 218 51" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1.2" stroke-linecap="round"/>`
+      : `<path d="M182 78 Q180 46 210 41 Q240 46 238 78 L232 68 L228 76 L220 60 L212 76 L204 60 L196 76 L190 68 Z" fill="${hair}"/><path d="M184 74 Q181 92 188 102 Q185 86 190 70 Z" fill="${hair}"/><path d="M236 74 Q239 92 232 102 Q235 86 230 70 Z" fill="${hair}"/><path d="M192 51 Q204 45 218 50" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1.1" stroke-linecap="round"/>`;
+    const earrings = her
+      ? '<circle cx="186" cy="91" r="1.8" fill="#fbbf24" opacity=".86"/><circle cx="234" cy="91" r="1.8" fill="#fbbf24" opacity=".86"/>'
+      : "";
+    const face = `
+      <circle cx="199" cy="82" r="4.1" fill="#fff"/>
+      <circle cx="221" cy="82" r="4.1" fill="#fff"/>
+      <ellipse cx="200" cy="82" rx="${eyeRx}" ry="${eyeRy}" fill="${eye}"/>
+      <ellipse cx="222" cy="82" rx="${eyeRx}" ry="${eyeRy}" fill="${eye}"/>
+      <circle cx="201" cy="80.5" r="1.1" fill="#fff"/>
+      <circle cx="223" cy="80.5" r="1.1" fill="#fff"/>
+      <path d="M194 77 Q199 74 204 77" fill="none" stroke="#3a2a35" stroke-width="1.1" stroke-linecap="round"/>
+      <path d="M216 77 Q221 74 226 77" fill="none" stroke="#3a2a35" stroke-width="1.1" stroke-linecap="round"/>
+      <path d="M194 73 Q199 70 203 73" fill="none" stroke="#3a2a35" stroke-width="1" stroke-linecap="round"/>
+      <path d="M217 73 Q221 70 225 73" fill="none" stroke="#3a2a35" stroke-width="1" stroke-linecap="round"/>
+      <path d="M210 84 L210 90" fill="none" stroke="${skinShade}" stroke-width="1.1" stroke-linecap="round"/>
+      <path d="M206 95 Q210 97 214 95" fill="none" stroke="${lip}" stroke-width="1.1" stroke-linecap="round"/>
+      ${her ? '<ellipse cx="191" cy="92" rx="4" ry="2" fill="#e88b8b" opacity=".22"/><ellipse cx="229" cy="92" rx="4" ry="2" fill="#e88b8b" opacity=".22"/>' : ""}
+    `;
+
+    return `${shadow}${hairBack}${head}${hairFront}${earrings}${face}${neck}${torso}${arms}${hands}${legs}${shoes}`;
+  }
+
+  function buildLookSvg(garmentId, palette, pattern, colorway = "detected", model = "her") {
     const { base, accent, highlight } = getLookColors(palette, colorway);
     const uid = `look-${garmentId}-${Math.random().toString(36).slice(2, 8)}`;
     const solid = pattern === "Solid";
@@ -835,29 +1012,7 @@ initFabric();
       </pattern>
     `;
 
-    const figure = `
-      <ellipse cx="210" cy="466" rx="94" ry="12" fill="rgba(0,0,0,.46)"/>
-      <path d="M184 80 Q182 47 210 43 Q238 47 236 80 Q232 58 210 55 Q188 58 184 80 Z" fill="#18202f"/>
-      <path d="M184 76 Q181 94 189 103 Q185 86 191 69 Z" fill="#18202f"/>
-      <path d="M236 76 Q239 94 231 103 Q235 86 229 69 Z" fill="#18202f"/>
-      <circle cx="210" cy="45" r="8" fill="#18202f"/>
-      <circle cx="210" cy="82" r="25" fill="#d8b7a3" stroke="rgba(255,255,255,.18)" stroke-width="1.2"/>
-      <path d="M186 71 Q197 55 219 60 Q207 62 198 72 Z" fill="#243042" opacity=".9"/>
-      <circle cx="186" cy="89" r="1.6" fill="#fbbf24" opacity=".8"/>
-      <circle cx="234" cy="89" r="1.6" fill="#fbbf24" opacity=".8"/>
-      <path d="M198 105 L198 124 Q210 132 222 124 L222 105 Z" fill="#d8b7a3" stroke="rgba(255,255,255,.14)" stroke-width="1"/>
-      <path d="M198 106 Q210 115 222 106 L222 112 Q210 121 198 112 Z" fill="#c79b83" opacity=".38"/>
-      <path d="M168 145 Q210 124 252 145 L260 178 L250 244 L238 242 L238 300 L182 300 L182 242 L170 244 L160 178 Z" fill="#e6d7cc" stroke="rgba(255,255,255,.14)" stroke-width="1"/>
-      <path d="M238 160 Q248 202 238 242 L238 300 L182 300 L182 242 Q198 212 207 160 Z" fill="rgba(2,6,23,.08)"/>
-      <path d="M168 148 Q148 196 154 250 L166 250 Q162 204 178 160 Z" fill="#e6d7cc" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
-      <path d="M252 148 Q272 196 266 250 L254 250 Q258 204 242 160 Z" fill="#e6d7cc" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
-      <circle cx="160" cy="257" r="7" fill="#d8b7a3"/>
-      <circle cx="260" cy="257" r="7" fill="#d8b7a3"/>
-      <path d="M184 298 L176 408 L190 408 L200 306 Z" fill="#e6d7cc" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
-      <path d="M236 298 L244 408 L230 408 L220 306 Z" fill="#e6d7cc" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
-      <ellipse cx="181" cy="414" rx="18" ry="7" fill="#0b1220" stroke="rgba(255,255,255,.18)" stroke-width="1"/>
-      <ellipse cx="239" cy="414" rx="18" ry="7" fill="#0b1220" stroke="rgba(255,255,255,.18)" stroke-width="1"/>
-    `;
+    const figure = buildLookFigure(model);
 
     const jacket = "M162 142 Q210 122 258 142 L272 184 L258 252 L246 248 L246 318 L174 318 L174 248 L162 252 L148 184 Z";
     const trousers = "M174 310 H246 L252 410 H232 L210 340 L188 410 H168 Z";
@@ -867,9 +1022,34 @@ initFabric();
     const skirt = "M174 300 H246 L264 410 H156 Z";
     const sleeveL = "M166 142 L146 184 L160 192 L180 158 Z";
     const sleeveR = "M254 142 L274 184 L260 192 L240 158 Z";
+    const wSleeveL = "M172 144 L154 184 L166 194 L180 160 Z";
+    const wSleeveR = "M248 144 L266 184 L254 194 L240 160 Z";
+    const wKurta = "M170 142 Q210 124 250 142 L260 172 L252 210 L248 332 L172 332 L168 210 L160 172 Z";
+    const wKurtaPants = "M184 332 L178 414 L192 414 L202 344 L218 344 L228 414 L242 414 L236 332 Z";
+    const wKurtaDupatta = "M164 144 Q210 116 256 144 L248 170 L210 156 L172 170 Z M246 158 Q282 214 262 358 L248 354 Q264 222 236 168 Z";
+    const wAnarkaliTop = "M180 142 Q210 124 240 142 L246 202 L238 252 L174 252 L170 202 Z";
+    const wAnarkaliSkirt = "M174 252 L238 252 L278 410 L144 410 Z";
+    const wSalwarTop = "M172 142 Q210 124 248 142 L258 172 L250 230 L246 342 L174 342 L170 230 L162 172 Z";
+    const wSalwarPants = "M180 342 L162 414 L184 414 L202 350 L218 350 L236 414 L258 414 L240 342 Z";
+    const wLehengaTop = "M184 142 Q210 128 236 142 L242 182 L238 232 L182 232 L178 182 Z";
+    const wLehengaSkirt = "M182 232 L238 232 L286 410 L134 410 Z";
+    const wLehengaDupatta = "M236 150 Q280 206 262 342 L246 338 Q262 214 226 164 Z";
+    const wSareeTop = "M186 142 Q210 130 234 142 L240 180 L236 222 L184 222 L180 180 Z";
+    const wSareeSkirt = "M184 222 L236 222 L264 410 L156 410 Z";
+    const wSareeWrap = "M184 224 Q210 238 236 224 L246 290 L174 290 Z";
+    const wSareePallu = "M232 150 Q280 210 264 356 L246 352 Q260 222 220 162 Z";
+    const wShararaTop = "M172 142 Q210 124 248 142 L258 172 L250 220 L246 286 L174 286 L170 220 L162 172 Z";
+    const wShararaPants = "M180 286 L150 410 L178 410 L202 322 L218 322 L242 410 L270 410 L240 286 Z";
+    const mKurta = "M166 142 Q210 124 254 142 L264 172 L256 230 L252 336 L168 336 L164 230 L156 172 Z";
+    const mKurtaPants = "M184 336 L180 414 L194 414 L204 348 L216 348 L226 414 L240 414 L236 336 Z";
+    const mShalwar = "M180 336 L162 414 L184 414 L204 350 L216 350 L236 414 L258 414 L240 336 Z";
+    const mSherwani = "M162 142 Q210 120 258 142 L272 184 L262 240 L258 342 L162 342 L158 240 L148 184 Z";
+    const mSherwaniPants = "M184 342 L180 414 L194 414 L204 352 L216 352 L226 414 L240 414 L236 342 Z";
+    const mWaistcoat = "M174 148 L198 136 L210 160 L222 136 L246 148 L252 244 L246 252 L244 330 L210 336 L176 330 L174 252 L168 244 Z";
     const stroke = 'stroke="rgba(255,255,255,.3)" stroke-width="1.3" stroke-linejoin="round"';
     const detail = 'fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.2" stroke-linecap="round"';
     const add = (path, fill) => `<path d="${path}" fill="${fill}" ${stroke}/>`;
+    const addSoft = (path, fill, opacity = 0.45) => `<path d="${path}" fill="${fill}" fill-opacity="${opacity}" stroke="rgba(255,255,255,.22)" stroke-width="1"/>`;
 
     let layers = "";
     if (garmentId === "dress") {
@@ -886,6 +1066,26 @@ initFabric();
       layers = `${add(top, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, bottomFill)}<path d="M210 182 V410" ${detail}/><path d="M184 300 H236" fill="none" stroke="${accent}" stroke-width="2" stroke-linecap="round" opacity=".8"/>`;
     } else if (garmentId === "blazer") {
       layers = `${add(jacket, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, accentFill)}<path d="M190 142 L210 185 L230 142" ${detail}/><circle cx="210" cy="224" r="1.8" fill="rgba(255,255,255,.7)"/>`;
+    } else if (garmentId === "w-kurta") {
+      layers = `${add(wKurta, fabricFill)}${add(wSleeveL, fabricFill)}${add(wSleeveR, fabricFill)}${add(wKurtaPants, accentFill)}${addSoft(wKurtaDupatta, highlight, 0.48)}<path d="M196 142 L210 162 L224 142" ${detail}/><path d="M210 162 V332" ${detail}/><path d="M174 324 H246" fill="none" stroke="${accent}" stroke-width="2.2" opacity=".9"/><path d="M174 260 H186 M234 260 H246" ${detail}/>`;
+    } else if (garmentId === "w-anarkali") {
+      layers = `${add(wAnarkaliTop, fabricFill)}${add(wAnarkaliSkirt, fabricFill)}${add(wSleeveL, fabricFill)}${add(wSleeveR, fabricFill)}<path d="M184 252 H236" fill="none" stroke="${accent}" stroke-width="2.4" opacity=".9"/><path d="M210 142 V410" ${detail}/><path d="M158 404 H262" fill="none" stroke="${accent}" stroke-width="2" opacity=".8"/>`;
+    } else if (garmentId === "w-salwar") {
+      layers = `${add(wSalwarTop, fabricFill)}${add(wSleeveL, fabricFill)}${add(wSleeveR, fabricFill)}${add(wSalwarPants, accentFill)}${addSoft(wKurtaDupatta, highlight, 0.34)}<path d="M196 142 L210 160 L224 142" ${detail}/><path d="M210 160 V342" ${detail}/><path d="M176 334 H244" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><path d="M184 400 H198 M222 400 H236" fill="none" stroke="${accent}" stroke-width="1.6" opacity=".8"/>`;
+    } else if (garmentId === "w-lehenga") {
+      layers = `${add(wLehengaSkirt, fabricFill)}${add(wLehengaTop, fabricFill)}${add(wSleeveL, fabricFill)}${add(wSleeveR, fabricFill)}${addSoft(wLehengaDupatta, highlight, 0.55)}<path d="M182 232 H238" fill="none" stroke="${accent}" stroke-width="2.8" opacity=".9"/><path d="M190 246 L174 404 M210 246 V404 M230 246 L246 404" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/><path d="M140 404 H280" fill="none" stroke="${accent}" stroke-width="2" opacity=".8"/>`;
+    } else if (garmentId === "w-saree") {
+      layers = `${add(wSareeSkirt, fabricFill)}${add(wSareeTop, fabricFill)}${addSoft(wSareeWrap, fabricFill, 0.5)}${addSoft(wSareePallu, highlight, 0.58)}<path d="M186 142 Q210 158 234 142" ${detail}/><path d="M166 398 H254" fill="none" stroke="${accent}" stroke-width="2.2" opacity=".8"/><path d="M192 230 L178 400 M210 230 V400 M228 230 L242 400" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1"/>`;
+    } else if (garmentId === "w-sharara") {
+      layers = `${add(wShararaTop, fabricFill)}${add(wSleeveL, fabricFill)}${add(wSleeveR, fabricFill)}${add(wShararaPants, accentFill)}<path d="M196 142 L210 160 L224 142" ${detail}/><path d="M210 160 V286" ${detail}/><path d="M176 278 H244" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><path d="M176 398 H192 M228 398 H244" fill="none" stroke="${accent}" stroke-width="1.6" opacity=".8"/>`;
+    } else if (garmentId === "m-kurta") {
+      layers = `${add(mKurta, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(mKurtaPants, accentFill)}<path d="M196 142 L210 158 L224 142" ${detail}/><path d="M210 158 V336" ${detail}/><path d="M168 328 H252" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><circle cx="210" cy="184" r="1.5" fill="rgba(255,255,255,.6)"/><circle cx="210" cy="198" r="1.5" fill="rgba(255,255,255,.6)"/>`;
+    } else if (garmentId === "m-shalwar") {
+      layers = `${add(mKurta, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(mShalwar, accentFill)}<path d="M196 142 L210 158 L224 142" ${detail}/><path d="M210 158 V336" ${detail}/><path d="M168 328 H252" fill="none" stroke="${accent}" stroke-width="2" opacity=".85"/><path d="M168 398 H190 M230 398 H252" fill="none" stroke="${accent}" stroke-width="1.6" opacity=".8"/>`;
+    } else if (garmentId === "m-sherwani") {
+      layers = `${add(mSherwani, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(mSherwaniPants, accentFill)}<path d="M196 142 L210 164 L224 142" ${detail}/><path d="M210 164 V342" ${detail}/><path d="M170 334 H250" fill="none" stroke="${accent}" stroke-width="2.2" opacity=".9"/><circle cx="210" cy="192" r="1.6" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="208" r="1.6" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="224" r="1.6" fill="rgba(255,255,255,.58)"/>`;
+    } else if (garmentId === "m-waistcoat") {
+      layers = `${addSoft(mKurta, "#f4f1e8", 0.44)}${addSoft(sleeveL, "#f4f1e8", 0.44)}${addSoft(sleeveR, "#f4f1e8", 0.44)}${add(mKurtaPants, accentFill)}${add(mWaistcoat, fabricFill)}<path d="M196 136 L210 164 L224 136" ${detail}/><path d="M210 164 V330" ${detail}/><path d="M178 250 H196 M224 250 H242" ${detail}/><circle cx="210" cy="196" r="1.5" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="212" r="1.5" fill="rgba(255,255,255,.58)"/><circle cx="210" cy="228" r="1.5" fill="rgba(255,255,255,.58)"/>`;
     } else {
       layers = `${add(jacket, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, bottomFill)}<path d="M190 142 L210 185 L230 142" ${detail}/><path d="M210 142 V318" ${detail}/><circle cx="210" cy="224" r="1.8" fill="rgba(255,255,255,.7)"/><path d="M206 146 L214 146 L210 196 Z" fill="${highlight}" opacity=".82"/>`;
     }
@@ -917,26 +1117,81 @@ initFabric();
     return `${garment.note} ${occasion} ${finish} ${colorway}`;
   }
 
+  function getLookOptions(brief = fabricLastBrief) {
+    if (!brief) return [];
+    if (lookCollection === "desi") {
+      return brief.desiGarments.filter((item) => item.gender === lookModel);
+    }
+    return brief.garments.filter((item) => lookModel === "her" || !["dress", "skirt"].includes(item.id));
+  }
+
+  function syncLookSwitches() {
+    document.querySelectorAll("#look-model-switch [data-model]").forEach((button) => {
+      const active = button.dataset.model === lookModel;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    document.querySelectorAll("#look-collection-switch [data-collection]").forEach((button) => {
+      const active = button.dataset.collection === lookCollection;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+  }
+
+  function setLookModel(model) {
+    lookModel = model;
+    syncLookSwitches();
+    renderLookPreview(fabricLastBrief);
+  }
+
+  function setLookCollection(collection) {
+    lookCollection = collection;
+    syncLookSwitches();
+    renderLookPreview(fabricLastBrief);
+  }
+
+  function selectLook(id) {
+    const brief = fabricLastBrief;
+    if (!brief) return;
+    const desi = brief.desiGarments.find((item) => item.id === id);
+    const modern = brief.garments.find((item) => item.id === id);
+    if (desi) {
+      lookCollection = "desi";
+      lookModel = desi.gender;
+    } else if (modern) {
+      lookCollection = "modern";
+      if (["dress", "skirt"].includes(id)) lookModel = "her";
+    }
+    selectedLook = id;
+    syncLookSwitches();
+    renderLookPreview(brief);
+  }
+
   function renderLookPreview(brief = fabricLastBrief) {
     if (!brief || !fabricLookSvgWrap) return;
-    const garment = brief.garments.find((item) => item.id === selectedLook) || brief.garments[0];
+    const options = getLookOptions(brief);
+    const garment = options.find((item) => item.id === selectedLook) || options[0];
     if (!garment) return;
     selectedLook = garment.id;
-    fabricLookSvgWrap.innerHTML = buildLookSvg(garment.id, brief.palette, brief.pattern, lookColorway);
+    fabricLookSvgWrap.innerHTML = buildLookSvg(garment.id, brief.palette, brief.pattern, lookColorway, lookModel);
+    if (fabricLookTag) fabricLookTag.textContent = `AI look preview · ${lookModel === "her" ? "Her" : "Him"} · ${lookCollection === "desi" ? "Desi" : "Modern"}`;
     if (fabricLookTitle) fabricLookTitle.textContent = garment.name;
     if (fabricLookNote) fabricLookNote.textContent = getLookNote(garment, brief);
     if (fabricLookPills) {
-      if (fabricLookPills.children.length !== brief.garments.length) {
-        fabricLookPills.innerHTML = brief.garments.map((item) => `<button class="look-pill ${item.id === selectedLook ? "active" : ""}" type="button" data-look="${item.id}">${escapeHtml(item.name)}</button>`).join("");
+      const pillKey = options.map((item) => item.id).join("|");
+      if (fabricLookPills.dataset.key !== pillKey) {
+        fabricLookPills.innerHTML = options.map((item) => `<button class="look-pill ${item.id === selectedLook ? "active" : ""}" type="button" data-look="${item.id}">${escapeHtml(item.name)}</button>`).join("");
+        fabricLookPills.dataset.key = pillKey;
       } else {
         [...fabricLookPills.children].forEach((pill) => {
           pill.classList.toggle("active", pill.dataset.look === selectedLook);
         });
       }
     }
-    document.querySelectorAll("#garment-grid .garment-card").forEach((card) => {
+    document.querySelectorAll("#garment-grid .garment-card, #desi-grid .garment-card").forEach((card) => {
       card.classList.toggle("is-selected", card.dataset.look === selectedLook);
     });
+    syncLookSwitches();
   }
 
   function downloadLook() {
@@ -979,7 +1234,7 @@ initFabric();
 
   function surpriseLook() {
     if (!fabricLastBrief) return;
-    const options = fabricLastBrief.garments.filter((item) => item.id !== selectedLook);
+    const options = getLookOptions(fabricLastBrief).filter((item) => item.id !== selectedLook);
     if (options.length) selectedLook = options[Math.floor(Math.random() * options.length)].id;
     const occasions = ["office", "evening", "weekend", "wedding"];
     const finishes = ["tailored", "relaxed", "fluid"];
@@ -1001,10 +1256,13 @@ initFabric();
     fabricBriefTitle.textContent = brief.title;
     fabricBriefTag.textContent = brief.tag;
     fabricBriefSummary.textContent = brief.summary;
-    selectedLook = brief.garments[0]?.id || "suit";
+    selectedLook = getLookOptions(brief)[0]?.id || brief.garments[0]?.id || "suit";
     fabricPalette.innerHTML = brief.palette.map((color) => `<span class="swatch"><i style="background:${color.hex}"></i>${escapeHtml(color.name)} <span>${color.hex}</span></span>`).join("");
     fabricFacts.innerHTML = brief.facts.map((fact) => `<div class="fact"><span>${escapeHtml(fact.label)}</span><strong>${escapeHtml(fact.value)}</strong></div>`).join("");
     fabricGarmentGrid.innerHTML = brief.garments.map((garment) => `<article class="garment-card ${garment.id === selectedLook ? "is-selected" : ""}" data-look="${garment.id}" tabindex="0" role="button" aria-label="Preview ${escapeHtml(garment.name)}"><div class="garment-visual">${garmentSvg(garment.id, brief.palette, brief.pattern)}</div><div class="garment-copy"><h4>${escapeHtml(garment.name)}</h4><p>${escapeHtml(garment.note)}</p></div></article>`).join("");
+    if (fabricDesiGrid) {
+      fabricDesiGrid.innerHTML = brief.desiGarments.map((garment) => `<article class="garment-card desi-card ${garment.id === selectedLook ? "is-selected" : ""}" data-look="${garment.id}" tabindex="0" role="button" aria-label="Preview ${escapeHtml(garment.name)}"><div class="garment-visual">${garmentSvg(garment.id, brief.palette, brief.pattern)}</div><div class="garment-copy"><span class="desi-gender">${garment.gender === "her" ? "Women" : "Men"}</span><h4>${escapeHtml(garment.name)}</h4><p>${escapeHtml(garment.note)}</p></div></article>`).join("");
+    }
     fabricArticle.innerHTML = `<h3>${escapeHtml(brief.article.heading)}</h3>${brief.article.paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}<div class="styling-note">${escapeHtml(brief.article.note)}</div>`;
     renderLookPreview(brief);
   }
@@ -1243,24 +1501,35 @@ initFabric();
   fabricLookPills?.addEventListener("click", (event) => {
     const pill = event.target.closest("[data-look]");
     if (!pill) return;
-    selectedLook = pill.dataset.look;
-    renderLookPreview(fabricLastBrief);
+    selectLook(pill.dataset.look);
   });
 
-  fabricGarmentGrid?.addEventListener("click", (event) => {
-    const card = event.target.closest("[data-look]");
-    if (!card) return;
-    selectedLook = card.dataset.look;
-    renderLookPreview(fabricLastBrief);
+  [fabricGarmentGrid, fabricDesiGrid].forEach((grid) => {
+    grid?.addEventListener("click", (event) => {
+      const card = event.target.closest("[data-look]");
+      if (!card) return;
+      selectLook(card.dataset.look);
+    });
+
+    grid?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const card = event.target.closest("[data-look]");
+      if (!card) return;
+      event.preventDefault();
+      selectLook(card.dataset.look);
+    });
   });
 
-  fabricGarmentGrid?.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    const card = event.target.closest("[data-look]");
-    if (!card) return;
-    event.preventDefault();
-    selectedLook = card.dataset.look;
-    renderLookPreview(fabricLastBrief);
+  fabricLookModelSwitch?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-model]");
+    if (!button) return;
+    setLookModel(button.dataset.model);
+  });
+
+  fabricLookCollectionSwitch?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-collection]");
+    if (!button) return;
+    setLookCollection(button.dataset.collection);
   });
 
   fabricLookOccasion?.addEventListener("change", () => {

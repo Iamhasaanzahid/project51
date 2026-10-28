@@ -6,7 +6,7 @@
     <title>AI Fabric Studio — Show the fabric. See the wardrobe.</title>
     <meta
       name="description"
-      content="Upload a fabric photo or short video and get an instant fashion brief: colour palette, garment concepts and a styling article. Runs on-device with no API keys."
+      content="Upload a fabric photo or short video and get an instant fashion brief: colour palette, modern and South Asian garment concepts, an anime look preview and a styling article. Runs on-device with no API keys."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20261028" />
+    <link rel="stylesheet" href="styles.css?v=20261028c" />
   </head>
   <body>
     <div class="ambient ambient-one"></div>
@@ -45,7 +45,7 @@
           <h1>Show the <span class="gradient-text">fabric</span>. See the wardrobe.</h1>
           <p class="hero-lede">
             Upload a fabric photo or a short video. The studio reads its colour, texture and drape,
-            then writes a fashion brief with the suits, jackets, dresses and trousers it can become.
+            then writes a fashion brief with the suits, dresses, kurtas, lehengas and sherwanis it can become.
             No API keys. Nothing leaves your browser.
           </p>
           <div class="hero-actions">
@@ -58,7 +58,7 @@
               <span>fabric input</span>
             </div>
             <div class="metric">
-              <strong><span data-count="8">0</span>+</strong>
+              <strong><span data-count="18">0</span>+</strong>
               <span>garment directions</span>
             </div>
             <div class="metric">
@@ -115,7 +115,7 @@
           <h2>Show the fabric. See the wardrobe.</h2>
           <p>
             Add a photo or a short video. The studio reads colour, surface and drape, then builds
-            an eight-piece garment board, a look preview and a written fashion brief for the cloth.
+            an eight-piece modern board, a 10-look desi atelier, an anime look preview and a written fashion brief for the cloth.
           </p>
         </div>
 
@@ -162,7 +162,7 @@
             <div class="brief-empty" id="brief-empty">
               <span class="brief-spark" aria-hidden="true">✦</span>
               <h3>Your fashion brief appears here.</h3>
-              <p>Add a fabric photo or video, then generate. You will get a palette, a fabric read, eight garment concepts, a live look preview and a short styling article.</p>
+              <p>Add a fabric photo or video, then generate. You will get a palette, a fabric read, eight modern concepts plus a desi atelier, an anime look preview and a short styling article.</p>
               <div class="brief-placeholder" aria-hidden="true">
                 <span></span><span></span><span></span><span></span><span></span><span></span>
               </div>
@@ -179,13 +179,29 @@
 
               <div class="look-preview">
                 <div class="look-stage">
-                  <span class="look-tag">AI look preview</span>
+                  <span class="look-tag" id="look-tag">AI look preview · Her · Modern</span>
                   <div class="look-svg-wrap" id="look-svg-wrap"></div>
                 </div>
                 <div class="look-copy">
                   <span class="panel-label">Selected look</span>
                   <h4 id="look-title">—</h4>
                   <p class="look-note" id="look-note"></p>
+                  <div class="look-switches">
+                    <div class="look-switch-group">
+                      <span class="switch-label">Model</span>
+                      <div class="look-segment" id="look-model-switch" role="group" aria-label="Model">
+                        <button type="button" data-model="her" class="active" title="Anime female model">Her</button>
+                        <button type="button" data-model="him" title="Anime male model">Him</button>
+                      </div>
+                    </div>
+                    <div class="look-switch-group">
+                      <span class="switch-label">Wardrobe</span>
+                      <div class="look-segment" id="look-collection-switch" role="group" aria-label="Wardrobe">
+                        <button type="button" data-collection="modern" class="active">Modern</button>
+                        <button type="button" data-collection="desi">Desi</button>
+                      </div>
+                    </div>
+                  </div>
                   <div class="look-pills" id="look-pills"></div>
                   <div class="look-controls">
                     <label>Occasion
@@ -222,6 +238,19 @@
               <div class="palette" id="palette"></div>
               <div class="fabric-facts" id="fabric-facts"></div>
               <div class="garment-grid" id="garment-grid"></div>
+
+              <div class="desi-section">
+                <div class="desi-head">
+                  <div>
+                    <span class="panel-label">India &amp; Pakistan wardrobe</span>
+                    <h3>Desi atelier</h3>
+                    <p>Kurta, salwar kameez, anarkali, lehenga, saree, sherwani and more — all cut from the same cloth.</p>
+                  </div>
+                  <span class="tag">10 silhouettes</span>
+                </div>
+                <div class="garment-grid desi-grid" id="desi-grid"></div>
+              </div>
+
               <article class="fabric-article" id="fabric-article"></article>
               <div class="brief-foot">
                 <button class="btn btn-small btn-ghost" id="copy-brief" type="button">Copy brief</button>
@@ -263,8 +292,8 @@
           <article class="step-card reveal">
             <div class="step-top"><span class="step-number">04</span><span class="step-icon">✦</span></div>
             <h3>Map garments</h3>
-            <p>The same cloth is mapped to tailoring, outerwear, dresses, shirts, skirts and trousers as an eight-piece board.</p>
-            <span class="tag">eight directions</span>
+            <p>The same cloth is mapped to tailoring, outerwear, dresses, shirts, skirts and trousers as an eight-piece modern board and a 10-look desi atelier.</p>
+            <span class="tag">18 directions</span>
           </article>
           <article class="step-card reveal">
             <div class="step-top"><span class="step-number">05</span><span class="step-icon">◇</span></div>
@@ -398,7 +427,7 @@
         <div class="cta-inner">
           <span class="eyebrow">Ready to see your fabric</span>
           <h2>One cloth in. A full wardrobe out.</h2>
-          <p>Upload a photo or video and get a palette, eight garment directions, a look preview and a styling article in seconds.</p>
+          <p>Upload a photo or video and get a palette, 18 garment directions, a look preview and a styling article in seconds.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="#fabric-ai">Try fabric AI <span aria-hidden="true">✦</span></a>
             <a class="btn btn-ghost" href="#workflow">See how it works</a>
@@ -418,6 +447,6 @@
       <span class="made-by">Made in <strong>mhzaly</strong></span>
     </footer>
 
-    <script type="module" src="app.js?v=20261028"></script>
+    <script type="module" src="app.js?v=20261028c"></script>
   </body>
 </html>
