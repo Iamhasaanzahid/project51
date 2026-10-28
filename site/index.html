@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Fabric Studio — Secure AI Fabric OS</title>
+    <meta
+      name="description"
+      content="AI Fabric Studio is a hyper-secure fabric rendering and retail SaaS console: tenant-isolated workspaces, hardened media intake, idempotent payments and audit-grade logging."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+    <div class="grain"></div>
+
+    <header class="nav" id="nav">
+      <a class="brand" href="#top" aria-label="AI Fabric Studio home">
+        <span class="brand-mark">AF</span>
+        <span>AI Fabric Studio</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#workflow">Workflow</a>
+        <a href="#security">Security</a>
+        <a href="#credits">Free AI</a>
+      </nav>
+      <a class="btn btn-small btn-ghost" href="https://github.com/Iamhasaanzahid/project51" target="_blank" rel="noreferrer">
+        View repo <span aria-hidden="true">↗</span>
+      </a>
+    </header>
+
+    <main id="top">
+      <section class="hero section-shell">
+        <div class="hero-copy reveal">
+          <div class="kicker"><span class="pulse-dot"></span> Secure AI Fabric OS</div>
+          <h1>Weave <span class="gradient-text">intelligence</span> into every thread.</h1>
+          <p class="hero-lede">
+            A hyper-secure fabric rendering and retail SaaS console. Tenant-isolated workspaces,
+            magic-byte media intake, server-authoritative pricing, and audit-grade logs — in one
+            beautifully sharp operating surface.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#workflow">Open the workflow <span aria-hidden="true">→</span></a>
+            <a class="btn btn-ghost" href="#security">Read security model</a>
+          </div>
+          <div class="metrics">
+            <div class="metric">
+              <strong><span data-count="10">0</span>B+</strong>
+              <span>free AI tokens / mo</span>
+            </div>
+            <div class="metric">
+              <strong><span data-count="15">0</span> min</strong>
+              <span>tenant-scoped JWT</span>
+            </div>
+            <div class="metric">
+              <strong>TLS 1.3</strong>
+              <span>encrypted in transit</span>
+            </div>
+            <div class="metric">
+              <strong>6</strong>
+              <span>security vectors covered</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual reveal" aria-label="Interactive 3D fabric mesh">
+          <div class="visual-glow"></div>
+          <canvas id="fabric-canvas"></canvas>
+          <div class="visual-topline">
+            <span class="live-dot"></span>
+            <span>live fabric mesh</span>
+            <span class="visual-code">GPU · SHIELDED</span>
+          </div>
+          <div class="floating-chip chip-one">tenant isolated</div>
+          <div class="floating-chip chip-two">EXIF scrubbed</div>
+          <div class="floating-chip chip-three">audit ready</div>
+          <div class="lab-panel">
+            <div class="lab-title">Fabric lab</div>
+            <label>
+              <span>Weave intensity</span>
+              <input id="amp" type="range" min="0.25" max="2" step="0.05" value="1" />
+            </label>
+            <label>
+              <span>Orbit speed</span>
+              <input id="speed" type="range" min="0.15" max="2.5" step="0.05" value="1" />
+            </label>
+            <label>
+              <span>Neon hue</span>
+              <input id="hue" type="range" min="160" max="300" step="1" value="186" />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="logo-strip section-shell reveal" aria-label="Security posture">
+        <span>Zero raw card data</span>
+        <span>Schema-per-tenant RLS</span>
+        <span>ClamAV quarantine</span>
+        <span>Idempotent payments</span>
+        <span>PII-redacted logs</span>
+      </section>
+
+      <section class="section section-shell" id="workflow">
+        <div class="section-head reveal">
+          <span class="eyebrow">The workflow</span>
+          <h2>From upload to audited render in six clean moves.</h2>
+          <p>
+            Every step is fail-closed. A bad file never reaches the GPU, a client never sets a
+            price, and every action leaves a trace you can actually defend.
+          </p>
+        </div>
+        <div class="workflow-grid">
+          <article class="step-card reveal">
+            <div class="step-top"><span class="step-number">01</span><span class="step-icon">◈</span></div>
+            <h3>Ingest</h3>
+            <p>Magic-byte validation and ClamAV scanning reject polyglots, spoofed extensions and malware before decode.</p>
+            <span class="tag">fail-closed</span>
+          </article>
+          <article class="step-card reveal">
+            <div class="step-top"><span class="step-number">02</span><span class="step-icon">⌁</span></div>
+            <h3>Sanitize</h3>
+            <p>Pixels are re-encoded and EXIF/GPS metadata is stripped. Device fingerprints never reach the render worker.</p>
+            <span class="tag">metadata scrub</span>
+          </article>
+          <article class="step-card reveal">
+            <div class="step-top"><span class="step-number">03</span><span class="step-icon">≋</span></div>
+            <h3>Queue</h3>
+            <p>An atomic Redis leaky-bucket limiter protects GPU capacity and is keyed to the token hash, not the user.</p>
+            <span class="tag">atomic limiter</span>
+          </article>
+          <article class="step-card reveal">
+            <div class="step-top"><span class="step-number">04</span><span class="step-icon">✦</span></div>
+            <h3>Render</h3>
+            <p>ControlNet + SDXL run on non-root, read-only GPU workers with dropped capabilities and a seccomp profile.</p>
+            <span class="tag">GPU shield</span>
+          </article>
+          <article class="step-card reveal">
+            <div class="step-top"><span class="step-number">05</span><span class="step-icon">◇</span></div>
+            <h3>Pay</h3>
+            <p>Hosted Checkout, 3DS2 and HMAC-verified webhooks keep raw card data out of your stack entirely.</p>
+            <span class="tag">PCI SAQ A</span>
+          </article>
+          <article class="step-card reveal">
+            <div class="step-top"><span class="step-number">06</span><span class="step-icon">◎</span></div>
+            <h3>Audit</h3>
+            <p>Tenant RLS, uniform 404 IDOR guards and PII-redacted structured logs make every action traceable.</p>
+            <span class="tag">audit trail</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="section section-shell split-section" id="security">
+        <div class="security-copy reveal">
+          <span class="eyebrow">Security model</span>
+          <h2>Designed like a vault. Built like a product.</h2>
+          <p>
+            Six architectural vectors, one coherent security posture. The console is not a thin
+            demo shell around a fragile API — it is a reference implementation of the controls
+            that matter when AI meets money and customer data.
+          </p>
+          <div class="security-points">
+            <div class="security-point">
+              <span class="shield-icon">01</span>
+              <div>
+                <strong>AI / media hardening</strong>
+                <span>Strict decode, metadata scrub, quarantine scanning.</span>
+              </div>
+            </div>
+            <div class="security-point">
+              <span class="shield-icon">02</span>
+              <div>
+                <strong>Payment security</strong>
+                <span>No raw PANs, server-side prices, webhook integrity.</span>
+              </div>
+            </div>
+            <div class="security-point">
+              <span class="shield-icon">03</span>
+              <div>
+                <strong>Tenant isolation &amp; RBAC</strong>
+                <span>Schema-per-tenant, PostgreSQL RLS, uniform 404s.</span>
+              </div>
+            </div>
+            <div class="security-point">
+              <span class="shield-icon">04</span>
+              <div>
+                <strong>Data protection &amp; logging</strong>
+                <span>TLS 1.3, AES-256 at rest, PII-redacted events.</span>
+              </div>
+            </div>
+            <div class="security-point">
+              <span class="shield-icon">05</span>
+              <div>
+                <strong>Secret management</strong>
+                <span>Fail-fast production checks, split DB roles, no defaults.</span>
+              </div>
+            </div>
+            <div class="security-point">
+              <span class="shield-icon">06</span>
+              <div>
+                <strong>DevSecOps &amp; monitoring</strong>
+                <span>Bandit, Semgrep, Gitleaks, Trivy, SBOM, Dependabot.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="security-visual reveal">
+          <div class="orbit-card">
+            <div class="orbit-ring ring-one"></div>
+            <div class="orbit-ring ring-two"></div>
+            <div class="orbit-ring ring-three"></div>
+            <div class="orbit-core">
+              <span>AF</span>
+              <small>secure core</small>
+            </div>
+            <span class="orbit-label label-a">RLS</span>
+            <span class="orbit-label label-b">3DS2</span>
+            <span class="orbit-label label-c">KMS</span>
+            <span class="orbit-label label-d">SBOM</span>
+            <span class="orbit-label label-e">WAF</span>
+            <span class="orbit-label label-f">PII</span>
+          </div>
+          <div class="security-note">
+            <span class="live-dot"></span>
+            <span>Every control is exercised by automated tests and CI gates.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-shell" id="credits">
+        <div class="section-head reveal">
+          <span class="eyebrow">Free AI credits</span>
+          <h2>~10 billion free tokens a month. Use them with judgment.</h2>
+          <p>
+            A curated catalogue of hidden AI platforms with generous free tiers, daily credits and
+            developer-friendly APIs — surfaced inside the console as a practical launchpad.
+          </p>
+        </div>
+        <div class="marquee" aria-hidden="true">
+          <div class="marquee-track">
+            <span>OmniRush</span><span>Groq</span><span>Cohere</span><span>Mistral AI</span><span>Google AI Studio</span><span>OpenRouter</span><span>Deepgram</span><span>Hugging Face</span><span>Stability AI</span><span>Jina AI</span>
+            <span>OmniRush</span><span>Groq</span><span>Cohere</span><span>Mistral AI</span><span>Google AI Studio</span><span>OpenRouter</span><span>Deepgram</span><span>Hugging Face</span><span>Stability AI</span><span>Jina AI</span>
+          </div>
+        </div>
+        <div class="credit-grid">
+          <article class="credit-card reveal">
+            <span class="credit-icon">⌘</span>
+            <h3>LLM &amp; reasoning</h3>
+            <p>High-volume chat, coding and reasoning APIs with daily and monthly free allowances.</p>
+            <span class="credit-meta">~4B tokens / mo</span>
+          </article>
+          <article class="credit-card reveal">
+            <span class="credit-icon">✧</span>
+            <h3>Image &amp; video</h3>
+            <p>Fabric concepting, product shots and trend boards with hosted diffusion endpoints.</p>
+            <span class="credit-meta">curated tiers</span>
+          </article>
+          <article class="credit-card reveal">
+            <span class="credit-icon">◉</span>
+            <h3>Speech &amp; vision</h3>
+            <p>Transcription, voice and embedding APIs for retail assistants and catalogue search.</p>
+            <span class="credit-meta">developer free tiers</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="cta section-shell reveal">
+        <div class="cta-inner">
+          <span class="eyebrow">Ready to weave</span>
+          <h2>Put a security-first fabric engine behind your next retail idea.</h2>
+          <p>Start with the console, inspect the workflow, and harden the entire path from upload to checkout.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://github.com/Iamhasaanzahid/project51" target="_blank" rel="noreferrer">Explore the repository <span aria-hidden="true">↗</span></a>
+            <a class="btn btn-ghost" href="#top">Back to top</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer section-shell">
+      <div class="brand">
+        <span class="brand-mark">AF</span>
+        <span>AI Fabric Studio</span>
+      </div>
+      <p>Security-hardened AI fabric &amp; retail SaaS reference implementation.</p>
+      <span class="footer-meta">No raw card data · No client-side pricing · No unvalidated uploads</span>
+    </footer>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
