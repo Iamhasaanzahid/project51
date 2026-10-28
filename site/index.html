@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AI Fabric Studio — Secure AI Fabric OS</title>
+    <title>AI Fabric Studio — Show the fabric. See the wardrobe.</title>
     <meta
       name="description"
-      content="AI Fabric Studio is a hyper-secure fabric rendering and retail SaaS console: tenant-isolated workspaces, hardened media intake, idempotent payments and audit-grade logging."
+      content="Upload a fabric photo or short video and get an instant fashion brief: colour palette, garment concepts and a styling article. Runs on-device with no API keys."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -28,46 +28,46 @@
         <span>AI Fabric Studio</span>
       </a>
       <nav class="nav-links" aria-label="Primary">
-        <a href="#console">Console</a>
-        <a href="#workflow">Workflow</a>
-        <a href="#security">Security</a>
-        <a href="#credits">Free AI</a>
+        <a href="#fabric-ai">Fabric AI</a>
+        <a href="#workflow">How it works</a>
+        <a href="#security">Privacy</a>
+        <a href="#credits">Library</a>
       </nav>
-      <a class="btn btn-small btn-primary" href="aifabric-studio.zip" download>
-        Download code <span aria-hidden="true">↓</span>
+      <a class="btn btn-small btn-primary" href="#fabric-ai">
+        Try fabric AI <span aria-hidden="true">✦</span>
       </a>
     </header>
 
     <main id="top">
       <section class="hero section-shell">
         <div class="hero-copy reveal">
-          <div class="kicker"><span class="pulse-dot"></span> Secure AI Fabric OS</div>
-          <h1>Weave <span class="gradient-text">intelligence</span> into every thread.</h1>
+          <div class="kicker"><span class="pulse-dot"></span> Fabric intelligence · on-device</div>
+          <h1>Show the <span class="gradient-text">fabric</span>. See the wardrobe.</h1>
           <p class="hero-lede">
-            A hyper-secure fabric rendering and retail SaaS console. Tenant-isolated workspaces,
-            magic-byte media intake, server-authoritative pricing, and audit-grade logs — in one
-            beautifully sharp operating surface.
+            Upload a fabric photo or a short video. The studio reads its colour, texture and drape,
+            then writes a fashion brief with the suits, jackets, dresses and trousers it can become.
+            No API keys. Nothing leaves your browser.
           </p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="#workflow">Open the workflow <span aria-hidden="true">→</span></a>
-            <a class="btn btn-ghost" href="#security">Read security model</a>
+            <a class="btn btn-primary" href="#fabric-ai">Try fabric AI <span aria-hidden="true">✦</span></a>
+            <a class="btn btn-ghost" href="#workflow">See how it works</a>
           </div>
           <div class="metrics">
             <div class="metric">
-              <strong><span data-count="10">0</span>B+</strong>
-              <span>free AI tokens / mo</span>
+              <strong>Photo + video</strong>
+              <span>fabric input</span>
             </div>
             <div class="metric">
-              <strong><span data-count="15">0</span> min</strong>
-              <span>tenant-scoped JWT</span>
+              <strong><span data-count="6">0</span>+</strong>
+              <span>garment directions</span>
             </div>
             <div class="metric">
-              <strong>TLS 1.3</strong>
-              <span>encrypted in transit</span>
+              <strong>100%</strong>
+              <span>on-device</span>
             </div>
             <div class="metric">
-              <strong>6</strong>
-              <span>security vectors covered</span>
+              <strong>0</strong>
+              <span>API keys needed</span>
             </div>
           </div>
         </div>
@@ -101,118 +101,89 @@
         </div>
       </section>
 
-      <section class="logo-strip section-shell reveal" aria-label="Security posture">
-        <span>Zero raw card data</span>
-        <span>Schema-per-tenant RLS</span>
-        <span>ClamAV quarantine</span>
-        <span>Idempotent payments</span>
-        <span>PII-redacted logs</span>
+      <section class="logo-strip section-shell reveal" aria-label="Fabric AI features">
+        <span>Photo + video intake</span>
+        <span>On-device colour reading</span>
+        <span>Garment concept board</span>
+        <span>Styling article</span>
+        <span>No API keys</span>
       </section>
 
-      <section class="section section-shell" id="console">
+      <section class="section section-shell fabric-ai" id="fabric-ai">
         <div class="section-head reveal">
-          <span class="eyebrow">The command center</span>
-          <h2>One console. Every signal that matters.</h2>
+          <span class="eyebrow">Fabric intelligence · no API key</span>
+          <h2>Show the fabric. See the wardrobe.</h2>
           <p>
-            Render jobs, payment state, security checks and free AI credits surfaced in a single,
-            calm interface. This is what a secure fabric workflow should feel like.
+            Add a photo or a short video. The studio reads colour, surface and drape, then builds
+            a six-piece garment board and a written fashion brief for the cloth.
           </p>
         </div>
 
-        <div class="console reveal">
-          <div class="console-bar">
-            <div class="console-dots"><span></span><span></span><span></span></div>
-            <span class="console-path">aifabric.studio / command-center</span>
-            <span class="console-live"><span class="live-dot"></span> live</span>
+        <div class="fabric-lab reveal">
+          <div class="fabric-input">
+            <div class="drop-zone" id="drop-zone" role="button" tabindex="0" aria-label="Upload a fabric photo or video">
+              <input id="fabric-file" type="file" accept="image/*,video/*" hidden />
+              <span class="drop-orbit" aria-hidden="true"><span></span><span></span><span></span></span>
+              <strong>Drop a fabric photo or video</strong>
+              <span class="drop-sub">JPG, PNG, WEBP, MP4, WEBM · processed on this device</span>
+              <span class="drop-cta">Choose a file <span aria-hidden="true">↗</span></span>
+            </div>
+
+            <div class="fabric-preview" id="fabric-preview" hidden>
+              <img id="fabric-image" alt="Selected fabric preview" hidden />
+              <video id="fabric-video" muted playsinline loop hidden></video>
+              <div class="scan-overlay" aria-hidden="true"><span></span></div>
+              <div class="preview-meta">
+                <span id="preview-name">fabric.jpg</span>
+                <div class="preview-actions">
+                  <button id="change-file" type="button">Change</button>
+                  <button id="remove-file" type="button" aria-label="Remove selected file">×</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="sample-row">
+              <span>No photo yet?</span>
+              <button class="sample-chip" type="button" data-sample="linen">Linen</button>
+              <button class="sample-chip" type="button" data-sample="denim">Indigo denim</button>
+              <button class="sample-chip" type="button" data-sample="silk">Silk</button>
+            </div>
+
+            <div class="fabric-actions">
+              <button class="btn btn-primary" id="analyze-btn" type="button" disabled>
+                Generate fashion brief <span aria-hidden="true">✦</span>
+              </button>
+              <span class="privacy-note">On-device · no uploads · no API keys</span>
+            </div>
+            <p class="fabric-status" id="fabric-status" role="status" aria-live="polite"></p>
           </div>
-          <div class="console-body">
-            <aside class="console-sidebar">
-              <div class="console-brand">AF</div>
-              <span class="side-item active">Overview</span>
-              <span class="side-item">Render lab</span>
-              <span class="side-item">Payments</span>
-              <span class="side-item">Security</span>
-              <span class="side-item">Free AI</span>
-              <span class="side-foot">tenant · acme</span>
-            </aside>
-            <div class="console-main">
-              <div class="console-tabs" role="tablist" aria-label="Console preview">
-                <button class="console-tab active" data-panel="render" type="button">Render</button>
-                <button class="console-tab" data-panel="payments" type="button">Payments</button>
-                <button class="console-tab" data-panel="security" type="button">Security</button>
-                <button class="console-tab" data-panel="credits" type="button">Free AI</button>
-              </div>
 
-              <div class="console-panel active" data-panel="render">
-                <div class="panel-grid">
-                  <div class="panel-card panel-span-2">
-                    <div class="panel-head">
-                      <span class="panel-label">Active render</span>
-                      <span class="panel-badge">GPU · shielded</span>
-                    </div>
-                    <h3>Indigo weave · v4</h3>
-                    <div class="progress"><span style="width: 78%"></span></div>
-                    <div class="panel-foot"><span>00:42 elapsed</span><span>queue healthy</span></div>
-                  </div>
-                  <div class="panel-card panel-meter-card">
-                    <span class="panel-label">Capacity</span>
-                    <div class="ring-meter"><span>78%</span></div>
-                    <span class="panel-meta">leaky bucket</span>
-                  </div>
-                  <div class="panel-card panel-span-3">
-                    <div class="panel-head">
-                      <span class="panel-label">Render throughput</span>
-                      <span class="panel-meta">last 12 hours</span>
-                    </div>
-                    <div class="mini-bars" aria-hidden="true">
-                      <span style="height: 34%"></span><span style="height: 52%"></span><span style="height: 44%"></span><span style="height: 68%"></span><span style="height: 58%"></span><span style="height: 82%"></span><span style="height: 71%"></span><span style="height: 92%"></span><span style="height: 76%"></span><span style="height: 100%"></span><span style="height: 88%"></span><span style="height: 95%"></span>
-                    </div>
-                  </div>
-                </div>
+          <div class="brief-panel" id="brief-panel">
+            <div class="brief-empty" id="brief-empty">
+              <span class="brief-spark" aria-hidden="true">✦</span>
+              <h3>Your fashion brief appears here.</h3>
+              <p>Add a fabric photo or video, then generate. You will get a palette, a fabric read, six garment concepts and a short styling article.</p>
+              <div class="brief-placeholder" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span><span></span>
               </div>
+            </div>
 
-              <div class="console-panel" data-panel="payments">
-                <div class="panel-grid">
-                  <div class="panel-card panel-span-2">
-                    <div class="panel-head"><span class="panel-label">Checkout session</span><span class="panel-badge success">3DS2 verified</span></div>
-                    <h3>Render pack · 100 credits</h3>
-                    <div class="pay-amount">PKR 4,000.00</div>
-                    <div class="panel-foot"><span>idempotency key · set</span><span>webhook · signed</span></div>
-                  </div>
-                  <div class="panel-card panel-span-3">
-                    <span class="panel-label">Recent events</span>
-                    <div class="log-row"><span class="log-dot"></span><span>checkout.completed</span><span class="log-time">just now</span></div>
-                    <div class="log-row"><span class="log-dot violet"></span><span>webhook.hmac_ok</span><span class="log-time">2s ago</span></div>
-                    <div class="log-row"><span class="log-dot lime"></span><span>credits.granted</span><span class="log-time">2s ago</span></div>
-                  </div>
+            <div class="brief-content" id="brief-content" hidden>
+              <div class="brief-head">
+                <div>
+                  <span class="panel-label">AI fabric brief</span>
+                  <h3 id="brief-title">—</h3>
                 </div>
+                <span class="brief-tag" id="brief-tag">on-device read</span>
               </div>
-
-              <div class="console-panel" data-panel="security">
-                <div class="panel-grid">
-                  <div class="panel-card panel-span-3">
-                    <div class="panel-head"><span class="panel-label">Security posture</span><span class="panel-badge success">all systems normal</span></div>
-                    <div class="check-row"><span class="check-icon">✓</span><span>Magic-byte + ClamAV validation</span><span class="check-state">passing</span></div>
-                    <div class="check-row"><span class="check-icon">✓</span><span>Tenant RLS + uniform 404 guard</span><span class="check-state">passing</span></div>
-                    <div class="check-row"><span class="check-icon">✓</span><span>PII redaction on structured logs</span><span class="check-state">passing</span></div>
-                    <div class="check-row"><span class="check-icon">✓</span><span>Secret scan + dependency audit</span><span class="check-state">passing</span></div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="console-panel" data-panel="credits">
-                <div class="panel-grid">
-                  <div class="panel-card panel-span-2">
-                    <span class="panel-label">Free AI budget</span>
-                    <h3>~10B tokens / month</h3>
-                    <div class="progress"><span style="width: 64%"></span></div>
-                    <div class="panel-foot"><span>curated catalogue</span><span>ready to launch</span></div>
-                  </div>
-                  <div class="panel-card panel-span-2">
-                    <span class="panel-label">Top sources</span>
-                    <div class="credits-row"><span>OmniRush</span><span>Groq</span><span>Cohere</span><span>OpenRouter</span><span>Hugging Face</span></div>
-                  </div>
-                </div>
+              <p class="brief-summary" id="brief-summary"></p>
+              <div class="palette" id="palette"></div>
+              <div class="fabric-facts" id="fabric-facts"></div>
+              <div class="garment-grid" id="garment-grid"></div>
+              <article class="fabric-article" id="fabric-article"></article>
+              <div class="brief-foot">
+                <button class="btn btn-small btn-ghost" id="copy-brief" type="button">Copy brief</button>
+                <span>Generated on this device</span>
               </div>
             </div>
           </div>
@@ -221,103 +192,102 @@
 
       <section class="section section-shell" id="workflow">
         <div class="section-head reveal">
-          <span class="eyebrow">The workflow</span>
-          <h2>From upload to audited render in six clean moves.</h2>
+          <span class="eyebrow">How it works</span>
+          <h2>From fabric photo to fashion brief in six quiet moves.</h2>
           <p>
-            Every step is fail-closed. A bad file never reaches the GPU, a client never sets a
-            price, and every action leaves a trace you can actually defend.
+            No upload queue, no API key and no waiting room. The studio reads the cloth, maps it to
+            silhouettes and writes the story in one local pass.
           </p>
         </div>
         <div class="workflow-grid">
           <article class="step-card reveal">
             <div class="step-top"><span class="step-number">01</span><span class="step-icon">◈</span></div>
-            <h3>Ingest</h3>
-            <p>Magic-byte validation and ClamAV scanning reject polyglots, spoofed extensions and malware before decode.</p>
-            <span class="tag">fail-closed</span>
+            <h3>Add fabric</h3>
+            <p>Drop a photo or a short video. The file is previewed in the browser and never sent to a server.</p>
+            <span class="tag">photo + video</span>
           </article>
           <article class="step-card reveal">
             <div class="step-top"><span class="step-number">02</span><span class="step-icon">⌁</span></div>
-            <h3>Sanitize</h3>
-            <p>Pixels are re-encoded and EXIF/GPS metadata is stripped. Device fingerprints never reach the render worker.</p>
-            <span class="tag">metadata scrub</span>
+            <h3>Read colour</h3>
+            <p>Pixels are sampled into a palette so the brief can name the exact tones in the cloth.</p>
+            <span class="tag">palette read</span>
           </article>
           <article class="step-card reveal">
             <div class="step-top"><span class="step-number">03</span><span class="step-icon">≋</span></div>
-            <h3>Queue</h3>
-            <p>An atomic Redis leaky-bucket limiter protects GPU capacity and is keyed to the token hash, not the user.</p>
-            <span class="tag">atomic limiter</span>
+            <h3>Read surface</h3>
+            <p>Contrast and saturation reveal whether the fabric reads solid, woven or boldly patterned.</p>
+            <span class="tag">texture + drape</span>
           </article>
           <article class="step-card reveal">
             <div class="step-top"><span class="step-number">04</span><span class="step-icon">✦</span></div>
-            <h3>Render</h3>
-            <p>ControlNet + SDXL run on non-root, read-only GPU workers with dropped capabilities and a seccomp profile.</p>
-            <span class="tag">GPU shield</span>
+            <h3>Map garments</h3>
+            <p>The same cloth is mapped to tailoring, outerwear, dresses, shirts and trousers as a six-piece board.</p>
+            <span class="tag">six directions</span>
           </article>
           <article class="step-card reveal">
             <div class="step-top"><span class="step-number">05</span><span class="step-icon">◇</span></div>
-            <h3>Pay</h3>
-            <p>Hosted Checkout, 3DS2 and HMAC-verified webhooks keep raw card data out of your stack entirely.</p>
-            <span class="tag">PCI SAQ A</span>
+            <h3>Write the brief</h3>
+            <p>A short styling article explains what the fabric can become, how to cut it and what to pair it with.</p>
+            <span class="tag">fashion article</span>
           </article>
           <article class="step-card reveal">
             <div class="step-top"><span class="step-number">06</span><span class="step-icon">◎</span></div>
-            <h3>Audit</h3>
-            <p>Tenant RLS, uniform 404 IDOR guards and PII-redacted structured logs make every action traceable.</p>
-            <span class="tag">audit trail</span>
+            <h3>Copy + keep</h3>
+            <p>Copy the whole brief or reset the studio. Nothing is stored after you refresh.</p>
+            <span class="tag">private by default</span>
           </article>
         </div>
       </section>
 
       <section class="section section-shell split-section" id="security">
         <div class="security-copy reveal">
-          <span class="eyebrow">Security model</span>
-          <h2>Designed like a vault. Built like a product.</h2>
+          <span class="eyebrow">Privacy, by design</span>
+          <h2>Your fabric stays on your device.</h2>
           <p>
-            Six architectural vectors, one coherent security posture. The console is not a thin
-            demo shell around a fragile API — it is a reference implementation of the controls
-            that matter when AI meets money and customer data.
+            No uploads, no API keys, no account. The entire read happens in your browser, so a
+            photo or video never leaves your machine.
           </p>
           <div class="security-points">
             <div class="security-point">
               <span class="shield-icon">01</span>
               <div>
-                <strong>AI / media hardening</strong>
-                <span>Strict decode, metadata scrub, quarantine scanning.</span>
+                <strong>On-device reading</strong>
+                <span>Colour, surface and drape are read from local pixels.</span>
               </div>
             </div>
             <div class="security-point">
               <span class="shield-icon">02</span>
               <div>
-                <strong>Payment security</strong>
-                <span>No raw PANs, server-side prices, webhook integrity.</span>
+                <strong>No uploads</strong>
+                <span>The file is previewed and analysed in the browser only.</span>
               </div>
             </div>
             <div class="security-point">
               <span class="shield-icon">03</span>
               <div>
-                <strong>Tenant isolation &amp; RBAC</strong>
-                <span>Schema-per-tenant, PostgreSQL RLS, uniform 404s.</span>
+                <strong>No API keys</strong>
+                <span>No model account, no token, no billing setup.</span>
               </div>
             </div>
             <div class="security-point">
               <span class="shield-icon">04</span>
               <div>
-                <strong>Data protection &amp; logging</strong>
-                <span>TLS 1.3, AES-256 at rest, PII-redacted events.</span>
+                <strong>Nothing stored</strong>
+                <span>Refresh the page and the preview is gone.</span>
               </div>
             </div>
             <div class="security-point">
               <span class="shield-icon">05</span>
               <div>
-                <strong>Secret management</strong>
-                <span>Fail-fast production checks, split DB roles, no defaults.</span>
+                <strong>Photo + video</strong>
+                <span>Stills and short clips both work as fabric input.</span>
               </div>
             </div>
             <div class="security-point">
               <span class="shield-icon">06</span>
               <div>
-                <strong>DevSecOps &amp; monitoring</strong>
-                <span>Bandit, Semgrep, Gitleaks, Trivy, SBOM, Dependabot.</span>
+                <strong>Copy-ready brief</strong>
+                <span>Palette, garments and article in one click.</span>
               </div>
             </div>
           </div>
@@ -329,67 +299,67 @@
             <div class="orbit-ring ring-three"></div>
             <div class="orbit-core">
               <span>AF</span>
-              <small>secure core</small>
+              <small>private core</small>
             </div>
-            <span class="orbit-label label-a">RLS</span>
-            <span class="orbit-label label-b">3DS2</span>
-            <span class="orbit-label label-c">KMS</span>
-            <span class="orbit-label label-d">SBOM</span>
-            <span class="orbit-label label-e">WAF</span>
-            <span class="orbit-label label-f">PII</span>
+            <span class="orbit-label label-a">LOCAL</span>
+            <span class="orbit-label label-b">NO KEY</span>
+            <span class="orbit-label label-c">PRIVATE</span>
+            <span class="orbit-label label-d">SAFE</span>
+            <span class="orbit-label label-e">INSTANT</span>
+            <span class="orbit-label label-f">NO CLOUD</span>
           </div>
           <div class="security-note">
             <span class="live-dot"></span>
-            <span>Every control is exercised by automated tests and CI gates.</span>
+            <span>Everything in this studio runs locally in your browser.</span>
           </div>
         </div>
       </section>
 
       <section class="section section-shell" id="credits">
         <div class="section-head reveal">
-          <span class="eyebrow">Free AI credits</span>
-          <h2>~10 billion free tokens a month. Use them with judgment.</h2>
+          <span class="eyebrow">Fabric library</span>
+          <h2>From everyday cotton to statement silk.</h2>
           <p>
-            A curated catalogue of hidden AI platforms with generous free tiers, daily credits and
-            developer-friendly APIs — surfaced inside the console as a practical launchpad.
+            Browse the cloths the studio understands best. Every swatch gets the same treatment:
+            colour read, surface read, garment board and a styling article.
           </p>
         </div>
         <div class="marquee" aria-hidden="true">
           <div class="marquee-track">
-            <span>OmniRush</span><span>Groq</span><span>Cohere</span><span>Mistral AI</span><span>Google AI Studio</span><span>OpenRouter</span><span>Deepgram</span><span>Hugging Face</span><span>Stability AI</span><span>Jina AI</span>
-            <span>OmniRush</span><span>Groq</span><span>Cohere</span><span>Mistral AI</span><span>Google AI Studio</span><span>OpenRouter</span><span>Deepgram</span><span>Hugging Face</span><span>Stability AI</span><span>Jina AI</span>
+            <span>Linen</span><span>Cotton poplin</span><span>Indigo denim</span><span>Silk satin</span><span>Wool crepe</span><span>Tweed</span><span>Velvet</span><span>Corduroy</span><span>Organza</span><span>Linen blend</span>
+            <span>Linen</span><span>Cotton poplin</span><span>Indigo denim</span><span>Silk satin</span><span>Wool crepe</span><span>Tweed</span><span>Velvet</span><span>Corduroy</span><span>Organza</span><span>Linen blend</span>
           </div>
         </div>
         <div class="credit-grid">
           <article class="credit-card reveal">
-            <span class="credit-icon">⌘</span>
-            <h3>LLM &amp; reasoning</h3>
-            <p>High-volume chat, coding and reasoning APIs with daily and monthly free allowances.</p>
-            <span class="credit-meta">~4B tokens / mo</span>
+            <span class="credit-icon">◌</span>
+            <h3>Natural &amp; breathable</h3>
+            <p>Linen, cotton and hemp. Best for shirts, summer dresses, relaxed trousers and soft tailoring.</p>
+            <span class="credit-meta">linen · cotton · hemp</span>
           </article>
           <article class="credit-card reveal">
-            <span class="credit-icon">✧</span>
-            <h3>Image &amp; video</h3>
-            <p>Fabric concepting, product shots and trend boards with hosted diffusion endpoints.</p>
-            <span class="credit-meta">curated tiers</span>
+            <span class="credit-icon">⌁</span>
+            <h3>Structured &amp; tailored</h3>
+            <p>Wool crepe, tweed and denim. Best for suits, blazers, jackets and wide-leg trousers.</p>
+            <span class="credit-meta">wool · tweed · denim</span>
           </article>
           <article class="credit-card reveal">
-            <span class="credit-icon">◉</span>
-            <h3>Speech &amp; vision</h3>
-            <p>Transcription, voice and embedding APIs for retail assistants and catalogue search.</p>
-            <span class="credit-meta">developer free tiers</span>
+            <span class="credit-icon">✦</span>
+            <h3>Fluid &amp; occasion</h3>
+            <p>Silk, satin and velvet. Best for column dresses, bias skirts, evening jackets and scarves.</p>
+            <span class="credit-meta">silk · satin · velvet</span>
           </article>
         </div>
       </section>
 
       <section class="cta section-shell reveal">
         <div class="cta-inner">
-          <span class="eyebrow">Ready to weave</span>
-          <h2>Put a security-first fabric engine behind your next retail idea.</h2>
-          <p>Start with the console, inspect the workflow, and harden the entire path from upload to checkout.</p>
+          <span class="eyebrow">Ready to see your fabric</span>
+          <h2>One cloth in. A full wardrobe out.</h2>
+          <p>Upload a photo or video and get a palette, six garment directions and a styling article in seconds.</p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="aifabric-studio.zip" download>Download source <span aria-hidden="true">↓</span></a>
-            <a class="btn btn-ghost" href="https://github.com/Iamhasaanzahid/project51" target="_blank" rel="noreferrer">View repository <span aria-hidden="true">↗</span></a>
+            <a class="btn btn-primary" href="#fabric-ai">Try fabric AI <span aria-hidden="true">✦</span></a>
+            <a class="btn btn-ghost" href="#workflow">See how it works</a>
             <a class="btn btn-ghost" href="#top">Back to top</a>
           </div>
         </div>
@@ -401,8 +371,8 @@
         <span class="brand-mark">AF</span>
         <span>AI Fabric Studio</span>
       </div>
-      <p>Security-hardened AI fabric &amp; retail SaaS reference implementation.</p>
-      <span class="footer-meta">No raw card data · No client-side pricing · No unvalidated uploads</span>
+      <p>Fabric intelligence for the next wardrobe. Photo + video in, garment story out.</p>
+      <span class="footer-meta">On-device · no uploads · no API keys</span>
       <span class="made-by">Made in <strong>mhzaly</strong></span>
     </footer>
 
