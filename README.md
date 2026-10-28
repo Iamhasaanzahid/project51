@@ -135,4 +135,15 @@ BASE_URL=https://staging.example.com TOKEN="$TOKEN" python loadtest/verify_rate_
 Runbooks: [`docs/deployment-runbook.md`](docs/deployment-runbook.md) ·
 [`docs/api.md`](docs/api.md) · [`docs/streamlit-deploy.md`](docs/streamlit-deploy.md).
 
+## 7. Free AI credits
+
+The Streamlit console ships with a **Free AI credits** tab backed by the curated
+[Awesome-Hidden-AI-Credits-Free](https://github.com/oniondas/Awesome-Hidden-AI-Credits-Free)
+catalogue — hidden AI platforms and APIs with massive free token allowances
+(~10 Billion free tokens/mo), daily credits and generous free tiers.
+
+- Data: [`ui/free_credits.py`](ui/free_credits.py)
+- UI: [`ui/app.py`](ui/app.py) → `_render_credits_tab`
+- Tests: `tests/test_ui_free_credits.py`
+
 See [`SECURITY.md`](SECURITY.md) and [`docs/threat-model.md`](docs/threat-model.md).

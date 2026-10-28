@@ -11,13 +11,16 @@ mode both are enforced by the API.
 """
 from __future__ import annotations
 
+import math
 import os
 import uuid
 from datetime import UTC, datetime
 
 import httpx
+import plotly.graph_objects as go
 import streamlit as st
 
+from ui.free_credits import FREE_AI_CATEGORIES, FREE_AI_PROVIDERS
 from ui.image_ops import (
     ImageValidationError,
     demo_render,
@@ -36,11 +39,15 @@ st.set_page_config(
 
 # --------------------------------------------------------------------------- config
 def _cfg(key: str, default: str | None = None) -> str | None:
-    """Read from Streamlit secrets first, then environment."""
+    """Read from Streamlit secrets first, then environment.
+
+    ``load_if_toml_exists()`` avoids Streamlit rendering an error banner when
+    the app has no secrets configured (local demo / public Cloud demo).
+    """
     try:
-        if key in st.secrets:
+        if st.secrets.load_if_toml_exists() and key in st.secrets:
             return str(st.secrets[key])
-    except Exception:  # noqa: S110 - Streamlit secrets are optional in local/demo runs
+    except Exception:  # noqa: S110 - malformed/absent secrets fall back to env
         pass
     return os.environ.get(key, default)
 
@@ -72,6 +79,15 @@ SECURITY_CHECKS = [
     ("DevSecOps", "Bandit, Semgrep, Gitleaks, Trivy, pip-audit, SBOM, Dependabot."),
 ]
 
+WORKFLOW_STEPS = (
+    ("Ingest", "Magic-byte + ClamAV malware scan"),
+    ("Sanitize", "EXIF / GPS strip by pixel re-encode"),
+    ("Queue", "Atomic Redis leaky-bucket GPU shield"),
+    ("Render", "ControlNet + SDXL GPU render"),
+    ("Pay", "PCI SAQ A / 3DS2 idempotent checkout"),
+    ("Audit", "Tenant RLS + PII-redacted logs"),
+)
+
 
 def _auth_headers() -> dict:
     return {"Authorization": f"Bearer {st.session_state.token}"}
@@ -92,21 +108,211 @@ def _sign_out() -> None:
         st.session_state.pop(key, None)
 
 
+def _fabric_3d():
+    grid = [i / 10 for i in range(-10, 11)]
+    z = [
+        [
+            0.22 * math.sin(2.4 * x) * math.cos(2.2 * y) + 0.08 * math.cos(4.5 * x + y)
+            for x in grid
+        ]
+        for y in grid
+    ]
+
+    fig = go.Figure(
+        data=[
+            go.Surface(
+                x=grid,
+                y=grid,
+                z=z,
+                colorscale="Viridis",
+                showscale=False,
+                opacity=0.95,
+                lighting=dict(ambient=0.55, diffuse=0.9, specular=0.35, roughness=0.45),
+            )
+        ],
+        layout=go.Layout(
+            scene=dict(
+                xaxis=dict(visible=False, range=[-1, 1]),
+                yaxis=dict(visible=False, range=[-1, 1]),
+                zaxis=dict(visible=False, range=[-0.5, 0.5]),
+                camera=dict(eye=dict(x=1.5, y=-1.6, z=1.2)),
+                aspectmode="cube",
+            ),
+            margin=dict(l=0, r=0, t=0, b=0),
+            updatemenus=[
+                {
+                    "type": "buttons",
+                    "direction": "left",
+                    "x": 0.0,
+                    "y": 1.12,
+                    "showactive": False,
+                    "buttons": [
+                        {
+                            "label": "Rotate 3D",
+                            "method": "animate",
+                            "args": [
+                                None,
+                                {
+                                    "frame": {"duration": 45, "redraw": True},
+                                    "fromcurrent": True,
+                                    "transition": {"duration": 0},
+                                },
+                            ],
+                        },
+                        {
+                            "label": "Pause",
+                            "method": "animate",
+                            "args": [[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}],
+                        },
+                    ],
+                }
+            ],
+        ),
+        frames=[
+            {
+                "frame_id": str(i),
+                "layout": {
+                    "scene": {
+                        "camera": {
+                            "eye": {
+                                "x": 1.5 * math.cos(2 * math.pi * i / 60),
+                                "y": 1.5 * math.sin(2 * math.pi * i / 60),
+                                "z": 1.2,
+                            }
+                        }
+                    }
+                },
+            }
+            for i in range(60)
+        ],
+    )
+    return fig
+
+
+def _render_hero() -> None:
+    left, right = st.columns([1.15, 1], gap="large")
+
+    with left:
+        st.markdown('<span class="aif-kicker">Secure AI Fabric OS</span>', unsafe_allow_html=True)
+        st.title("🧵 AI Fabric Studio")
+        st.subheader("Hyper-secure fabric rendering & retail console")
+        st.caption("Security-first by design · tenant isolation · GPU shield · PCI SAQ A")
+        st.markdown(
+            """
+            **Next-level fabric intelligence**
+            - Tenant-scoped JWT access (15 min)
+            - Magic-byte + EXIF + ClamAV media pipeline
+            - Server-authoritative pricing + idempotent payments
+            - PII-redacted structured logs
+            """
+        )
+        st.markdown(
+            "[Deployment runbook →](https://github.com/Iamhasaanzahid/project51/blob/main/docs/deployment-runbook.md) "
+            "· [API docs →](https://github.com/Iamhasaanzahid/project51/blob/main/docs/api.md)"
+        )
+
+    with right:
+        st.plotly_chart(_fabric_3d(), use_container_width=True)
+        st.caption("Animated GPU fabric mesh — demo visual; real mode uses hardened GPU pipeline.")
+
+    stats_cols = st.columns(4, gap="large")
+    with stats_cols[0]:
+        st.metric("Free AI tokens", "~10B / mo")
+    with stats_cols[1]:
+        st.metric("JWT TTL", "15 min")
+    with stats_cols[2]:
+        st.metric("Transport", "TLS 1.3")
+    with stats_cols[3]:
+        st.metric("Card flow", "PCI SAQ A")
+
+
+def _render_workflow() -> None:
+    st.markdown("## ⚙️ Security & Delivery Workflow")
+    for row_start in range(0, len(WORKFLOW_STEPS), 3):
+        cols = st.columns(3, gap="large")
+        for offset, (title, detail) in enumerate(WORKFLOW_STEPS[row_start : row_start + 3]):
+            with cols[offset]:
+                step = row_start + offset + 1
+                st.markdown(
+                    f'<div class="aif-card"><div class="aif-step">Step {step}</div>'
+                    f'<strong>{title}</strong><div class="aif-muted">{detail}</div></div>',
+                    unsafe_allow_html=True,
+                )
+
+
+def _inject_styles() -> None:
+    st.markdown(
+        """
+        <style>
+        @keyframes aif-float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        .aif-kicker {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border: 1px solid rgba(34, 211, 238, 0.35);
+            border-radius: 999px;
+            color: #22d3ee;
+            background: rgba(34, 211, 238, 0.08);
+            font-size: 0.75rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            animation: aif-float 4s ease-in-out infinite;
+        }
+        div[data-testid="stMetric"] {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(2, 6, 23, 0.95));
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 16px;
+            padding: 14px 16px;
+            box-shadow: 0 18px 45px rgba(2, 6, 23, 0.35);
+            transition: transform 180ms ease, border-color 180ms ease;
+        }
+        div[data-testid="stMetric"]:hover {
+            transform: translateY(-3px);
+            border-color: rgba(34, 211, 238, 0.55);
+        }
+        .aif-card {
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.72), rgba(2, 6, 23, 0.72));
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 16px;
+            padding: 16px 18px;
+            margin-bottom: 12px;
+            transition: transform 180ms ease, border-color 180ms ease;
+        }
+        .aif-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(167, 139, 250, 0.55);
+        }
+        .aif-step {
+            color: #22d3ee;
+            font-size: 0.72rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+        }
+        .aif-muted {
+            color: #94a3b8;
+            font-size: 0.86rem;
+            margin-top: 4px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 # --------------------------------------------------------------------------- login
 def _render_login(demo_mode: bool) -> None:
     left, right = st.columns([1.1, 1], gap="large")
 
     with left:
-        st.title("🧵 AI Fabric Studio")
-        st.caption("Hyper-secure fabric rendering & retail console")
+        st.subheader("Start secure demo")
         st.markdown(
             """
-            **Security-first by design**
-
-            - Tenant-scoped JWT access (15 minutes)
-            - Magic-byte + EXIF + ClamAV media pipeline
-            - Server-authoritative pricing and idempotent payments
-            - PII-redacted structured logs
+            **What you get**
+            - Tenant-isolated render workspaces
+            - Sanitised uploads and server-authoritative pricing
+            - One console for render, payments, audit, and free AI credits
             """
         )
         if demo_mode:
@@ -405,29 +611,57 @@ def _render_security_tab(demo_mode: bool) -> None:
         )
 
 
+# --------------------------------------------------------------------------- free AI credits
+def _render_credits_tab() -> None:
+    st.subheader("Free AI credits")
+    st.caption(
+        "Curated hidden AI platforms and APIs handing out massive free token "
+        "allowances, daily credits and generous free tiers. "
+        "Source: [Awesome-Hidden-AI-Credits-Free](https://github.com/oniondas/Awesome-Hidden-AI-Credits-Free)."
+    )
+    st.markdown("**~10 Billion free tokens / month** across the catalogue.")
+
+    for category in FREE_AI_CATEGORIES:
+        providers = [p for p in FREE_AI_PROVIDERS if p.category == category]
+        with st.expander(f"💰 {category}", icon="🪙"):
+            for provider in providers:
+                st.markdown(
+                    f"- **{provider.name}** — {provider.blurb}. "
+                    f"*Free allowance:* **{provider.free_allowance}**. "
+                    f"[Get started →]({provider.url})"
+                )
+
+
 # --------------------------------------------------------------------------- main
 def main() -> None:
     if "demo_user" not in st.session_state:
         st.session_state.demo_user = None
 
     demo_mode = _demo_enabled()
+    _inject_styles()
 
     if not _is_authenticated():
+        _render_hero()
+        _render_workflow()
         _render_login(demo_mode)
         return
 
     _render_sidebar(demo_mode)
+    _render_hero()
+    _render_workflow()
 
     if demo_mode:
         st.warning("Demo mode: local preview pipeline only. The hardened API is not connected.")
 
-    render_tab, payments_tab, security_tab = st.tabs(["Render", "Payments", "Security"])
+    render_tab, payments_tab, security_tab, credits_tab = st.tabs(["Render", "Payments", "Security", "Free AI"])
     with render_tab:
         _render_render_tab(demo_mode)
     with payments_tab:
         _render_payments_tab(demo_mode)
     with security_tab:
         _render_security_tab(demo_mode)
+    with credits_tab:
+        _render_credits_tab()
 
     st.divider()
     st.caption(
