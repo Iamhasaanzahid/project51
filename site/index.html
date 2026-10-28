@@ -20,6 +20,7 @@
     <div class="ambient ambient-one"></div>
     <div class="ambient ambient-two"></div>
     <div class="grain"></div>
+    <div class="scroll-progress" aria-hidden="true"><span id="scroll-bar"></span></div>
 
     <header class="nav" id="nav">
       <a class="brand" href="#top" aria-label="AI Fabric Studio home">
@@ -27,6 +28,7 @@
         <span>AI Fabric Studio</span>
       </a>
       <nav class="nav-links" aria-label="Primary">
+        <a href="#console">Console</a>
         <a href="#workflow">Workflow</a>
         <a href="#security">Security</a>
         <a href="#credits">Free AI</a>
@@ -105,6 +107,116 @@
         <span>ClamAV quarantine</span>
         <span>Idempotent payments</span>
         <span>PII-redacted logs</span>
+      </section>
+
+      <section class="section section-shell" id="console">
+        <div class="section-head reveal">
+          <span class="eyebrow">The command center</span>
+          <h2>One console. Every signal that matters.</h2>
+          <p>
+            Render jobs, payment state, security checks and free AI credits surfaced in a single,
+            calm interface. This is what a secure fabric workflow should feel like.
+          </p>
+        </div>
+
+        <div class="console reveal">
+          <div class="console-bar">
+            <div class="console-dots"><span></span><span></span><span></span></div>
+            <span class="console-path">aifabric.studio / command-center</span>
+            <span class="console-live"><span class="live-dot"></span> live</span>
+          </div>
+          <div class="console-body">
+            <aside class="console-sidebar">
+              <div class="console-brand">AF</div>
+              <span class="side-item active">Overview</span>
+              <span class="side-item">Render lab</span>
+              <span class="side-item">Payments</span>
+              <span class="side-item">Security</span>
+              <span class="side-item">Free AI</span>
+              <span class="side-foot">tenant · acme</span>
+            </aside>
+            <div class="console-main">
+              <div class="console-tabs" role="tablist" aria-label="Console preview">
+                <button class="console-tab active" data-panel="render" type="button">Render</button>
+                <button class="console-tab" data-panel="payments" type="button">Payments</button>
+                <button class="console-tab" data-panel="security" type="button">Security</button>
+                <button class="console-tab" data-panel="credits" type="button">Free AI</button>
+              </div>
+
+              <div class="console-panel active" data-panel="render">
+                <div class="panel-grid">
+                  <div class="panel-card panel-span-2">
+                    <div class="panel-head">
+                      <span class="panel-label">Active render</span>
+                      <span class="panel-badge">GPU · shielded</span>
+                    </div>
+                    <h3>Indigo weave · v4</h3>
+                    <div class="progress"><span style="width: 78%"></span></div>
+                    <div class="panel-foot"><span>00:42 elapsed</span><span>queue healthy</span></div>
+                  </div>
+                  <div class="panel-card panel-meter-card">
+                    <span class="panel-label">Capacity</span>
+                    <div class="ring-meter"><span>78%</span></div>
+                    <span class="panel-meta">leaky bucket</span>
+                  </div>
+                  <div class="panel-card panel-span-3">
+                    <div class="panel-head">
+                      <span class="panel-label">Render throughput</span>
+                      <span class="panel-meta">last 12 hours</span>
+                    </div>
+                    <div class="mini-bars" aria-hidden="true">
+                      <span style="height: 34%"></span><span style="height: 52%"></span><span style="height: 44%"></span><span style="height: 68%"></span><span style="height: 58%"></span><span style="height: 82%"></span><span style="height: 71%"></span><span style="height: 92%"></span><span style="height: 76%"></span><span style="height: 100%"></span><span style="height: 88%"></span><span style="height: 95%"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="console-panel" data-panel="payments">
+                <div class="panel-grid">
+                  <div class="panel-card panel-span-2">
+                    <div class="panel-head"><span class="panel-label">Checkout session</span><span class="panel-badge success">3DS2 verified</span></div>
+                    <h3>Render pack · 100 credits</h3>
+                    <div class="pay-amount">PKR 4,000.00</div>
+                    <div class="panel-foot"><span>idempotency key · set</span><span>webhook · signed</span></div>
+                  </div>
+                  <div class="panel-card panel-span-3">
+                    <span class="panel-label">Recent events</span>
+                    <div class="log-row"><span class="log-dot"></span><span>checkout.completed</span><span class="log-time">just now</span></div>
+                    <div class="log-row"><span class="log-dot violet"></span><span>webhook.hmac_ok</span><span class="log-time">2s ago</span></div>
+                    <div class="log-row"><span class="log-dot lime"></span><span>credits.granted</span><span class="log-time">2s ago</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="console-panel" data-panel="security">
+                <div class="panel-grid">
+                  <div class="panel-card panel-span-3">
+                    <div class="panel-head"><span class="panel-label">Security posture</span><span class="panel-badge success">all systems normal</span></div>
+                    <div class="check-row"><span class="check-icon">✓</span><span>Magic-byte + ClamAV validation</span><span class="check-state">passing</span></div>
+                    <div class="check-row"><span class="check-icon">✓</span><span>Tenant RLS + uniform 404 guard</span><span class="check-state">passing</span></div>
+                    <div class="check-row"><span class="check-icon">✓</span><span>PII redaction on structured logs</span><span class="check-state">passing</span></div>
+                    <div class="check-row"><span class="check-icon">✓</span><span>Secret scan + dependency audit</span><span class="check-state">passing</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="console-panel" data-panel="credits">
+                <div class="panel-grid">
+                  <div class="panel-card panel-span-2">
+                    <span class="panel-label">Free AI budget</span>
+                    <h3>~10B tokens / month</h3>
+                    <div class="progress"><span style="width: 64%"></span></div>
+                    <div class="panel-foot"><span>curated catalogue</span><span>ready to launch</span></div>
+                  </div>
+                  <div class="panel-card panel-span-2">
+                    <span class="panel-label">Top sources</span>
+                    <div class="credits-row"><span>OmniRush</span><span>Groq</span><span>Cohere</span><span>OpenRouter</span><span>Hugging Face</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="section section-shell" id="workflow">
@@ -291,6 +403,7 @@
       </div>
       <p>Security-hardened AI fabric &amp; retail SaaS reference implementation.</p>
       <span class="footer-meta">No raw card data · No client-side pricing · No unvalidated uploads</span>
+      <span class="made-by">Made in <strong>mhzaly</strong></span>
     </footer>
 
     <script type="module" src="app.js"></script>

@@ -28,13 +28,35 @@ function applyHue() {
   document.documentElement.style.setProperty("--cyan-soft", soft);
 }
 
+const scrollBar = document.querySelector("#scroll-bar");
+
+function updateScrollProgress() {
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = max > 0 ? Math.min((window.scrollY / max) * 100, 100) : 0;
+  if (scrollBar) scrollBar.style.width = `${progress}%`;
+}
+
 window.addEventListener(
   "scroll",
   () => {
     nav?.classList.toggle("scrolled", window.scrollY > 24);
+    updateScrollProgress();
   },
   { passive: true }
 );
+
+updateScrollProgress();
+
+const consoleTabs = document.querySelectorAll(".console-tab");
+const consolePanels = document.querySelectorAll(".console-panel");
+
+consoleTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const target = tab.dataset.panel;
+    consoleTabs.forEach((item) => item.classList.toggle("active", item === tab));
+    consolePanels.forEach((panel) => panel.classList.toggle("active", panel.dataset.panel === target));
+  });
+});
 
 const revealObserver = new IntersectionObserver(
   (entries) => {
