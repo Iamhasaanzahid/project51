@@ -315,6 +315,15 @@ initFabric();
   const fabricArticle = document.querySelector("#fabric-article");
   const fabricCopyBtn = document.querySelector("#copy-brief");
   const fabricSampleButtons = document.querySelectorAll("[data-sample]");
+  const fabricLookSvgWrap = document.querySelector("#look-svg-wrap");
+  const fabricLookTitle = document.querySelector("#look-title");
+  const fabricLookNote = document.querySelector("#look-note");
+  const fabricLookPills = document.querySelector("#look-pills");
+  const fabricLookOccasion = document.querySelector("#look-occasion");
+  const fabricLookFinish = document.querySelector("#look-finish");
+  const fabricLookColorway = document.querySelector("#look-colorway");
+  const fabricSaveLookBtn = document.querySelector("#save-look");
+  const fabricSurpriseBtn = document.querySelector("#surprise-look");
 
   if (!fabricDropZone || !fabricFileInput) return;
 
@@ -342,6 +351,7 @@ initFabric();
     jacket: "M28 23 L39 14 L61 14 L72 23 L85 47 L74 53 L71 105 L29 105 L26 53 L15 47 Z",
     trousers: "M34 17 H66 L73 105 H55 L50 55 L45 105 H27 Z",
     skirt: "M36 17 H64 L79 105 H21 Z",
+    "co-ord": "M34 21 L44 13 L56 13 L66 21 L78 31 L72 44 L68 40 L68 70 L32 70 L32 40 L28 44 L22 31 Z M36 74 H64 L70 105 H54 L50 88 L46 105 H30 Z",
   };
 
   const GARMENT_LABELS = {
@@ -351,7 +361,8 @@ initFabric();
     shirt: "Relaxed shirt",
     jacket: "Statement jacket",
     trousers: "Wide-leg trousers",
-    skirt: "Skirt",
+    skirt: "Bias skirt",
+    "co-ord": "Co-ord set",
   };
 
   const GARMENT_DETAILS = {
@@ -362,6 +373,7 @@ initFabric();
     jacket: '<path d="M50 14 V105" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1"/><path d="M41 14 L50 38 L59 14" fill="none" stroke="rgba(255,255,255,.26)" stroke-width="1"/>',
     trousers: '<path d="M50 17 V55" fill="none" stroke="rgba(255,255,255,.26)" stroke-width="1"/><path d="M37 28 H63" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>',
     skirt: '<path d="M42 17 L38 105 M58 17 L62 105" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1"/>',
+    "co-ord": '<path d="M50 13 V70" fill="none" stroke="rgba(255,255,255,.26)" stroke-width="1"/><path d="M34 74 H66" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="1"/>',
   };
 
   const SAMPLES = {
@@ -391,6 +403,10 @@ initFabric();
   let fabricSource = null;
   let fabricLastBrief = null;
   let fabricAnalyzing = false;
+  let selectedLook = "suit";
+  let lookOccasion = "office";
+  let lookFinish = "tailored";
+  let lookColorway = "detected";
 
   function setFabricStatus(message, isError = false) {
     if (!fabricStatus) return;
@@ -450,6 +466,13 @@ initFabric();
   function resetStudio() {
     releaseFabricSource();
     resetBrief();
+    selectedLook = "suit";
+    lookOccasion = "office";
+    lookFinish = "tailored";
+    lookColorway = "detected";
+    if (fabricLookOccasion) fabricLookOccasion.value = lookOccasion;
+    if (fabricLookFinish) fabricLookFinish.value = lookFinish;
+    if (fabricLookColorway) fabricLookColorway.value = lookColorway;
     fabricPreview?.classList.remove("is-scanning");
     if (fabricPreview) fabricPreview.hidden = true;
     if (fabricDropZone) fabricDropZone.hidden = false;
@@ -660,6 +683,16 @@ initFabric();
         name: "Wide-leg trousers",
         note: `High-waisted ${accent} trousers with a clean crease and an easy, long line.`,
       },
+      {
+        id: "skirt",
+        name: "Bias skirt",
+        note: `A ${primary} bias-cut skirt that lets the ${analysis.drape.toLowerCase()} drape do the work.`,
+      },
+      {
+        id: "co-ord",
+        name: "Co-ord set",
+        note: `A matching ${primary} top and ${accent} trousers — the easiest head-to-toe look.`,
+      },
     ];
   }
 
@@ -674,7 +707,7 @@ initFabric();
     const paragraphs = [
       `This ${analysis.tone.toLowerCase()} ${patternLabel} cloth reads as a ${analysis.drape.toLowerCase()} fabric with a ${analysis.weight.toLowerCase()} body. Its palette moves from ${primary} to ${secondary}${names[2] ? ` and ${accent}` : ""}, which gives the collection a ${analysis.saturation > 0.42 ? "confident, saturated" : "quiet, tonal"} direction.`,
       `The most direct first piece is a ${garments[0].name.toLowerCase()}. ${garments[0].note} ${garments[2].name} keeps the same ${surfaceWord} in a softer silhouette, while a ${garments[4].name.toLowerCase()} turns the cloth into an outerwear statement.`,
-      `For the rest of the wardrobe, ${garments[1].name.toLowerCase()}, ${garments[3].name.toLowerCase()} and ${garments[5].name.toLowerCase()} round out the board. The through-line is ${analysis.drape === "Structured" ? "clean lines and a little structure" : "soft volume and an easy hand-feel"} — the fabric should stay the loudest thing in the look.`,
+      `For the rest of the wardrobe, ${garments[1].name.toLowerCase()}, ${garments[3].name.toLowerCase()}, ${garments[5].name.toLowerCase()}, a ${garments[6].name.toLowerCase()} and a ${garments[7].name.toLowerCase()} round out the board. The through-line is ${analysis.drape === "Structured" ? "clean lines and a little structure" : "soft volume and an easy hand-feel"} — the fabric should stay the loudest thing in the look.`,
     ];
     const note = `Styling note. Keep the palette close: ${primary} with ${secondary}${names[2] ? ` and a small ${accent} accent` : ""}. Let one silhouette carry the texture; everything else can stay quiet.`;
     return { heading: `${title}: the story`, paragraphs, note };
@@ -734,6 +767,233 @@ initFabric();
     return `<svg viewBox="0 0 100 120" role="img" aria-label="${label} concept"><defs>${defs}</defs><path d="${path}" fill="url(#${uid})" stroke="rgba(255,255,255,.28)" stroke-width="1.2" stroke-linejoin="round"/>${details}</svg>`;
   }
 
+  function hexToRgb(hex) {
+    const value = String(hex).replace("#", "");
+    const full = value.length === 3 ? value.split("").map((part) => part + part).join("") : value;
+    const number = Number.parseInt(full, 16);
+    return { r: (number >> 16) & 255, g: (number >> 8) & 255, b: number & 255 };
+  }
+
+  function colorDistance(hexA, hexB) {
+    const a = hexToRgb(hexA);
+    const b = hexToRgb(hexB);
+    return Math.hypot(a.r - b.r, a.g - b.g, a.b - b.b);
+  }
+
+  function getContrastColor(hex) {
+    const { r, g, b } = hexToRgb(hex);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.55 ? "#111827" : "#f4f1e8";
+  }
+
+  function getLookColors(palette, colorway) {
+    const base = palette[0]?.hex || "#334155";
+    const accent = palette[1]?.hex || base;
+    const highlight = palette[2]?.hex || accent;
+    if (colorway === "monochrome") {
+      return { base, accent: base, highlight };
+    }
+    if (colorway === "contrast") {
+      const candidates = palette.map((color) => color.hex).filter((hex) => hex.toLowerCase() !== base.toLowerCase());
+      const paletteContrast = candidates.sort((a, b) => colorDistance(b, base) - colorDistance(a, base))[0];
+      const contrast = paletteContrast && colorDistance(paletteContrast, base) > 100 ? paletteContrast : getContrastColor(base);
+      return { base, accent: contrast, highlight: contrast };
+    }
+    return { base, accent, highlight };
+  }
+
+  function buildLookSvg(garmentId, palette, pattern, colorway = "detected") {
+    const { base, accent, highlight } = getLookColors(palette, colorway);
+    const uid = `look-${garmentId}-${Math.random().toString(36).slice(2, 8)}`;
+    const solid = pattern === "Solid";
+    const fabricFill = solid ? `url(#${uid}-fabric)` : `url(#${uid}-weave)`;
+    const accentFill = colorway === "monochrome" ? fabricFill : colorway === "contrast" ? accent : `url(#${uid}-accent)`;
+    const bottomFill = colorway === "contrast" ? accentFill : fabricFill;
+
+    const defs = `
+      <linearGradient id="${uid}-bg" x1="0" y1="0" x2="0.85" y2="1">
+        <stop stop-color="#0c1628"/>
+        <stop offset="1" stop-color="#05070f"/>
+      </linearGradient>
+      <radialGradient id="${uid}-glow" cx="50%" cy="36%" r="62%">
+        <stop stop-color="rgba(34, 211, 238, 0.24)"/>
+        <stop offset="1" stop-color="rgba(34, 211, 238, 0)"/>
+      </radialGradient>
+      <linearGradient id="${uid}-fabric" x1="0" y1="0" x2="1" y2="1">
+        <stop stop-color="${highlight}"/>
+        <stop offset="0.55" stop-color="${base}"/>
+        <stop offset="1" stop-color="${accent}"/>
+      </linearGradient>
+      <linearGradient id="${uid}-accent" x1="0" y1="0" x2="1" y2="1">
+        <stop stop-color="${accent}"/>
+        <stop offset="1" stop-color="${base}"/>
+      </linearGradient>
+      <pattern id="${uid}-weave" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="8" height="8" fill="${base}"/>
+        <path d="M0 0V8" stroke="${accent}" stroke-opacity=".55" stroke-width="1.4"/>
+        <path d="M0 0H8" stroke="${highlight}" stroke-opacity=".2" stroke-width="1"/>
+      </pattern>
+    `;
+
+    const figure = `
+      <ellipse cx="210" cy="466" rx="94" ry="12" fill="rgba(0,0,0,.46)"/>
+      <path d="M184 80 Q182 47 210 43 Q238 47 236 80 Q232 58 210 55 Q188 58 184 80 Z" fill="#18202f"/>
+      <path d="M184 76 Q181 94 189 103 Q185 86 191 69 Z" fill="#18202f"/>
+      <path d="M236 76 Q239 94 231 103 Q235 86 229 69 Z" fill="#18202f"/>
+      <circle cx="210" cy="45" r="8" fill="#18202f"/>
+      <circle cx="210" cy="82" r="25" fill="#d8b7a3" stroke="rgba(255,255,255,.18)" stroke-width="1.2"/>
+      <path d="M186 71 Q197 55 219 60 Q207 62 198 72 Z" fill="#243042" opacity=".9"/>
+      <circle cx="186" cy="89" r="1.6" fill="#fbbf24" opacity=".8"/>
+      <circle cx="234" cy="89" r="1.6" fill="#fbbf24" opacity=".8"/>
+      <path d="M198 105 L198 124 Q210 132 222 124 L222 105 Z" fill="#d8b7a3" stroke="rgba(255,255,255,.14)" stroke-width="1"/>
+      <path d="M198 106 Q210 115 222 106 L222 112 Q210 121 198 112 Z" fill="#c79b83" opacity=".38"/>
+      <path d="M168 145 Q210 124 252 145 L260 178 L250 244 L238 242 L238 300 L182 300 L182 242 L170 244 L160 178 Z" fill="#e6d7cc" stroke="rgba(255,255,255,.14)" stroke-width="1"/>
+      <path d="M238 160 Q248 202 238 242 L238 300 L182 300 L182 242 Q198 212 207 160 Z" fill="rgba(2,6,23,.08)"/>
+      <path d="M168 148 Q148 196 154 250 L166 250 Q162 204 178 160 Z" fill="#e6d7cc" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+      <path d="M252 148 Q272 196 266 250 L254 250 Q258 204 242 160 Z" fill="#e6d7cc" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+      <circle cx="160" cy="257" r="7" fill="#d8b7a3"/>
+      <circle cx="260" cy="257" r="7" fill="#d8b7a3"/>
+      <path d="M184 298 L176 408 L190 408 L200 306 Z" fill="#e6d7cc" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+      <path d="M236 298 L244 408 L230 408 L220 306 Z" fill="#e6d7cc" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+      <ellipse cx="181" cy="414" rx="18" ry="7" fill="#0b1220" stroke="rgba(255,255,255,.18)" stroke-width="1"/>
+      <ellipse cx="239" cy="414" rx="18" ry="7" fill="#0b1220" stroke="rgba(255,255,255,.18)" stroke-width="1"/>
+    `;
+
+    const jacket = "M162 142 Q210 122 258 142 L272 184 L258 252 L246 248 L246 318 L174 318 L174 248 L162 252 L148 184 Z";
+    const trousers = "M174 310 H246 L252 410 H232 L210 340 L188 410 H168 Z";
+    const dress = "M180 142 Q210 124 240 142 L248 200 L238 250 L266 410 L154 410 L182 250 L172 200 Z";
+    const shirt = "M166 142 Q210 124 254 142 L260 172 L248 180 L248 302 L172 302 L172 180 L160 172 Z";
+    const top = "M168 142 Q210 124 252 142 L258 174 L246 182 L246 302 L174 302 L174 182 L162 174 Z";
+    const skirt = "M174 300 H246 L264 410 H156 Z";
+    const sleeveL = "M166 142 L146 184 L160 192 L180 158 Z";
+    const sleeveR = "M254 142 L274 184 L260 192 L240 158 Z";
+    const stroke = 'stroke="rgba(255,255,255,.3)" stroke-width="1.3" stroke-linejoin="round"';
+    const detail = 'fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.2" stroke-linecap="round"';
+    const add = (path, fill) => `<path d="${path}" fill="${fill}" ${stroke}/>`;
+
+    let layers = "";
+    if (garmentId === "dress") {
+      layers = `${add(dress, fabricFill)}<path d="M184 250 H236" fill="none" stroke="${accent}" stroke-width="2.4" stroke-linecap="round" opacity=".85"/><path d="M210 142 V250" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/>`;
+    } else if (garmentId === "shirt") {
+      layers = `${add(shirt, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, accentFill)}<path d="M210 142 V302" ${detail}/><circle cx="210" cy="186" r="1.8" fill="rgba(255,255,255,.7)"/><circle cx="210" cy="204" r="1.8" fill="rgba(255,255,255,.7)"/><circle cx="210" cy="222" r="1.8" fill="rgba(255,255,255,.7)"/>`;
+    } else if (garmentId === "jacket") {
+      layers = `${add(jacket, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, accentFill)}<path d="M190 142 L210 185 L230 142" ${detail}/><path d="M210 142 V318" ${detail}/><circle cx="210" cy="224" r="1.8" fill="rgba(255,255,255,.7)"/>`;
+    } else if (garmentId === "trousers") {
+      layers = `${add(top, accentFill)}${add(sleeveL, accentFill)}${add(sleeveR, accentFill)}${add(trousers, fabricFill)}<path d="M210 182 V302" ${detail}/><path d="M210 310 V410" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/>`;
+    } else if (garmentId === "skirt") {
+      layers = `${add(top, accentFill)}${add(sleeveL, accentFill)}${add(sleeveR, accentFill)}${add(skirt, fabricFill)}<path d="M184 300 H236" ${detail}/><path d="M202 300 L196 410 M218 300 L224 410" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1"/>`;
+    } else if (garmentId === "co-ord") {
+      layers = `${add(top, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, bottomFill)}<path d="M210 182 V410" ${detail}/><path d="M184 300 H236" fill="none" stroke="${accent}" stroke-width="2" stroke-linecap="round" opacity=".8"/>`;
+    } else if (garmentId === "blazer") {
+      layers = `${add(jacket, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, accentFill)}<path d="M190 142 L210 185 L230 142" ${detail}/><circle cx="210" cy="224" r="1.8" fill="rgba(255,255,255,.7)"/>`;
+    } else {
+      layers = `${add(jacket, fabricFill)}${add(sleeveL, fabricFill)}${add(sleeveR, fabricFill)}${add(trousers, bottomFill)}<path d="M190 142 L210 185 L230 142" ${detail}/><path d="M210 142 V318" ${detail}/><circle cx="210" cy="224" r="1.8" fill="rgba(255,255,255,.7)"/><path d="M206 146 L214 146 L210 196 Z" fill="${highlight}" opacity=".82"/>`;
+    }
+
+    const lookLabel = (GARMENT_LABELS[garmentId] || garmentId).toUpperCase();
+    return `<svg viewBox="0 0 420 520" role="img" aria-label="${GARMENT_LABELS[garmentId] || garmentId} look preview"><defs>${defs}</defs><rect width="420" height="520" fill="url(#${uid}-bg)"/><circle cx="210" cy="220" r="184" fill="url(#${uid}-glow)"/><path d="M92 470 V210 Q92 62 210 62 Q328 62 328 210 V470" fill="none" stroke="rgba(34,211,238,.12)" stroke-width="1.2"/><path d="M112 470 V220 Q112 82 210 82 Q308 82 308 220 V470" fill="none" stroke="rgba(255,255,255,.045)" stroke-width="1"/><path d="M210 70 L120 470 H300 Z" fill="rgba(34,211,238,.022)"/>${figure}${layers}<path d="M150 470 H270" stroke="rgba(34,211,238,.22)" stroke-width="1.2" stroke-linecap="round"/><text x="210" y="502" text-anchor="middle" fill="rgba(226,232,240,.42)" font-family="Arial, Helvetica, sans-serif" font-size="9" letter-spacing="1.8">AI FABRIC STUDIO · ${lookLabel}</text></svg>`;
+  }
+
+  function getLookNote(garment, analysis) {
+    const names = analysis.palette.map((color) => color.name.toLowerCase());
+    const primary = names[0] || "tonal";
+    const secondary = names[1] || primary;
+    const occasion = {
+      office: "Office: keep the palette close and add one clean accessory.",
+      evening: `Evening: lean into the ${primary} depth with a metallic earring or heel.`,
+      weekend: `Weekend: pair it with ${secondary} separates and flat shoes.`,
+      wedding: `Wedding: let the ${primary} cloth carry the look; keep jewellery minimal.`,
+    }[lookOccasion] || "";
+    const finish = {
+      tailored: "Finish: clean shoulder, defined waist, sharp hem.",
+      relaxed: "Finish: size up slightly and let the fabric fall away from the body.",
+      fluid: "Finish: cut on the bias and keep the silhouette long.",
+    }[lookFinish] || "";
+    const colorway = {
+      detected: "Colourway: straight from the cloth.",
+      monochrome: "Colourway: one-colour, texture-led.",
+      contrast: "Colourway: contrast panels and trims.",
+    }[lookColorway] || "";
+    return `${garment.note} ${occasion} ${finish} ${colorway}`;
+  }
+
+  function renderLookPreview(brief = fabricLastBrief) {
+    if (!brief || !fabricLookSvgWrap) return;
+    const garment = brief.garments.find((item) => item.id === selectedLook) || brief.garments[0];
+    if (!garment) return;
+    selectedLook = garment.id;
+    fabricLookSvgWrap.innerHTML = buildLookSvg(garment.id, brief.palette, brief.pattern, lookColorway);
+    if (fabricLookTitle) fabricLookTitle.textContent = garment.name;
+    if (fabricLookNote) fabricLookNote.textContent = getLookNote(garment, brief);
+    if (fabricLookPills) {
+      if (fabricLookPills.children.length !== brief.garments.length) {
+        fabricLookPills.innerHTML = brief.garments.map((item) => `<button class="look-pill ${item.id === selectedLook ? "active" : ""}" type="button" data-look="${item.id}">${escapeHtml(item.name)}</button>`).join("");
+      } else {
+        [...fabricLookPills.children].forEach((pill) => {
+          pill.classList.toggle("active", pill.dataset.look === selectedLook);
+        });
+      }
+    }
+    document.querySelectorAll("#garment-grid .garment-card").forEach((card) => {
+      card.classList.toggle("is-selected", card.dataset.look === selectedLook);
+    });
+  }
+
+  function downloadLook() {
+    const svg = fabricLookSvgWrap?.querySelector("svg");
+    if (!svg) return;
+    const clone = svg.cloneNode(true);
+    clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const serialized = new XMLSerializer().serializeToString(clone);
+    const svgBlob = new Blob([serialized], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 840;
+      canvas.height = 1040;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        URL.revokeObjectURL(url);
+        return;
+      }
+      context.fillStyle = "#05070f";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(url);
+        if (!blob) return;
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `ai-fabric-${selectedLook}.png`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+      }, "image/png");
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      setFabricStatus("Could not save the look. Try again.", true);
+    };
+    image.src = url;
+  }
+
+  function surpriseLook() {
+    if (!fabricLastBrief) return;
+    const options = fabricLastBrief.garments.filter((item) => item.id !== selectedLook);
+    if (options.length) selectedLook = options[Math.floor(Math.random() * options.length)].id;
+    const occasions = ["office", "evening", "weekend", "wedding"];
+    const finishes = ["tailored", "relaxed", "fluid"];
+    const colorways = ["detected", "monochrome", "contrast"];
+    lookOccasion = occasions[Math.floor(Math.random() * occasions.length)];
+    lookFinish = finishes[Math.floor(Math.random() * finishes.length)];
+    lookColorway = colorways[Math.floor(Math.random() * colorways.length)];
+    if (fabricLookOccasion) fabricLookOccasion.value = lookOccasion;
+    if (fabricLookFinish) fabricLookFinish.value = lookFinish;
+    if (fabricLookColorway) fabricLookColorway.value = lookColorway;
+    renderLookPreview(fabricLastBrief);
+    setFabricStatus(`New look: ${fabricLookTitle?.textContent || "selected"}.`);
+  }
+
   function renderBrief(brief) {
     if (!fabricBriefContent) return;
     fabricBriefEmpty.hidden = true;
@@ -741,10 +1001,12 @@ initFabric();
     fabricBriefTitle.textContent = brief.title;
     fabricBriefTag.textContent = brief.tag;
     fabricBriefSummary.textContent = brief.summary;
+    selectedLook = brief.garments[0]?.id || "suit";
     fabricPalette.innerHTML = brief.palette.map((color) => `<span class="swatch"><i style="background:${color.hex}"></i>${escapeHtml(color.name)} <span>${color.hex}</span></span>`).join("");
     fabricFacts.innerHTML = brief.facts.map((fact) => `<div class="fact"><span>${escapeHtml(fact.label)}</span><strong>${escapeHtml(fact.value)}</strong></div>`).join("");
-    fabricGarmentGrid.innerHTML = brief.garments.map((garment) => `<article class="garment-card"><div class="garment-visual">${garmentSvg(garment.id, brief.palette, brief.pattern)}</div><div class="garment-copy"><h4>${escapeHtml(garment.name)}</h4><p>${escapeHtml(garment.note)}</p></div></article>`).join("");
+    fabricGarmentGrid.innerHTML = brief.garments.map((garment) => `<article class="garment-card ${garment.id === selectedLook ? "is-selected" : ""}" data-look="${garment.id}" tabindex="0" role="button" aria-label="Preview ${escapeHtml(garment.name)}"><div class="garment-visual">${garmentSvg(garment.id, brief.palette, brief.pattern)}</div><div class="garment-copy"><h4>${escapeHtml(garment.name)}</h4><p>${escapeHtml(garment.note)}</p></div></article>`).join("");
     fabricArticle.innerHTML = `<h3>${escapeHtml(brief.article.heading)}</h3>${brief.article.paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("")}<div class="styling-note">${escapeHtml(brief.article.note)}</div>`;
+    renderLookPreview(brief);
   }
 
   async function analyzeFabric() {
@@ -759,9 +1021,9 @@ initFabric();
       await new Promise((resolve) => setTimeout(resolve, 850));
       const analysis = readFabricPixels(fabricSource);
       const brief = buildBrief(analysis, fabricSource.name);
-      renderBrief(brief);
       fabricLastBrief = brief;
-      setFabricStatus("Brief ready — six garment directions and a styling article.");
+      renderBrief(brief);
+      setFabricStatus("Brief ready — eight garment directions, a look preview and a styling article.");
     } catch (error) {
       console.error(error);
       setFabricStatus("I could not read that frame. Try a clear photo or another video.", true);
@@ -977,6 +1239,47 @@ initFabric();
   fabricSampleButtons.forEach((button) => {
     button.addEventListener("click", () => void loadSample(button.dataset.sample));
   });
+
+  fabricLookPills?.addEventListener("click", (event) => {
+    const pill = event.target.closest("[data-look]");
+    if (!pill) return;
+    selectedLook = pill.dataset.look;
+    renderLookPreview(fabricLastBrief);
+  });
+
+  fabricGarmentGrid?.addEventListener("click", (event) => {
+    const card = event.target.closest("[data-look]");
+    if (!card) return;
+    selectedLook = card.dataset.look;
+    renderLookPreview(fabricLastBrief);
+  });
+
+  fabricGarmentGrid?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const card = event.target.closest("[data-look]");
+    if (!card) return;
+    event.preventDefault();
+    selectedLook = card.dataset.look;
+    renderLookPreview(fabricLastBrief);
+  });
+
+  fabricLookOccasion?.addEventListener("change", () => {
+    lookOccasion = fabricLookOccasion.value;
+    renderLookPreview(fabricLastBrief);
+  });
+
+  fabricLookFinish?.addEventListener("change", () => {
+    lookFinish = fabricLookFinish.value;
+    renderLookPreview(fabricLastBrief);
+  });
+
+  fabricLookColorway?.addEventListener("change", () => {
+    lookColorway = fabricLookColorway.value;
+    renderLookPreview(fabricLastBrief);
+  });
+
+  fabricSaveLookBtn?.addEventListener("click", downloadLook);
+  fabricSurpriseBtn?.addEventListener("click", surpriseLook);
 
   fabricCopyBtn?.addEventListener("click", async () => {
     if (!fabricLastBrief) return;

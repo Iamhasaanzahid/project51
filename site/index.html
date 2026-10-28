@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20261028" />
   </head>
   <body>
     <div class="ambient ambient-one"></div>
@@ -58,7 +58,7 @@
               <span>fabric input</span>
             </div>
             <div class="metric">
-              <strong><span data-count="6">0</span>+</strong>
+              <strong><span data-count="8">0</span>+</strong>
               <span>garment directions</span>
             </div>
             <div class="metric">
@@ -115,7 +115,7 @@
           <h2>Show the fabric. See the wardrobe.</h2>
           <p>
             Add a photo or a short video. The studio reads colour, surface and drape, then builds
-            a six-piece garment board and a written fashion brief for the cloth.
+            an eight-piece garment board, a look preview and a written fashion brief for the cloth.
           </p>
         </div>
 
@@ -162,7 +162,7 @@
             <div class="brief-empty" id="brief-empty">
               <span class="brief-spark" aria-hidden="true">✦</span>
               <h3>Your fashion brief appears here.</h3>
-              <p>Add a fabric photo or video, then generate. You will get a palette, a fabric read, six garment concepts and a short styling article.</p>
+              <p>Add a fabric photo or video, then generate. You will get a palette, a fabric read, eight garment concepts, a live look preview and a short styling article.</p>
               <div class="brief-placeholder" aria-hidden="true">
                 <span></span><span></span><span></span><span></span><span></span><span></span>
               </div>
@@ -176,6 +176,48 @@
                 </div>
                 <span class="brief-tag" id="brief-tag">on-device read</span>
               </div>
+
+              <div class="look-preview">
+                <div class="look-stage">
+                  <span class="look-tag">AI look preview</span>
+                  <div class="look-svg-wrap" id="look-svg-wrap"></div>
+                </div>
+                <div class="look-copy">
+                  <span class="panel-label">Selected look</span>
+                  <h4 id="look-title">—</h4>
+                  <p class="look-note" id="look-note"></p>
+                  <div class="look-pills" id="look-pills"></div>
+                  <div class="look-controls">
+                    <label>Occasion
+                      <select id="look-occasion">
+                        <option value="office">Office</option>
+                        <option value="evening">Evening</option>
+                        <option value="weekend">Weekend</option>
+                        <option value="wedding">Wedding</option>
+                      </select>
+                    </label>
+                    <label>Finish
+                      <select id="look-finish">
+                        <option value="tailored">Tailored</option>
+                        <option value="relaxed">Relaxed</option>
+                        <option value="fluid">Fluid</option>
+                      </select>
+                    </label>
+                    <label>Colourway
+                      <select id="look-colorway">
+                        <option value="detected">As detected</option>
+                        <option value="monochrome">Monochrome</option>
+                        <option value="contrast">Contrast</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="look-actions">
+                    <button class="btn btn-small btn-primary" id="save-look" type="button">Save look <span aria-hidden="true">↓</span></button>
+                    <button class="btn btn-small btn-ghost" id="surprise-look" type="button">Surprise me <span aria-hidden="true">✦</span></button>
+                  </div>
+                </div>
+              </div>
+
               <p class="brief-summary" id="brief-summary"></p>
               <div class="palette" id="palette"></div>
               <div class="fabric-facts" id="fabric-facts"></div>
@@ -221,8 +263,8 @@
           <article class="step-card reveal">
             <div class="step-top"><span class="step-number">04</span><span class="step-icon">✦</span></div>
             <h3>Map garments</h3>
-            <p>The same cloth is mapped to tailoring, outerwear, dresses, shirts and trousers as a six-piece board.</p>
-            <span class="tag">six directions</span>
+            <p>The same cloth is mapped to tailoring, outerwear, dresses, shirts, skirts and trousers as an eight-piece board.</p>
+            <span class="tag">eight directions</span>
           </article>
           <article class="step-card reveal">
             <div class="step-top"><span class="step-number">05</span><span class="step-icon">◇</span></div>
@@ -356,7 +398,7 @@
         <div class="cta-inner">
           <span class="eyebrow">Ready to see your fabric</span>
           <h2>One cloth in. A full wardrobe out.</h2>
-          <p>Upload a photo or video and get a palette, six garment directions and a styling article in seconds.</p>
+          <p>Upload a photo or video and get a palette, eight garment directions, a look preview and a styling article in seconds.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="#fabric-ai">Try fabric AI <span aria-hidden="true">✦</span></a>
             <a class="btn btn-ghost" href="#workflow">See how it works</a>
@@ -376,6 +418,6 @@
       <span class="made-by">Made in <strong>mhzaly</strong></span>
     </footer>
 
-    <script type="module" src="app.js"></script>
+    <script type="module" src="app.js?v=20261028"></script>
   </body>
 </html>
