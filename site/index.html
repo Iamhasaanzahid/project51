@@ -3,420 +3,128 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>The Cloth Room — notes on fabric, pieces to make</title>
-    <meta
-      name="description"
-      content="A small fabric studio by mhzaly. Bring a photo of a cloth; read its colour and fall; see modern and desi pieces, a model study and a page of notes. Nothing leaves your browser."
-    />
+    <title>The Cloth Room — Virtual Try-On</title>
+    <meta name="description" content="Photorealistic virtual try-on. Pick a model, choose a real-world scene, upload your fabric, and see the garment composited live." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css?v=20261028y" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=20261029a" />
   </head>
   <body>
     <div class="grain" aria-hidden="true"></div>
-    <div class="scroll-progress" aria-hidden="true"><span id="scroll-bar"></span></div>
 
-    <header class="nav" id="nav">
-      <a class="brand" href="#top" aria-label="The Cloth Room home">
-        <span class="brand-mark">CR</span>
-        <span>The Cloth Room</span>
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="#fabric-ai">The table</a>
-        <a href="#workflow">How I read</a>
-        <a href="#security">Privacy</a>
-        <a href="#credits">Cloth notes</a>
-      </nav>
-      <a class="btn btn-small btn-primary" href="#fabric-ai">
-        Bring a cloth <span aria-hidden="true">→</span>
-      </a>
-    </header>
-
-    <main id="top">
-      <section class="hero section-shell">
-        <div class="hero-copy reveal">
-          <span class="kicker">A small fabric studio · by mhzaly</span>
-          <h1>A good cloth already knows <em>what it wants to be.</em></h1>
-          <p class="hero-lede">
-            Bring me a photo of a fabric you love. I'll read its colour and fall, then sketch a
-            small wardrobe around it — modern and desi, with a model study and a page of notes.
-          </p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#fabric-ai">Bring a cloth <span aria-hidden="true">→</span></a>
-            <a class="btn btn-ghost" href="#workflow">How I read a cloth</a>
-          </div>
-          <div class="hero-footnote">
-            <span>No account.</span>
-            <span>No upload.</span>
-            <span>Just cloth.</span>
-          </div>
-        </div>
-
-        <div class="hero-board reveal" aria-label="A page from the worktable">
-          <div class="board-sheet">
-            <span class="board-kicker">from the shelf</span>
-            <div class="swatch-row" aria-hidden="true">
-              <div class="swatch-card swatch-linen"><span>oat linen</span></div>
-              <div class="swatch-card swatch-denim"><span>indigo twill</span></div>
-              <div class="swatch-card swatch-silk"><span>plum silk</span></div>
-            </div>
-            <div class="board-sketch" aria-hidden="true">
-              <svg viewBox="0 0 260 170" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M38 46 L62 30 L86 42 L110 30 L134 46 L144 78 L124 88 L122 144 L50 144 L48 88 L28 78 Z" />
-                <path d="M62 30 L86 66 L110 30" />
-                <path d="M86 66 V144" />
-                <path d="M56 96 H76 M96 96 H116" />
-                <path d="M164 38 L178 58 L170 76 L196 144 L140 144 L166 76 L158 58 Z" />
-                <path d="M158 58 Q168 66 178 58" />
-                <path d="M168 76 V144" />
-                <path d="M146 120 H190" />
-                <path d="M26 158 H210" stroke-dasharray="3 5" opacity=".5" />
-              </svg>
-            </div>
-            <p class="board-note">
-              <span class="hand">for the plum silk —</span>
-              a long jacket, a column dress, and a saree with a thin border.
-            </p>
-            <span class="board-caption">a page from the worktable</span>
-          </div>
-          <span class="board-tape" aria-hidden="true"></span>
-          <span class="board-pin" aria-hidden="true"></span>
-        </div>
-      </section>
-
-      <section class="materials-strip section-shell reveal" aria-label="Fabrics in the library">
-        <span>Linen</span>
-        <span>Cotton</span>
-        <span>Indigo</span>
-        <span>Silk</span>
-        <span>Wool</span>
-        <span>Tweed</span>
-        <span>Velvet</span>
-        <span>Organza</span>
-      </section>
-
-      <section class="section section-shell fabric-ai" id="fabric-ai">
-        <div class="section-head reveal">
-          <span class="eyebrow">The worktable</span>
-          <h2>Bring a cloth. I'll show you what it could be.</h2>
-          <p>
-            A photo or a short video is enough. A close-up in daylight gives the best read.
-            I'll take it from there.
-          </p>
-        </div>
-
-        <div class="fabric-lab">
-          <div class="fabric-input reveal">
-            <div class="drop-zone" id="drop-zone" role="button" tabindex="0" aria-label="Upload a fabric photo or video">
-              <input id="fabric-file" type="file" accept="image/*,video/*" hidden />
-              <span class="drop-mark" aria-hidden="true">+</span>
-              <strong>Put a fabric on the table</strong>
-              <span class="drop-sub">JPG, PNG, WEBP, MP4 or WEBM. A close-up is best.</span>
-              <span class="drop-cta">Choose a photo or video <span aria-hidden="true">→</span></span>
-            </div>
-
-            <div class="fabric-preview" id="fabric-preview" hidden>
-              <img id="fabric-image" alt="Selected fabric preview" hidden />
-              <video id="fabric-video" muted playsinline loop hidden></video>
-              <div class="scan-overlay" aria-hidden="true"><span></span></div>
-              <div class="preview-meta">
-                <span id="preview-name">fabric.jpg</span>
-                <div class="preview-actions">
-                  <button id="change-file" type="button">Change</button>
-                  <button id="remove-file" type="button" aria-label="Remove selected file">×</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="sample-row">
-              <span>Or try a swatch</span>
-              <button class="sample-chip" type="button" data-sample="linen">Oat linen</button>
-              <button class="sample-chip" type="button" data-sample="denim">Indigo twill</button>
-              <button class="sample-chip" type="button" data-sample="silk">Plum silk</button>
-            </div>
-
-            <div class="fabric-actions">
-              <button class="btn btn-primary" id="analyze-btn" type="button" disabled>
-                Read this cloth <span aria-hidden="true">→</span>
-              </button>
-              <span class="privacy-note">Your photo stays on this device.</span>
-            </div>
-            <p class="fabric-status" id="fabric-status" role="status" aria-live="polite"></p>
-          </div>
-
-          <div class="brief-panel reveal" id="brief-panel">
-            <div class="brief-empty" id="brief-empty">
-              <span class="brief-mark" aria-hidden="true">“</span>
-              <h3>Nothing on the table yet.</h3>
-              <p>Start with a photo you already have. I'll read the colour and the fall, then put a few pieces beside it.</p>
-              <span class="hand">a close-up in daylight is best.</span>
-            </div>
-
-            <div class="brief-content" id="brief-content" hidden>
-              <div class="brief-head">
-                <div>
-                  <span class="panel-label">The reading</span>
-                  <h3 id="brief-title">—</h3>
-                </div>
-                <span class="brief-tag" id="brief-tag">read at the table</span>
-              </div>
-
-              <div class="look-preview">
-                <div class="look-stage">
-                  <span class="look-tag" id="look-tag">Model study · Her · Modern</span>
-                  <div class="look-svg-wrap" id="look-svg-wrap"></div>
-                </div>
-                <div class="look-copy">
-                  <span class="panel-label">Model study</span>
-                  <h4 id="look-title">—</h4>
-                  <p class="look-note" id="look-note"></p>
-                  <span class="model-note">Anime-style figure, drawn in the studio.</span>
-                  <div class="look-switches">
-                    <div class="look-switch-group">
-                      <span class="switch-label">Figure</span>
-                      <div class="look-segment" id="look-model-switch" role="group" aria-label="Figure">
-                        <button type="button" data-model="her" class="active" title="Anime-style female figure">Her</button>
-                        <button type="button" data-model="him" title="Anime-style male figure">Him</button>
-                      </div>
-                    </div>
-                    <div class="look-switch-group">
-                      <span class="switch-label">Wardrobe</span>
-                      <div class="look-segment" id="look-collection-switch" role="group" aria-label="Wardrobe">
-                        <button type="button" data-collection="modern" class="active">Modern</button>
-                        <button type="button" data-collection="desi">Desi</button>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="look-pills" id="look-pills"></div>
-                  <div class="look-controls">
-                    <label>Where to
-                      <select id="look-occasion">
-                        <option value="office">Office</option>
-                        <option value="evening">Evening</option>
-                        <option value="weekend">Weekend</option>
-                        <option value="wedding">Wedding</option>
-                      </select>
-                    </label>
-                    <label>How it falls
-                      <select id="look-finish">
-                        <option value="tailored">Tailored</option>
-                        <option value="relaxed">Relaxed</option>
-                        <option value="fluid">Fluid</option>
-                      </select>
-                    </label>
-                    <label>Colour
-                      <select id="look-colorway">
-                        <option value="detected">From the cloth</option>
-                        <option value="monochrome">One tone</option>
-                        <option value="contrast">Contrast</option>
-                      </select>
-                    </label>
-                  </div>
-                  <div class="look-actions">
-                    <button class="btn btn-small btn-primary" id="save-look" type="button">Keep this look <span aria-hidden="true">↓</span></button>
-                    <button class="btn btn-small btn-ghost" id="surprise-look" type="button">Another idea <span aria-hidden="true">→</span></button>
-                  </div>
-                </div>
-              </div>
-
-              <p class="brief-summary" id="brief-summary"></p>
-              <div class="brief-subhead">
-                <span class="panel-label">The palette</span>
-                <span class="brief-subnote">five tones from the cloth</span>
-              </div>
-              <div class="palette" id="palette"></div>
-              <div class="fabric-facts" id="fabric-facts"></div>
-
-              <div class="rail-head">
-                <span class="panel-label">Modern pieces</span>
-                <span class="rail-note">click one to try it on the figure</span>
-              </div>
-              <div class="garment-grid" id="garment-grid"></div>
-
-              <div class="desi-section">
-                <div class="desi-head">
-                  <div>
-                    <span class="panel-label">Desi pieces</span>
-                    <h3>The same cloth, another wardrobe.</h3>
-                    <p>Kurta, salwar kameez, anarkali, lehenga, saree, sherwani and more — cut from the same cloth.</p>
-                  </div>
-                  <span class="tag">ten pieces</span>
-                </div>
-                <div class="garment-grid desi-grid" id="desi-grid"></div>
-              </div>
-
-              <article class="fabric-article" id="fabric-article"></article>
-              <div class="brief-foot">
-                <button class="btn btn-small btn-ghost" id="copy-brief" type="button">Copy the notes</button>
-                <span>Written at the worktable.</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section section-shell" id="workflow">
-        <div class="section-head reveal">
-          <span class="eyebrow">How I read a cloth</span>
-          <h2>Six small steps. No cloud queue.</h2>
-          <p>
-            This is a local read, not a render farm. The whole thing happens in your browser.
-          </p>
-        </div>
-        <div class="process-grid">
-          <article class="process-step reveal">
-            <span class="process-num">01</span>
-            <div>
-              <h3>You bring the cloth.</h3>
-              <p>A photo or a short video. A close-up in daylight is best.</p>
-            </div>
-          </article>
-          <article class="process-step reveal">
-            <span class="process-num">02</span>
-            <div>
-              <h3>I read the colour.</h3>
-              <p>Five tones, pulled from the pixels, named in plain language.</p>
-            </div>
-          </article>
-          <article class="process-step reveal">
-            <span class="process-num">03</span>
-            <div>
-              <h3>I feel the fall.</h3>
-              <p>Is it crisp, fluid, or somewhere in between? That decides the cut.</p>
-            </div>
-          </article>
-          <article class="process-step reveal">
-            <span class="process-num">04</span>
-            <div>
-              <h3>I sketch the rail.</h3>
-              <p>Eight modern pieces and ten desi pieces, all from the same cloth.</p>
-            </div>
-          </article>
-          <article class="process-step reveal">
-            <span class="process-num">05</span>
-            <div>
-              <h3>I dress the figure.</h3>
-              <p>An anime-style model study, so you can see the shape before you cut.</p>
-            </div>
-          </article>
-          <article class="process-step reveal">
-            <span class="process-num">06</span>
-            <div>
-              <h3>I write it down.</h3>
-              <p>A short note on what the cloth could become, and what to keep close.</p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="section section-shell split-section" id="security">
-        <div class="security-copy reveal">
-          <span class="eyebrow">A private workroom</span>
-          <h2>Your photo stays on your table.</h2>
-          <p>
-            No account, no upload, no waiting room. The read happens in the browser, and the
-            photo is gone when you close the tab.
-          </p>
-          <div class="privacy-list">
-            <div class="privacy-item">
-              <span class="privacy-num">01</span>
-              <div><strong>No account</strong><span>There is nothing to sign into.</span></div>
-            </div>
-            <div class="privacy-item">
-              <span class="privacy-num">02</span>
-              <div><strong>No upload</strong><span>The photo is read on this device.</span></div>
-            </div>
-            <div class="privacy-item">
-              <span class="privacy-num">03</span>
-              <div><strong>No cloud queue</strong><span>No render farm, no waiting room.</span></div>
-            </div>
-            <div class="privacy-item">
-              <span class="privacy-num">04</span>
-              <div><strong>Nothing kept</strong><span>Close the tab and it is gone.</span></div>
-            </div>
-          </div>
-        </div>
-        <div class="studio-letter reveal">
-          <span class="hand">a note from the worktable</span>
-          <p>
-            I made this for the pile of fabric photos on my phone — the ones I save and never
-            look at again. It is not a shop, and it is not trying to sell you anything. Bring a
-            cloth; I'll tell you what I see, and what I'd make.
-          </p>
-          <span class="signature">— mhzaly</span>
-        </div>
-      </section>
-
-      <section class="section section-shell" id="credits">
-        <div class="section-head reveal">
-          <span class="eyebrow">Cloth notes</span>
-          <h2>A small library of fabrics I keep coming back to.</h2>
-          <p>
-            Every swatch gets the same read: colour, surface, fall, pieces and a note.
-            These are the three shelves I reach for most.
-          </p>
-        </div>
-        <div class="cloth-grid">
-          <article class="cloth-card reveal">
-            <span class="cloth-swatch swatch-linen" aria-hidden="true"></span>
-            <div>
-              <span class="cloth-meta">01 · everyday</span>
-              <h3>Linen &amp; cotton</h3>
-              <p>For shirts, summer dresses and soft trousers. The kind of cloth that gets better with a wash.</p>
-            </div>
-          </article>
-          <article class="cloth-card reveal">
-            <span class="cloth-swatch swatch-denim" aria-hidden="true"></span>
-            <div>
-              <span class="cloth-meta">02 · structured</span>
-              <h3>Wool &amp; denim</h3>
-              <p>For suits, jackets and wide trousers. It holds a line, and a little weather.</p>
-            </div>
-          </article>
-          <article class="cloth-card reveal">
-            <span class="cloth-swatch swatch-silk" aria-hidden="true"></span>
-            <div>
-              <span class="cloth-meta">03 · occasion</span>
-              <h3>Silk &amp; velvet</h3>
-              <p>For a long dress, a bias skirt, an evening jacket. Let the cloth move; keep the rest quiet.</p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="cta section-shell reveal">
-        <div class="cta-inner">
-          <span class="eyebrow">The table is open</span>
-          <h2>Bring one cloth. Leave with a few good ideas.</h2>
-          <p>
-            A palette, eighteen pieces, a model study and a page of notes — in the time it takes
-            to make a cup of tea.
-          </p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#fabric-ai">Bring a cloth <span aria-hidden="true">→</span></a>
-            <a class="btn btn-ghost" href="#workflow">How I read a cloth</a>
-            <a class="btn btn-ghost" href="#top">Back to top</a>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="footer section-shell">
-      <div class="footer-brand">
+    <div class="app">
+      <aside class="sidebar">
         <div class="brand">
           <span class="brand-mark">CR</span>
           <span>The Cloth Room</span>
         </div>
-        <p>A small studio for the fabric you already own.</p>
-      </div>
-      <span class="footer-meta">No account · No upload · No cloud queue</span>
+        <nav class="nav">
+          <button class="nav-item active" data-view="models">Models</button>
+          <button class="nav-item" data-view="clothing">Clothing</button>
+          <button class="nav-item" data-view="scenes">Scenes</button>
+          <button class="nav-item" data-view="looks">My Looks</button>
+        </nav>
+        <div class="sidebar-foot">
+          <span>On-device · no upload</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <span class="eyebrow">Virtual Try-On Studio</span>
+            <h1 id="view-title">Models</h1>
+          </div>
+          <div class="topbar-status" id="pipeline-status">Pipeline ready</div>
+        </header>
+
+        <section class="stage">
+          <div class="stage-canvas-wrap">
+            <canvas id="stage-canvas" width="720" height="900"></canvas>
+            <div class="stage-overlay" id="stage-overlay">Pick a model and a scene to begin</div>
+          </div>
+          <div class="stage-meta">
+            <div class="meta-row">
+              <span class="meta-label">Model</span>
+              <span id="meta-model">—</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Scene</span>
+              <span id="meta-scene">—</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Garment</span>
+              <span id="meta-garment">—</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Fabric</span>
+              <span id="meta-fabric">—</span>
+            </div>
+            <div class="stage-actions">
+              <button class="btn btn-primary" id="render-look">Render look</button>
+              <button class="btn btn-ghost" id="save-look">Save PNG</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="view active" id="view-models">
+          <div class="view-head">
+            <h2>Choose a model</h2>
+            <p>Select a photorealistic base figure. The garment will be composited onto it.</p>
+          </div>
+          <div class="grid" id="model-grid"></div>
+        </section>
+
+        <section class="view" id="view-clothing" hidden>
+          <div class="view-head">
+            <h2>Clothing &amp; fabric</h2>
+            <p>Upload a fabric photo, then pick a garment silhouette to composite.</p>
+          </div>
+          <div class="clothing-layout">
+            <div class="fabric-upload">
+              <input id="fabric-file" type="file" accept="image/*" hidden />
+              <div class="drop-zone" id="drop-zone" role="button" tabindex="0">
+                <span class="drop-mark">+</span>
+                <strong>Drop a fabric photo</strong>
+                <span class="drop-sub">JPG, PNG, WEBP</span>
+                <span class="drop-cta" id="drop-cta">Choose image</span>
+              </div>
+              <canvas id="fabric-preview-canvas" width="200" height="200" hidden></canvas>
+              <p class="fabric-status" id="fabric-status"></p>
+              <div class="sample-row">
+                <button class="sample-chip" data-sample="linen">Oat linen</button>
+                <button class="sample-chip" data-sample="denim">Indigo twill</button>
+                <button class="sample-chip" data-sample="silk">Plum silk</button>
+              </div>
+            </div>
+            <div class="garment-grid" id="garment-grid"></div>
+          </div>
+        </section>
+
+        <section class="view" id="view-scenes" hidden>
+          <div class="view-head">
+            <h2>Real-world scenes</h2>
+            <p>Pick a photorealistic backdrop. Lighting and shadows are baked into the scene.</p>
+          </div>
+          <div class="grid scene-grid" id="scene-grid"></div>
+        </section>
+
+        <section class="view" id="view-looks" hidden>
+          <div class="view-head">
+            <h2>My looks</h2>
+            <p>Your saved renders appear here.</p>
+          </div>
+          <div class="grid look-grid" id="look-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <footer class="footer">
+      <span>The Cloth Room</span>
       <span class="made-by">Made in <strong>mhzaly</strong></span>
     </footer>
 
-    <script type="module" src="app.js?v=20261028y"></script>
+    <script type="module" src="app.js?v=20261029a"></script>
   </body>
 </html>
