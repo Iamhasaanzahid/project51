@@ -3,12 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>The Cloth Room — Virtual Try-On</title>
-    <meta name="description" content="Photorealistic virtual try-on. Pick a model, choose a real-world scene, upload your fabric, and see the garment composited live." />
+    <title>The Cloth Room — AI Virtual Try-On</title>
+    <meta name="description" content="AI virtual try-on. Upload a fabric or garment, pick a real 3D model and a real-world scene. Fitting, drape and styling run on-device." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=20261029a" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="styles.css?v=20261029o" />
   </head>
   <body>
     <div class="grain" aria-hidden="true"></div>
@@ -20,101 +28,162 @@
           <span>The Cloth Room</span>
         </div>
         <nav class="nav">
-          <button class="nav-item active" data-view="models">Models</button>
-          <button class="nav-item" data-view="clothing">Clothing</button>
-          <button class="nav-item" data-view="scenes">Scenes</button>
-          <button class="nav-item" data-view="looks">My Looks</button>
+          <button class="nav-item active" data-view="models">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6"/></svg>
+            Models
+          </button>
+          <button class="nav-item" data-view="clothing">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l3 2 3-2 4 3-2 4-1.5-1V20h-7V10L7 11 5 7z"/></svg>
+            Clothing
+          </button>
+          <button class="nav-item" data-view="scenes">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="8" cy="9" r="1.3"/></svg>
+            Scenes
+          </button>
+          <button class="nav-item" data-view="looks">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9a4 4 0 017-2.6A4 4 0 0119 11c0 4.6-7 9-7 9z"/></svg>
+            My Looks
+          </button>
         </nav>
+        <div class="sidebar-note">
+          <span class="live-dot"></span>
+          <div>
+            <strong>On-device fitting</strong>
+            <span>Real 3D avatars · fabric mapped live</span>
+          </div>
+        </div>
         <div class="sidebar-foot">
-          <span>On-device · no upload</span>
+          <span id="ai-status">3D engine ready</span>
         </div>
       </aside>
 
       <main class="main">
         <header class="topbar">
           <div>
-            <span class="eyebrow">Virtual Try-On Studio</span>
+            <span class="eyebrow">AI Virtual Try-On Studio</span>
             <h1 id="view-title">Models</h1>
           </div>
-          <div class="topbar-status" id="pipeline-status">Pipeline ready</div>
+          <div class="topbar-status"><span class="live-dot"></span><span id="pipeline-status">Idle</span></div>
         </header>
 
         <section class="stage">
-          <div class="stage-canvas-wrap">
+          <div class="stage-canvas-wrap" id="stage-wrap">
             <canvas id="stage-canvas" width="720" height="900"></canvas>
-            <div class="stage-overlay" id="stage-overlay">Pick a model and a scene to begin</div>
+            <div class="stage-overlay" id="stage-overlay">Loading the atelier…</div>
+            <div class="stage-badge">LIVE 3D</div>
           </div>
           <div class="stage-meta">
-            <div class="meta-row">
-              <span class="meta-label">Model</span>
-              <span id="meta-model">—</span>
-            </div>
-            <div class="meta-row">
-              <span class="meta-label">Scene</span>
-              <span id="meta-scene">—</span>
-            </div>
-            <div class="meta-row">
-              <span class="meta-label">Garment</span>
-              <span id="meta-garment">—</span>
-            </div>
-            <div class="meta-row">
-              <span class="meta-label">Fabric</span>
-              <span id="meta-fabric">—</span>
+            <div class="meta-stack">
+              <div class="meta-row"><span class="meta-label">Model</span><span id="meta-model">—</span></div>
+              <div class="meta-row"><span class="meta-label">Scene</span><span id="meta-scene">—</span></div>
+              <div class="meta-row"><span class="meta-label">Garment</span><span id="meta-garment">—</span></div>
+              <div class="meta-row"><span class="meta-label">Bottom</span><span id="meta-bottom">—</span></div>
+              <div class="meta-row"><span class="meta-label">Fabric</span><span id="meta-fabric">—</span></div>
             </div>
             <div class="stage-actions">
-              <button class="btn btn-primary" id="render-look">Render look</button>
+              <button class="btn btn-primary" id="render-look">Apply fabric</button>
               <button class="btn btn-ghost" id="save-look">Save PNG</button>
+            </div>
+
+            <div class="stylist-card">
+              <div class="stylist-top">
+                <span class="stylist-eyebrow"><span class="spark">✦</span> AI Stylist</span>
+                <span class="stylist-score" id="style-score">—</span>
+              </div>
+              <div class="stylist-track"><span id="style-bar"></span></div>
+              <p class="stylist-note" id="style-note">Apply an outfit to get a fit, colour and occasion read.</p>
+              <ul class="style-tips" id="style-tips"></ul>
             </div>
           </div>
         </section>
 
         <section class="view active" id="view-models">
-          <div class="view-head">
-            <h2>Choose a model</h2>
-            <p>Select a photorealistic base figure. The garment will be composited onto it.</p>
-          </div>
+          <div class="view-head"><h2>Choose a model</h2><p>Real 3D human avatars, fitted and rotating live. Pick a face, then dress them in the Clothing room.</p></div>
           <div class="grid" id="model-grid"></div>
         </section>
 
         <section class="view" id="view-clothing" hidden>
-          <div class="view-head">
-            <h2>Clothing &amp; fabric</h2>
-            <p>Upload a fabric photo, then pick a garment silhouette to composite.</p>
-          </div>
+          <div class="view-head"><h2>Clothing &amp; fabric</h2><p>Upload a textile or a garment photo, then choose the cut. The fabric is mapped onto the 3D garment with drape and folds.</p></div>
           <div class="clothing-layout">
-            <div class="fabric-upload">
-              <input id="fabric-file" type="file" accept="image/*" hidden />
-              <div class="drop-zone" id="drop-zone" role="button" tabindex="0">
-                <span class="drop-mark">+</span>
-                <strong>Drop a fabric photo</strong>
-                <span class="drop-sub">JPG, PNG, WEBP</span>
-                <span class="drop-cta" id="drop-cta">Choose image</span>
+            <div class="upload-stack">
+              <div class="upload-card">
+                <span class="upload-label">01 · Textile</span>
+                <input id="fabric-file" type="file" accept="image/*" hidden />
+                <div class="drop-zone" id="drop-zone" role="button" tabindex="0">
+                  <span class="drop-mark">+</span>
+                  <strong>Drop a fabric photo</strong>
+                  <span class="drop-sub">JPG, PNG, WEBP · weave, print or solid</span>
+                  <span class="drop-cta">Choose image</span>
+                </div>
+                <canvas id="fabric-preview-canvas" width="200" height="200" hidden></canvas>
+                <p class="fabric-status" id="fabric-status"></p>
+                <div class="sample-row">
+                  <button class="sample-chip" data-sample="linen">Oat linen</button>
+                  <button class="sample-chip" data-sample="denim">Indigo twill</button>
+                  <button class="sample-chip" data-sample="silk">Plum silk</button>
+                  <button class="sample-chip" data-sample="block">Block print</button>
+                </div>
               </div>
-              <canvas id="fabric-preview-canvas" width="200" height="200" hidden></canvas>
-              <p class="fabric-status" id="fabric-status"></p>
-              <div class="sample-row">
-                <button class="sample-chip" data-sample="linen">Oat linen</button>
-                <button class="sample-chip" data-sample="denim">Indigo twill</button>
-                <button class="sample-chip" data-sample="silk">Plum silk</button>
+
+              <div class="upload-card">
+                <span class="upload-label">02 · Garment</span>
+                <input id="garment-file" type="file" accept="image/*" hidden />
+                <div class="drop-zone drop-zone-sm" id="garment-drop" role="button" tabindex="0">
+                  <span class="drop-mark">+</span>
+                  <strong>Upload a garment</strong>
+                  <span class="drop-sub">Flat-lay or product shot — we lift the colour and print</span>
+                  <span class="drop-cta">Choose garment</span>
+                </div>
+                <canvas id="garment-preview" width="200" height="200" hidden></canvas>
+                <p class="fabric-status" id="garment-status"></p>
               </div>
             </div>
-            <div class="garment-grid" id="garment-grid"></div>
+
+            <div class="garment-panel">
+              <div class="panel-head">
+                <h3>Choose the cut</h3>
+                <p>Every cut is a real 3D pattern. The uploaded textile wraps onto it with seams, drape and folds.</p>
+              </div>
+              <div class="garment-grid" id="garment-grid"></div>
+
+              <div class="separates">
+                <div class="separates-head">
+                  <span class="upload-label">03 · Separates</span>
+                  <p>Style the bottom on its own. Pick a bottom and the outfit switches to a matching top.</p>
+                </div>
+                <div class="control-row">
+                  <span class="control-label">Bottom</span>
+                  <div class="chip-row" id="bottom-row"></div>
+                </div>
+                <div class="control-row">
+                  <span class="control-label">Bottom tone</span>
+                  <div class="chip-row" id="tone-row"></div>
+                </div>
+                <div class="control-row">
+                  <span class="control-label">Fit</span>
+                  <div class="chip-row" id="fit-row">
+                    <button class="chip" data-fit="slim">Slim</button>
+                    <button class="chip is-active" data-fit="regular">Regular</button>
+                    <button class="chip" data-fit="relaxed">Relaxed</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel-note">
+                <span class="spark">✦</span>
+                <p><strong>On-device fitting.</strong> Nothing is uploaded to a server. The garment is rebuilt in 3D in your browser, then composited onto a real-world scene.</p>
+              </div>
+            </div>
           </div>
         </section>
 
         <section class="view" id="view-scenes" hidden>
-          <div class="view-head">
-            <h2>Real-world scenes</h2>
-            <p>Pick a photorealistic backdrop. Lighting and shadows are baked into the scene.</p>
-          </div>
+          <div class="view-head"><h2>Real-world scenes</h2><p>Photoreal backdrops with soft depth of field, so the model sits naturally in the light.</p></div>
           <div class="grid scene-grid" id="scene-grid"></div>
         </section>
 
         <section class="view" id="view-looks" hidden>
-          <div class="view-head">
-            <h2>My looks</h2>
-            <p>Your saved renders appear here.</p>
-          </div>
+          <div class="view-head"><h2>My looks</h2><p>Every saved render is kept here. Click a look to download it again.</p></div>
           <div class="grid look-grid" id="look-grid"></div>
         </section>
       </main>
@@ -125,6 +194,6 @@
       <span class="made-by">Made in <strong>mhzaly</strong></span>
     </footer>
 
-    <script type="module" src="app.js?v=20261029a"></script>
+    <script type="module" src="app.js?v=20261029o"></script>
   </body>
 </html>
