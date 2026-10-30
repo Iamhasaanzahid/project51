@@ -506,6 +506,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
         top(0.205, 0.225, 0.64, 1.10, 0.76, 7, 0.007, 0.62);
         lapels(1.30);
         collar(0.095, 1.43);
+      if (g === "shirt") {
+        tunic([[0.19, 0.86], [0.19, 0.98], [0.195, 1.10], [0.205, 1.24], [0.21, 1.36], [0.1, 1.38]], 0.75, 8, 0.005);
+        collar(0.075, 1.37);
       } else if (g === "kurta") {
         tunic([[0.255,0.47],[0.235,0.70],[0.215,0.95],[0.205,1.20],[0.21,1.36],[0.205,1.44]], 0.74, 9, 0.009);
         collar(0.09, 1.44);
@@ -531,7 +534,10 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
         collar(0.10, 1.44);
       }
     } else {
-      if (g === "kurti") {
+      if (g === "set") {
+        tunic([[0.185, 0.97], [0.19, 1.06], [0.2, 1.2], [0.205, 1.32], [0.2, 1.36]], 0.8, 8, 0.005);
+        collar(0.07, 1.35);
+      } else if (g === "kurti") {
         tunic([[0.235,0.86],[0.215,1.02],[0.205,1.20],[0.21,1.36],[0.205,1.44]], 0.76, 7, 0.007);
         collar(0.088, 1.44);
       } else if (g === "kurta") {
