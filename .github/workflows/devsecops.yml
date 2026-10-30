@@ -94,7 +94,7 @@ jobs:
       - name: pip-audit (UI runtime)
         run: pip-audit -r requirements.txt --strict --desc
       - name: Trivy filesystem (vuln + secret + config)
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -119,7 +119,7 @@ jobs:
       - name: Build API image
         run: docker build -f docker/Dockerfile.api -t aifabric-api:ci .
       - name: Trivy image scan
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: aifabric-api:ci
           format: sarif
@@ -156,7 +156,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Trivy config (Docker/K8s)
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: config
           scan-ref: deploy

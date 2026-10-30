@@ -99,7 +99,7 @@ jobs:
 
       - name: Trivy scan (blocks the push)
         if: steps.gate.outputs.enabled == 'true'
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ steps.image.outputs.name }}:ci-${{ github.run_id }}
           format: sarif
