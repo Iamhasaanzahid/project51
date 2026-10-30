@@ -1,0 +1,10 @@
+[build]
+  # The Cloth Room is a static site: index.html + app.js + styles.css in /site
+  publish = "site"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[dev]
+  command = ""
+  publish = "site"
