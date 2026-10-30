@@ -506,7 +506,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
         top(0.205, 0.225, 0.64, 1.10, 0.76, 7, 0.007, 0.62);
         lapels(1.30);
         collar(0.095, 1.43);
-      if (g === "shirt") {
+      } else if (g === "shirt") {
         tunic([[0.19, 0.86], [0.19, 0.98], [0.195, 1.10], [0.205, 1.24], [0.21, 1.36], [0.1, 1.38]], 0.75, 8, 0.005);
         collar(0.075, 1.37);
       } else if (g === "kurta") {
