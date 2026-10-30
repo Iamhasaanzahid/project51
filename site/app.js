@@ -30,6 +30,14 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   const styleNote = $("style-note");
   const styleTips = $("style-tips");
 
+  const vibeCard = $("vibe-card");
+  const vibeInput = $("vibe-input");
+  const vibeGenerate = $("vibe-generate");
+  const vibeResult = $("vibe-result");
+  const vibeScore = $("vibe-score");
+  const vibeChips = $("vibe-chips");
+  const vibeNote = $("vibe-note");
+
   const navItems = document.querySelectorAll(".nav-item");
   const views = document.querySelectorAll(".view");
   const viewTitle = $("view-title");
@@ -132,6 +140,15 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   };
 
   const FIT = { slim: 0.94, regular: 1, relaxed: 1.08 };
+
+  const VIBE_PRESETS = [
+    { vibe: "monsoon streetwear", scene: "street", garment: "shirt", tone: "charcoal", fit: "regular" },
+    { vibe: "Eid morning formal", scene: "bazaar", garment: "kurta", tone: "auto", fit: "relaxed" },
+    { vibe: "coastal resort wedding", scene: "beach", garment: "dress", tone: "auto", fit: "relaxed" },
+    { vibe: "desi streetwear", scene: "bazaar", garment: "overshirt", tone: "denim", fit: "regular" },
+    { vibe: "office polish", scene: "mall", garment: "blazer", tone: "auto", fit: "regular" },
+    { vibe: "festival evening", scene: "boutique", garment: "sherwani", tone: "auto", fit: "relaxed" },
+  ];
 
   const BOTTOM_TONES = [
     { id: "auto", name: "Auto" },
@@ -742,6 +759,40 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   }
 
   /* ---------------- Scene background ---------------- */
+  function composeVibeLook(vibeText) {
+    const v = (vibeText || "").trim().toLowerCase() || "street casual";
+    const scene = SCENES.find((s) => v.includes(s.id)) || SCENES.find((s) => s.name.toLowerCase().includes(v.split(" ")[0])) || SCENES[0];
+    const glist = GARMENTS[state.gender] || [];
+    let garment = glist[0]?.id || "shirt";
+    for (const g of glist) {
+      const gtext = `${g.id} ${g.name} ${g.note} ${g.occasion} ${g.styling}`.toLowerCase();
+      if (v.includes(g.id) || gtext.includes(v)) { garment = g.id; break; }
+    }
+    const fit = /relaxed|loose|flowy|festive|gown|lehenga|bridal|anarkali|saree|sharara|shalwar|dress|sherwani|bandhgala|kurta|leggings/i.test(v) ? "relaxed" : "regular";
+    const toneId = /denim|street|bold|layered|colorful|indian|desi/i.test(v) ? "denim" : "auto";
+
+    state.scene = scene;
+    stageWrap.style.setProperty("--scene-image", `url("${scene.image}")`);
+    metaScene.textContent = scene.name;
+    applyGarment(garment);
+    state.bottomTone = toneId;
+    state.fit = fit;
+    renderToneRow();
+    syncFitRow();
+    styleAvatar();
+    buildOverlay();
+    updateStyle();
+    setStatus(`AI vibe composed: ${vibeText}`);
+
+    const brief = [
+      `AI Vibe Composer — "${vibeText}"`,
+      `Scene: ${scene.name} · Garment: ${garmentLabel(garment)} · Fit: ${fit} · Bottom tone: ${toneId === "auto" ? resolveBottomTone() : toneId}`,
+    ].join("\n");
+    vibeResult.textContent = brief;
+    vibeScore.textContent = `${Math.round(62 + (v.length * 7) % 33)}%`;
+    return brief;
+  }
+
   function setScene(sceneId) {
     const s = SCENES.find((x) => x.id === sceneId) || SCENES[0];
     state.scene = s;
@@ -1228,6 +1279,19 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     buildOverlay();
     updateStyle();
     setTimeout(() => setStatus("Fabric applied."), 220);
+  });
+  vibeGenerate.addEventListener("click", () => {
+    vibeResult.textContent = composeVibeLook(vibeInput.value);
+  });
+  vibeInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); vibeGenerate.click(); }
+  });
+  vibeChips.innerHTML = VIBE_PRESETS.map((p) => `<button class="vibe-chip" data-vibe="${p.vibe}">${p.vibe}</button>`).join("");
+  vibeChips.addEventListener("click", (e) => {
+    const b = e.target.closest(".vibe-chip");
+    if (!b) return;
+    vibeInput.value = b.dataset.vibe;
+    vibeResult.textContent = composeVibeLook(b.dataset.vibe);
   });
 
   saveBtn.addEventListener("click", saveLook);
