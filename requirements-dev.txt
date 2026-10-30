@@ -1,11 +1,11 @@
 -r requirements-api.txt
 
-pytest==8.2.2
-pytest-asyncio==0.23.7
-pytest-cov==5.0.0
-bandit[toml]==1.7.9
-pip-audit==2.7.3
-semgrep==1.79.0
-ruff==0.5.0
-fakeredis==2.23.1
-testcontainers[postgres]==4.8.2
+pytest==9.1.1
+pytest-asyncio==1.4.1
+pytest-cov==7.1.0
+bandit[toml]==1.9.4
+pip-audit==2.10.1
+semgrep==1.182.1
+ruff==0.17.3
+fakeredis==2.40.0
+testcontainers[postgres]==4.15.0
