@@ -3,9 +3,11 @@
 pytest==9.1.1
 pytest-asyncio==1.4.1
 pytest-cov==7.1.0
+# Scanner CLIs are installed by the CI jobs that run them. semgrep is not
+# listed here on purpose: it pins opentelemetry-api ~=1.37 while fastapi
+# requires >=1.44, which makes this file unresolvable as a whole.
 bandit[toml]==1.9.4
 pip-audit==2.10.1
-semgrep==1.182.1
 ruff==0.17.3
 fakeredis==2.40.0
 testcontainers[postgres]==4.15.0
