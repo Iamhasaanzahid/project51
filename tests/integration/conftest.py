@@ -114,14 +114,20 @@ def seeded_tenants(migrated_database):
                     name,
                     schema,
                 )
-            await conn.execute(
-                "INSERT INTO tenant_acme.users (tenant_id, email, full_name, password_hash) "
-                "VALUES ('acme', 'owner@acme.test', 'Acme Owner', 'x')"
-            )
-            await conn.execute(
-                "INSERT INTO tenant_beta.users (tenant_id, email, full_name, password_hash) "
-                "VALUES ('beta', 'owner@beta.test', 'Beta Owner', 'x')"
-            )
+                # Tenant tables are protected by row-level security keyed on
+                # app.current_tenant. The application sets it per request, so
+                # the seed connection must do the same; otherwise the INSERT is
+                # rejected by the policy instead of being scoped to a tenant.
+                await conn.execute(
+                    "SELECT set_config('app.current_tenant', $1, false)", slug
+                )
+                await conn.execute(
+                    f"INSERT INTO {schema}.users (tenant_id, email, full_name, password_hash) "
+                    f"VALUES ($1, $2, $3, 'x')",
+                    slug,
+                    f"owner@{slug}.test",
+                    f"{name} Owner",
+                )
         finally:
             await conn.close()
 
