@@ -3,7 +3,7 @@
    ============================================================ */
 
 import { db, totalSales, totalProfit } from '../db.js';
-import { icon, esc } from '../ui.js';
+import { icon, esc, emptyState } from '../ui.js';
 
 export function render(root) {
   const sales = totalSales();

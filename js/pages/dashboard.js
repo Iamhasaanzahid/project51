@@ -3,7 +3,7 @@
    ============================================================ */
 
 import { db, lowStockProducts, totalSales, totalProfit } from '../db.js';
-import { icon, esc } from '../ui.js';
+import { icon, esc, emptyState } from '../ui.js';
 
 function greeting() {
   const h = new Date().getHours();

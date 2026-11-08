@@ -2,7 +2,7 @@
    mhzaly — app shell, auth gate & router
    ============================================================ */
 
-import { db, lowStockProducts, totalReceivable, totalSales, totalProfit, configureShop, hydrate } from './db.js';
+import { db, lowStockProducts, totalReceivable, totalSales, totalProfit, configureShop, hydrate, save } from './db.js';
 import { icon, esc, initials, toast, openModal, closeModal } from './ui.js';
 import {
   getToken, getStoredShop, isDemo, bootstrap, clearSession,
@@ -39,7 +39,29 @@ const PAGE_TITLES = {
 
 let currentPage = null;
 
+function renderAuthView() {
+  const hash = location.hash.replace(/^#\/?/, '');
+  const mode = hash === 'register' ? 'register' : 'login';
+  const params = new URLSearchParams(location.search);
+  const shopCode = (params.get('shop') || '').trim().toLowerCase();
+  document.title = 'mhzaly — Shop Manager';
+  authPage.render(document.getElementById('app'), { mode, shopCode });
+}
+
 export function init() {
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+  if (isDemo()) {
+    configureShop({ demo: true });
+    renderShell();
+    const hash = location.hash && location.hash !== '#/login' && location.hash !== '#/register' ? location.hash : '#/dashboard';
+    if (!location.hash || location.hash === '#/login' || location.hash === '#/register') {
+      history.replaceState(null, '', location.pathname + '#/dashboard');
+    }
+    navigate(hash);
+    return;
+  }
   const token = getToken();
   if (token) {
     const stored = getStoredShop();
@@ -65,8 +87,7 @@ export function init() {
       return;
     }
   }
-  renderShell();
-  navigate('#/login');
+  renderAuthView();
 }
 
 function shell() {
@@ -318,7 +339,10 @@ function copyText(text) {
   navigator.clipboard.writeText(text || '').then(() => toast('Copied'));
 }
 
-window.addEventListener('hashchange', () => navigate(location.hash));
+window.addEventListener('hashchange', () => {
+  if (document.getElementById('main')) navigate(location.hash);
+  else renderAuthView();
+});
 window.addEventListener('session:expired', () => {
   clearSession();
   toast('Session expire ho gaya — dobara login karein', 'error');
