@@ -52,6 +52,11 @@ export function init() {
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
+  const params = new URLSearchParams(location.search);
+  if (params.get('logout') === '1') {
+    clearSession();
+    history.replaceState(null, '', location.pathname);
+  }
   if (isDemo()) {
     configureShop({ demo: true });
     renderShell();
@@ -124,6 +129,7 @@ function shell() {
             <span class="pill sync-pill idle" id="syncPill">${syncPillHTML('idle')}</span>
             <span class="pill date-pill">${icon('calendar')}<span id="todayPill"></span></span>
             <button class="icon-btn account-btn" id="accountBtn" title="Shop account">${esc(initials(db.settings.ownerName || shop))}</button>
+            <button class="btn btn-ghost btn-sm" id="logoutTopBtn" title="${isDemo() ? 'Exit demo' : 'Logout'}">${isDemo() ? 'Exit' : 'Logout'}</button>
             <button class="btn btn-primary btn-sm" data-nav="pos">${icon('plus')} New Sale</button>
           </div>
         </header>
@@ -143,6 +149,16 @@ function shell() {
 
   document.getElementById('accountBtn').addEventListener('click', openAccountModal);
   document.getElementById('sidebarAccount').addEventListener('click', openAccountModal);
+  document.getElementById('logoutTopBtn').addEventListener('click', () => {
+    if (isDemo()) {
+      clearSession();
+      window.location.href = location.pathname;
+      return;
+    }
+    const stored = getStoredShop() || {};
+    clearSession();
+    window.location.href = stored.code ? `${location.pathname}?shop=${encodeURIComponent(stored.code)}` : location.pathname;
+  });
 
   document.body.addEventListener('click', (e) => {
     const navBtn = e.target.closest('[data-nav]');
