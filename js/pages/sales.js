@@ -118,8 +118,9 @@ export function render(root) {
         <td style="text-align:right">${itemCount(s)}</td>
         <td>${new Date(s.createdAt).toLocaleDateString('en-GB')}</td>
         <td style="text-align:right">${money(s.total)}</td>
-        <td style="text-align:right">
-          <button class="btn btn-ghost btn-sm" data-view="${esc(s.id)}" title="View">${icon('eye')}</button>
+        <td style="text-align:right; white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" data-view="${esc(s.id)}" title="View invoice">${icon('eye')}</button>
+          <button class="btn btn-ghost btn-sm" data-print="${esc(s.id)}" title="Print receipt">${icon('download')}</button>
         </td>
       </tr>`
       )
@@ -130,10 +131,17 @@ export function render(root) {
   searchEl.addEventListener('input', renderTable);
 
   body.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-view]');
-    if (!btn) return;
-    const sale = db.sales.find((s) => s.id === btn.dataset.view);
-    if (sale) showInvoice(sale);
+    const view = e.target.closest('[data-view]');
+    if (view) {
+      const sale = db.sales.find((s) => s.id === view.dataset.view);
+      if (sale) showInvoice(sale);
+      return;
+    }
+    const pr = e.target.closest('[data-print]');
+    if (pr) {
+      const sale = db.sales.find((s) => s.id === pr.dataset.print);
+      if (sale) printReceipt(sale);
+    }
   });
 
   root.querySelector('#exportSales').addEventListener('click', () => {

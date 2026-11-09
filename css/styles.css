@@ -1141,3 +1141,31 @@ select.input { background-image: none; }
   box-shadow: 0 12px 26px -12px rgba(185, 28, 28, .55);
   transform: translateY(-1px);
 }
+
+/* ============================================================
+   Final polish — small, safe enhancements
+   ============================================================ */
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+.btn, .icon-btn, .nav-item, .qty-btn, .qty-del, .auth-demo, .account-btn {
+  -webkit-tap-highlight-color: transparent;
+}
+.card { border-color: #e6ebf2; }
+.card-head { border-bottom-color: #eef2f7; }
+.kpi, .stat-strip > div {
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.kpi:hover, .stat-strip > div:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+/* keep number columns crisp and aligned */
+td, th { font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) {
+  .date-pill { display: none; }
+  .topbar { padding: 10px 12px; gap: 8px; }
+  .content { padding: 12px; }
+  .page-head h2 { font-size: 16px; }
+}
