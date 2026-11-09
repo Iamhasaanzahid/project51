@@ -56,6 +56,20 @@ export function init() {
   if (params.get('logout') === '1') {
     clearSession();
     history.replaceState(null, '', location.pathname);
+    // Force a clean slate: drop the service worker + caches so a stale
+    // build can never keep the old login/dashboard around.
+    Promise.resolve().then(async () => {
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+        }
+        if (window.caches) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+      } catch { /* ignore */ }
+    });
   }
   if (isDemo()) {
     configureShop({ demo: true });
