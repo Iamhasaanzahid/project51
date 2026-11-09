@@ -49,8 +49,23 @@ export function toast(message, type = '') {
 }
 
 export function confirmDialog(message, onConfirm, onCancel) {
-  if (!confirm(message)) { if (onCancel) onCancel(); return; }
-  if (onConfirm) onConfirm();
+  const backdrop = openModal({
+    title: 'Confirm',
+    body: `<p style="margin:0;font-size:13.5px;line-height:1.6;color:#334155">${esc(message)}</p>`,
+    footer: `<button class="btn btn-ghost" data-no>Cancel</button>
+             <button class="btn btn-danger" data-yes>Delete</button>`,
+    onMount: (bd) => {
+      bd.querySelector('[data-no]').addEventListener('click', () => {
+        bd.remove();
+        if (onCancel) onCancel();
+      });
+      bd.querySelector('[data-yes]').addEventListener('click', () => {
+        bd.remove();
+        if (onConfirm) onConfirm();
+      });
+    },
+  });
+  return backdrop;
 }
 
 export function openModal({ title, subtitle, body, footer, onMount }) {
@@ -76,8 +91,8 @@ export function openModal({ title, subtitle, body, footer, onMount }) {
   return backdrop;
 }
 
-export function downloadFile(name, content) {
-  const blob = new Blob([content], { type: 'application/json' });
+export function downloadFile(name, content, mime = 'application/json') {
+  const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

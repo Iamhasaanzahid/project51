@@ -3,7 +3,7 @@
    ============================================================ */
 
 import { db, uid, save } from '../db.js';
-import { icon, esc, toast } from '../ui.js';
+import { icon, esc, toast, openModal, confirmDialog } from '../ui.js';
 
 export function render(root) {
   root.innerHTML = `
@@ -19,38 +19,135 @@ export function render(root) {
 
     <div class="card mt">
       <div class="card-pad">
-        <table style="width:100%">
-          <thead>
-            <tr>
-              <th style="text-align:left">Name</th>
-              <th style="text-align:left">Phone</th>
-              <th style="text-align:right">Balance</th>
-              <th style="width:140px"></th>
-            </tr>
-          </thead>
-          <tbody id="customerTableBody"></tbody>
-        </table>
+        <div class="field mt-sm">
+          <label>Search</label>
+          <input class="input" id="customerSearch" placeholder="Name or phone" />
+        </div>
+        <div class="table-wrap">
+          <table style="width:100%;margin-top:10px">
+            <thead>
+              <tr>
+                <th style="text-align:left">Name</th>
+                <th style="text-align:left">Phone</th>
+                <th style="text-align:right">Balance</th>
+                <th style="width:120px"></th>
+              </tr>
+            </thead>
+            <tbody id="customerTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>`;
 
   function renderTable() {
-    root.querySelector('#customerTableBody').innerHTML = db.customers.map((c) => `
-      <tr>
-        <td>${esc(c.name)}</td>
-        <td>${esc(c.phone || '')}</td>
-        <td style="text-align:right">Rs ${Number(c.balance || 0).toLocaleString()}</td>
-        <td style="text-align:right"><button class="btn btn-ghost btn-sm" data-edit="${esc(c.id)}">${icon('settings')}</button></td>
-      </tr>`).join('');
-  }
-  renderTable();
+    const q = String(root.querySelector('#customerSearch').value || '').toLowerCase();
+    const list = db.customers.filter(
+      (c) => c.name.toLowerCase().includes(q) || (c.phone || '').toLowerCase().includes(q)
+    );
 
-  root.querySelector('#addCustomerBtn').addEventListener('click', () => {
-    const name = prompt('Customer name:');
-    if (!name) return;
-    const phone = prompt('Phone:') || '';
-    db.customers.push({ id: uid('cust'), name, phone, balance: 0, createdAt: new Date().toISOString() });
-    save();
-    renderTable();
-    toast('Customer added');
+    if (!list.length) {
+      root.querySelector('#customerTableBody').innerHTML = `
+        <tr><td colspan="4"><div class="empty-state">Koi customer nahi mila.</div></td></tr>`;
+      return;
+    }
+
+    root.querySelector('#customerTableBody').innerHTML = list
+      .map((c) => {
+        const bal = Number(c.balance || 0);
+        return `
+      <tr>
+        <td><b>${esc(c.name)}</b></td>
+        <td>${esc(c.phone || '')}</td>
+        <td style="text-align:right">
+          ${bal > 0 ? `<span class="badge warn">Rs ${bal.toLocaleString()}</span>` : `<span class="badge ok">Rs 0</span>`}
+        </td>
+        <td style="text-align:right">
+          <button class="btn btn-ghost btn-sm" data-edit="${esc(c.id)}" title="Edit">${icon('settings')}</button>
+          <button class="btn btn-ghost btn-sm" data-del="${esc(c.id)}" title="Delete">${icon('trash')}</button>
+        </td>
+      </tr>`;
+      })
+      .join('');
+  }
+
+  renderTable();
+  root.querySelector('#customerSearch').addEventListener('input', renderTable);
+
+  function openForm(existing) {
+    const c = existing || {};
+    const isEdit = !!existing;
+
+    openModal({
+      title: isEdit ? 'Edit customer' : 'Add customer',
+      subtitle: isEdit ? c.name : 'Naya customer khata banayein',
+      body: `
+        <div class="owner-form-grid">
+          <label style="grid-column:1/-1">Customer name
+            <input id="cfName" value="${esc(c.name || '')}" placeholder="e.g. Ali Khan" />
+          </label>
+          <label>Phone
+            <input id="cfPhone" value="${esc(c.phone || '')}" placeholder="03xx-xxxxxxx" inputmode="tel" />
+          </label>
+          <label>Opening udhaar (Rs)
+            <input id="cfBalance" type="number" min="0" step="0.01" value="${c.balance ?? 0}" />
+          </label>
+          <label style="grid-column:1/-1">Note (optional)
+            <input id="cfNote" value="${esc(c.note || '')}" placeholder="e.g. gali no 4" />
+          </label>
+        </div>`,
+      footer: `<button class="btn btn-ghost" data-cancel>Cancel</button>
+               <button class="btn btn-primary" id="cfSave">${icon('check')} ${isEdit ? 'Save changes' : 'Add customer'}</button>`,
+      onMount: (bd) => {
+        bd.querySelector('[data-cancel]').addEventListener('click', () => bd.remove());
+        const doSave = () => {
+          const name = bd.querySelector('#cfName').value.trim();
+          if (!name) return toast('Customer ka naam likhein', 'error');
+          const data = {
+            name,
+            phone: bd.querySelector('#cfPhone').value.trim(),
+            balance: Number(bd.querySelector('#cfBalance').value || 0),
+            note: bd.querySelector('#cfNote').value.trim(),
+            updatedAt: new Date().toISOString(),
+          };
+          if (isEdit) {
+            Object.assign(c, data);
+            toast('Customer updated', 'success');
+          } else {
+            db.customers.push({ id: uid('cust'), createdAt: new Date().toISOString(), ...data });
+            toast('Customer added', 'success');
+          }
+          save();
+          renderTable();
+          bd.remove();
+        };
+        bd.querySelector('#cfSave').addEventListener('click', doSave);
+        bd.querySelector('#cfName').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') doSave();
+        });
+        setTimeout(() => bd.querySelector('#cfName').focus(), 60);
+      },
+    });
+  }
+
+  root.querySelector('#addCustomerBtn').addEventListener('click', () => openForm(null));
+
+  root.querySelector('#customerTableBody').addEventListener('click', (e) => {
+    const edit = e.target.closest('[data-edit]');
+    if (edit) {
+      const c = db.customers.find((x) => x.id === edit.dataset.edit);
+      if (c) openForm(c);
+      return;
+    }
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      const c = db.customers.find((x) => x.id === del.dataset.del);
+      if (!c) return;
+      confirmDialog(`"${c.name}" delete karein?`, () => {
+        db.customers = db.customers.filter((x) => x.id !== c.id);
+        save();
+        renderTable();
+        toast('Customer deleted', 'success');
+      });
+    }
   });
 }

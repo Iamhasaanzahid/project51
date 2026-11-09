@@ -1,12 +1,16 @@
 /* ============================================================
-   mhzaly — POS Billing
+   mhzaly — POS Billing (fixed + WhatsApp receipt)
    ============================================================ */
 
 import { db, uid, save } from '../db.js';
-import { icon, esc, toast } from '../ui.js';
+import { icon, esc, toast, openModal } from '../ui.js';
+import { money, printReceipt, shareWhatsApp } from '../receipt-share.js';
 
 export function render(root) {
   const cart = [];
+  let customerName = '';
+  let customerPhone = '';
+
   root.innerHTML = `
     <div class="page-head">
       <div class="grow">
@@ -26,88 +30,229 @@ export function render(root) {
             <label>Search product</label>
             <input class="input" id="posSearch" placeholder="Name, SKU or barcode" />
           </div>
-          <div id="posProductList" style="max-height:340px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;padding:8px;margin-top:8px;background:#f8fafc">
-            ${renderProductList(db.products, cart)}
-          </div>
+          <div id="posProductList" class="pos-list">${renderProductList(db.products, cart)}</div>
         </div>
       </div>
 
       <div class="card" style="min-height:520px">
-        <div class="card-head"><h3>Cart</h3></div>
+        <div class="card-head"><h3>Cart</h3><span class="right" id="posCount">0 items</span></div>
         <div class="card-pad">
-          <div id="posCart" style="max-height:300px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;padding:8px;background:#fff;margin-bottom:10px">
-            ${renderCart(cart)}
+          <div id="posCart" class="pos-cart">${renderCart(cart)}</div>
+
+          <div class="field" style="margin-top:12px">
+            <label>Customer name (optional)</label>
+            <input class="input" id="posCustomer" placeholder="Walk-in" />
           </div>
-          <div style="display:flex;justify-content:space-between;font-weight:800;font-size:16px;margin-top:10px">
+          <div class="field">
+            <label>Phone (WhatsApp receipt ke liye)</label>
+            <input class="input" id="posPhone" placeholder="03xx-xxxxxxx" inputmode="tel" />
+          </div>
+
+          <div class="pos-total">
             <span>Total</span><span id="posTotal">Rs 0</span>
           </div>
         </div>
       </div>
     </div>`;
 
+  const listEl = root.querySelector('#posProductList');
+  const cartEl = root.querySelector('#posCart');
+  const totalEl = root.querySelector('#posTotal');
+  const countEl = root.querySelector('#posCount');
+  const checkoutBtn = root.querySelector('#checkoutBtn');
   const search = root.querySelector('#posSearch');
+
+  function refresh() {
+    listEl.innerHTML = renderProductList(db.products, cart);
+    cartEl.innerHTML = renderCart(cart);
+    const total = cart.reduce((sum, i) => sum + i.qty * i.price, 0);
+    totalEl.textContent = money(total);
+    const count = cart.reduce((sum, i) => sum + i.qty, 0);
+    countEl.textContent = count + ' item' + (count === 1 ? '' : 's');
+    checkoutBtn.disabled = cart.length === 0;
+  }
+
+  function addToCart(id) {
+    const p = db.products.find((x) => x.id === id);
+    if (!p) return;
+    if ((p.stock || 0) <= 0) return toast('Ye product out of stock hai', 'error');
+    const existing = cart.find((i) => i.id === id);
+    if (existing) {
+      if (existing.qty >= (p.stock || 0)) return toast('Stock limit reached', 'error');
+      existing.qty += 1;
+    } else {
+      cart.push({ id: p.id, name: p.name, price: Number(p.price) || 0, qty: 1 });
+    }
+    refresh();
+  }
+
+  function changeQty(id, delta) {
+    const item = cart.find((i) => i.id === id);
+    if (!item) return;
+    const p = db.products.find((x) => x.id === id);
+    const max = p ? p.stock || 0 : 9999;
+    item.qty += delta;
+    if (item.qty <= 0) {
+      const idx = cart.findIndex((i) => i.id === id);
+      cart.splice(idx, 1);
+    } else if (p && item.qty > max) {
+      item.qty = max;
+      toast('Stock limit reached', 'error');
+    }
+    refresh();
+  }
+
+  function removeFromCart(id) {
+    const idx = cart.findIndex((i) => i.id === id);
+    if (idx >= 0) cart.splice(idx, 1);
+    refresh();
+  }
+
   search.addEventListener('input', (e) => {
     const q = String(e.target.value || '').toLowerCase();
-    const filtered = db.products.filter((p) => p.name.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q));
-    root.querySelector('#posProductList').innerHTML = renderProductList(filtered, cart);
+    const filtered = db.products.filter(
+      (p) => p.name.toLowerCase().includes(q) || (p.sku || '').toLowerCase().includes(q)
+    );
+    listEl.innerHTML = renderProductList(filtered, cart);
   });
 
-  root.querySelector('#checkoutBtn').addEventListener('click', () => {
+  listEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-add]');
+    if (!btn) return;
+    addToCart(btn.dataset.add);
+  });
+
+  cartEl.addEventListener('click', (e) => {
+    const inc = e.target.closest('[data-inc]');
+    if (inc) return changeQty(inc.dataset.inc, 1);
+    const dec = e.target.closest('[data-dec]');
+    if (dec) return changeQty(dec.dataset.dec, -1);
+    const rem = e.target.closest('[data-remove]');
+    if (rem) return removeFromCart(rem.dataset.remove);
+  });
+
+  root.querySelector('#posCustomer').addEventListener('input', (e) => {
+    customerName = e.target.value;
+  });
+  root.querySelector('#posPhone').addEventListener('input', (e) => {
+    customerPhone = e.target.value;
+  });
+
+  checkoutBtn.addEventListener('click', () => {
     if (!cart.length) return toast('Cart is empty', 'error');
     const total = cart.reduce((sum, i) => sum + i.qty * i.price, 0);
     const sale = {
       id: uid('sale'),
       invoiceNo: 'INV-' + String(Date.now()).slice(-6),
-      customerName: 'Walk-in',
+      customerName: (customerName || '').trim() || 'Walk-in',
+      customerPhone: (customerPhone || '').trim(),
       items: [...cart],
       total,
       paymentMethod: 'Cash',
       createdAt: new Date().toISOString(),
     };
+
     db.sales.push(sale);
     for (const item of cart) {
       const p = db.products.find((x) => x.id === item.id);
       if (p) p.stock = Math.max(0, (p.stock || 0) - item.qty);
     }
     save();
-    toast('Invoice created: ' + sale.invoiceNo);
+
     cart.length = 0;
-    root.querySelector('#posCart').innerHTML = renderCart(cart);
-    root.querySelector('#posTotal').textContent = 'Rs 0';
-    root.querySelector('#checkoutBtn').disabled = true;
-    root.querySelector('#posProductList').innerHTML = renderProductList(db.products, cart);
+    customerName = '';
+    customerPhone = '';
+    root.querySelector('#posCustomer').value = '';
+    root.querySelector('#posPhone').value = '';
     search.value = '';
-    search.focus();
+    refresh();
+
+    showSaleComplete(sale);
+  });
+}
+
+function showSaleComplete(sale) {
+  const rows = (sale.items || [])
+    .map(
+      (it) =>
+        `<tr><td>${esc(it.name)}</td><td style="text-align:center">${esc(it.qty)}</td><td style="text-align:right">${money(
+          (Number(it.qty) || 1) * (Number(it.price) || 0)
+        )}</td></tr>`
+    )
+    .join('');
+
+  openModal({
+    title: 'Sale complete',
+    subtitle: `Invoice ${sale.invoiceNo}`,
+    body: `
+      <div class="sale-done">
+        <div class="sale-done-ico">${icon('check')}</div>
+        <div class="sale-done-total">${money(sale.total)}</div>
+        <div class="sale-done-sub">${esc(sale.customerName || 'Walk-in')} · ${esc(sale.items.length)} item(s)</div>
+      </div>
+      <div class="table-wrap">
+        <table style="width:100%">
+          <thead><tr><th style="text-align:left">Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label>Customer phone (WhatsApp)</label>
+        <input class="input" id="salePhone" value="${esc(sale.customerPhone || '')}" placeholder="03xx-xxxxxxx" inputmode="tel" />
+      </div>`,
+    footer: `
+      <button class="btn btn-ghost" data-close-sale>Done</button>
+      <button class="btn btn-ghost" id="salePrint">${icon('download')} Print</button>
+      <button class="btn btn-primary" id="saleWhatsapp">${icon('check')} WhatsApp</button>`,
+    onMount: (bd) => {
+      bd.querySelector('[data-close-sale]').addEventListener('click', () => bd.remove());
+      bd.querySelector('#salePrint').addEventListener('click', () => printReceipt(sale));
+      bd.querySelector('#saleWhatsapp').addEventListener('click', () => {
+        const phone = bd.querySelector('#salePhone').value;
+        shareWhatsApp(sale, phone);
+      });
+    },
   });
 }
 
 function renderProductList(products, cart) {
-  if (!products.length) return '<div style="padding:10px;color:#64748b">No products found.</div>';
-  const inCart = new Set(cart.map((i) => i.id));
-  return products.map((p) => {
-    const hasStock = (p.stock || 0) > 0;
-    return `<div style="padding:8px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <div style="font-weight:700">${esc(p.name)}</div>
-        <div style="font-size:12px;color:#64748b">${esc(p.sku || '')} · ${esc(p.category || '')}</div>
-        <div style="font-size:12px;color:#64748b">Stock: ${esc(p.stock)} · Rs ${esc(Number(p.price || 0).toLocaleString())}</div>
-      </div>
-      <button class="btn btn-primary btn-sm" ${!hasStock || inCart.has(p.id) ? 'disabled' : ''} data-add="${esc(p.id)}">${icon('plus')}</button>
-    </div>`;
-  }).join('');
+  if (!products.length) return '<div class="pos-empty">No products found.</div>';
+  const qtyMap = new Map(cart.map((i) => [i.id, i.qty]));
+  return products
+    .map((p) => {
+      const hasStock = (p.stock || 0) > 0;
+      const inCart = qtyMap.get(p.id) || 0;
+      return `<div class="pos-row">
+        <div class="grow">
+          <div class="pos-name">${esc(p.name)}</div>
+          <div class="pos-meta">${esc(p.sku || '')}${p.category ? ' · ' + esc(p.category) : ''}</div>
+          <div class="pos-meta">Stock: ${esc(p.stock)} · ${money(p.price)}</div>
+        </div>
+        <button class="btn btn-primary btn-sm" ${!hasStock ? 'disabled' : ''} data-add="${esc(p.id)}">
+          ${icon('plus')}${inCart ? ` <span>${inCart}</span>` : ''}
+        </button>
+      </div>`;
+    })
+    .join('');
 }
 
 function renderCart(cart) {
-  if (!cart.length) return '<div style="padding:10px;color:#64748b">Cart is empty.</div>';
-  return cart.map((i) => `
-    <div style="padding:8px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <div style="font-weight:700">${esc(i.name)}</div>
-        <div style="font-size:12px;color:#64748b">Rs ${esc(Number(i.price || 0).toLocaleString())} each</div>
+  if (!cart.length) return '<div class="pos-empty">Cart is empty. Left se products add karein.</div>';
+  return cart
+    .map(
+      (i) => `
+    <div class="pos-row">
+      <div class="grow">
+        <div class="pos-name">${esc(i.name)}</div>
+        <div class="pos-meta">${money(i.price)} each</div>
       </div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <span style="font-weight:800">${i.qty}</span>
-        <button class="btn btn-ghost btn-sm" data-remove="${esc(i.id)}" style="padding:4px 8px">${icon('trash')}</button>
+      <div class="qty-ctrl">
+        <button class="qty-btn" data-dec="${esc(i.id)}">−</button>
+        <span class="qty-val">${i.qty}</span>
+        <button class="qty-btn" data-inc="${esc(i.id)}">+</button>
+        <button class="qty-del" data-remove="${esc(i.id)}" title="Remove">${icon('trash')}</button>
       </div>
-    </div>`).join('');
+    </div>`
+    )
+    .join('');
 }

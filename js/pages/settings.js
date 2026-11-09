@@ -227,18 +227,20 @@ export function render(root) {
   });
 
   root.querySelector('#loadDemo').addEventListener('click', () => {
-    if (!confirm('Demo data load karne se aap ka current data replace ho jayega. Pehle backup le lein.')) return;
-    import('../api.js').then(({ setDemo }) => setDemo(false));
-    loadSampleData();
-    toast('Demo data loaded');
-    refresh();
+    confirmDialog('Demo data load karne se aap ka current data replace ho jayega. Pehle backup le lein.', () => {
+      import('../api.js').then(({ setDemo }) => setDemo(false));
+      loadSampleData();
+      toast('Demo data loaded');
+      refresh();
+    });
   });
 
   root.querySelector('#clearData').addEventListener('click', () => {
-    if (!confirm('Poori data delete ho jayegi — ye step undo nahi kiya ja sakta. Backup zaroor le lein.')) return;
-    clearAll();
-    toast('All data cleared');
-    refresh();
+    confirmDialog('Poori data delete ho jayegi — ye step undo nahi kiya ja sakta. Backup zaroor le lein.', () => {
+      clearAll();
+      toast('All data cleared');
+      refresh();
+    });
   });
 }
 

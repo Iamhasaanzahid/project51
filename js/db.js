@@ -210,7 +210,7 @@ export function lowStockProducts() {
 }
 
 export function totalReceivable() {
-  return db.payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  return db.customers.reduce((sum, c) => sum + Math.max(0, Number(c.balance) || 0), 0);
 }
 
 export function totalSales() {
@@ -220,9 +220,18 @@ export function totalSales() {
 export function totalProfit() {
   let profit = 0;
   for (const s of db.sales) {
-    const p = db.products.find((pr) => pr.id === s.productId);
-    const cost = p ? Number(p.cost) : 0;
-    profit += (Number(s.total) || 0) - cost * (Number(s.qty) || 1);
+    if (Array.isArray(s.items) && s.items.length) {
+      for (const it of s.items) {
+        const p = db.products.find((pr) => pr.id === it.id || pr.id === it.productId);
+        const cost = p ? Number(p.cost) || 0 : 0;
+        const qty = Number(it.qty) || 1;
+        profit += ((Number(it.price) || 0) - cost) * qty;
+      }
+    } else {
+      const p = db.products.find((pr) => pr.id === s.productId);
+      const cost = p ? Number(p.cost) || 0 : 0;
+      profit += (Number(s.total) || 0) - cost * (Number(s.qty) || 1);
+    }
   }
   return profit;
 }

@@ -3,7 +3,7 @@
    ============================================================ */
 
 import { db, uid, save } from '../db.js';
-import { icon, esc, toast } from '../ui.js';
+import { icon, esc, toast, openModal, confirmDialog } from '../ui.js';
 
 export function render(root) {
   root.innerHTML = `
@@ -19,38 +19,135 @@ export function render(root) {
 
     <div class="card mt">
       <div class="card-pad">
-        <table style="width:100%">
-          <thead>
-            <tr>
-              <th style="text-align:left">Name</th>
-              <th style="text-align:left">Phone</th>
-              <th style="text-align:right">Payable</th>
-              <th style="width:140px"></th>
-            </tr>
-          </thead>
-          <tbody id="supplierTableBody"></tbody>
-        </table>
+        <div class="field mt-sm">
+          <label>Search</label>
+          <input class="input" id="supplierSearch" placeholder="Name or phone" />
+        </div>
+        <div class="table-wrap">
+          <table style="width:100%;margin-top:10px">
+            <thead>
+              <tr>
+                <th style="text-align:left">Name</th>
+                <th style="text-align:left">Phone</th>
+                <th style="text-align:right">Payable</th>
+                <th style="width:120px"></th>
+              </tr>
+            </thead>
+            <tbody id="supplierTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>`;
 
   function renderTable() {
-    root.querySelector('#supplierTableBody').innerHTML = db.suppliers.map((s) => `
-      <tr>
-        <td>${esc(s.name)}</td>
-        <td>${esc(s.phone || '')}</td>
-        <td style="text-align:right">Rs ${Number(s.balance || 0).toLocaleString()}</td>
-        <td style="text-align:right"><button class="btn btn-ghost btn-sm" data-edit="${esc(s.id)}">${icon('settings')}</button></td>
-      </tr>`).join('');
-  }
-  renderTable();
+    const q = String(root.querySelector('#supplierSearch').value || '').toLowerCase();
+    const list = db.suppliers.filter(
+      (s) => s.name.toLowerCase().includes(q) || (s.phone || '').toLowerCase().includes(q)
+    );
 
-  root.querySelector('#addSupplierBtn').addEventListener('click', () => {
-    const name = prompt('Supplier name:');
-    if (!name) return;
-    const phone = prompt('Phone:') || '';
-    db.suppliers.push({ id: uid('sup'), name, phone, balance: 0, createdAt: new Date().toISOString() });
-    save();
-    renderTable();
-    toast('Supplier added');
+    if (!list.length) {
+      root.querySelector('#supplierTableBody').innerHTML = `
+        <tr><td colspan="4"><div class="empty-state">Koi supplier nahi mila.</div></td></tr>`;
+      return;
+    }
+
+    root.querySelector('#supplierTableBody').innerHTML = list
+      .map((s) => {
+        const bal = Number(s.balance || 0);
+        return `
+      <tr>
+        <td><b>${esc(s.name)}</b></td>
+        <td>${esc(s.phone || '')}</td>
+        <td style="text-align:right">
+          ${bal > 0 ? `<span class="badge danger">Rs ${bal.toLocaleString()}</span>` : `<span class="badge ok">Rs 0</span>`}
+        </td>
+        <td style="text-align:right">
+          <button class="btn btn-ghost btn-sm" data-edit="${esc(s.id)}" title="Edit">${icon('settings')}</button>
+          <button class="btn btn-ghost btn-sm" data-del="${esc(s.id)}" title="Delete">${icon('trash')}</button>
+        </td>
+      </tr>`;
+      })
+      .join('');
+  }
+
+  renderTable();
+  root.querySelector('#supplierSearch').addEventListener('input', renderTable);
+
+  function openForm(existing) {
+    const s = existing || {};
+    const isEdit = !!existing;
+
+    openModal({
+      title: isEdit ? 'Edit supplier' : 'Add supplier',
+      subtitle: isEdit ? s.name : 'Naya supplier add karein',
+      body: `
+        <div class="owner-form-grid">
+          <label style="grid-column:1/-1">Supplier name
+            <input id="sfName" value="${esc(s.name || '')}" placeholder="e.g. Karachi Wholesale" />
+          </label>
+          <label>Phone
+            <input id="sfPhone" value="${esc(s.phone || '')}" placeholder="03xx-xxxxxxx" inputmode="tel" />
+          </label>
+          <label>Payable balance (Rs)
+            <input id="sfBalance" type="number" min="0" step="0.01" value="${s.balance ?? 0}" />
+          </label>
+          <label style="grid-column:1/-1">Note (optional)
+            <input id="sfNote" value="${esc(s.note || '')}" placeholder="e.g. weekly delivery" />
+          </label>
+        </div>`,
+      footer: `<button class="btn btn-ghost" data-cancel>Cancel</button>
+               <button class="btn btn-primary" id="sfSave">${icon('check')} ${isEdit ? 'Save changes' : 'Add supplier'}</button>`,
+      onMount: (bd) => {
+        bd.querySelector('[data-cancel]').addEventListener('click', () => bd.remove());
+        const doSave = () => {
+          const name = bd.querySelector('#sfName').value.trim();
+          if (!name) return toast('Supplier ka naam likhein', 'error');
+          const data = {
+            name,
+            phone: bd.querySelector('#sfPhone').value.trim(),
+            balance: Number(bd.querySelector('#sfBalance').value || 0),
+            note: bd.querySelector('#sfNote').value.trim(),
+            updatedAt: new Date().toISOString(),
+          };
+          if (isEdit) {
+            Object.assign(s, data);
+            toast('Supplier updated', 'success');
+          } else {
+            db.suppliers.push({ id: uid('sup'), createdAt: new Date().toISOString(), ...data });
+            toast('Supplier added', 'success');
+          }
+          save();
+          renderTable();
+          bd.remove();
+        };
+        bd.querySelector('#sfSave').addEventListener('click', doSave);
+        bd.querySelector('#sfName').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') doSave();
+        });
+        setTimeout(() => bd.querySelector('#sfName').focus(), 60);
+      },
+    });
+  }
+
+  root.querySelector('#addSupplierBtn').addEventListener('click', () => openForm(null));
+
+  root.querySelector('#supplierTableBody').addEventListener('click', (e) => {
+    const edit = e.target.closest('[data-edit]');
+    if (edit) {
+      const s = db.suppliers.find((x) => x.id === edit.dataset.edit);
+      if (s) openForm(s);
+      return;
+    }
+    const del = e.target.closest('[data-del]');
+    if (del) {
+      const s = db.suppliers.find((x) => x.id === del.dataset.del);
+      if (!s) return;
+      confirmDialog(`"${s.name}" delete karein?`, () => {
+        db.suppliers = db.suppliers.filter((x) => x.id !== s.id);
+        save();
+        renderTable();
+        toast('Supplier deleted', 'success');
+      });
+    }
   });
 }

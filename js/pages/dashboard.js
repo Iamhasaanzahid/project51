@@ -1,8 +1,8 @@
 /* ============================================================
-   mhzaly — Dashboard
+   mhzaly — Dashboard (enhanced)
    ============================================================ */
 
-import { db, lowStockProducts, totalSales, totalProfit } from '../db.js';
+import { db, lowStockProducts, totalReceivable } from '../db.js';
 import { icon, esc, emptyState } from '../ui.js';
 
 function greeting() {
@@ -12,17 +12,86 @@ function greeting() {
   return 'Good evening';
 }
 
+function money(n) {
+  return 'Rs ' + Number(n || 0).toLocaleString();
+}
+
+function saleProfit(s) {
+  let p = 0;
+  for (const it of (s.items || [])) {
+    const prod = db.products.find((x) => x.id === it.id || x.id === it.productId);
+    const cost = prod ? Number(prod.cost) || 0 : 0;
+    const qty = Number(it.qty) || 1;
+    p += (Number(it.price) || 0) * qty - cost * qty;
+  }
+  return p;
+}
+
+function dayStart(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function kpi(iconName, tone, label, value, sub) {
+  return `<div class="kpi">
+    <div class="kpi-ico ${tone}">${icon(iconName)}</div>
+    <div class="grow">
+      <div class="k-lbl">${esc(label)}</div>
+      <div class="k-val">${esc(value)}</div>
+      ${sub ? `<div class="k-sub">${esc(sub)}</div>` : ''}
+    </div>
+  </div>`;
+}
+
 export function render(root) {
   const shop = db.settings.shopName || 'My Mart';
   const low = lowStockProducts();
-  const sales = totalSales();
-  const profit = totalProfit();
+  const receivable = totalReceivable();
+
+  const todayStart = dayStart(new Date());
+  const todaySales = db.sales.filter((s) => new Date(s.createdAt || 0) >= todayStart);
+  const todayTotal = todaySales.reduce((a, s) => a + (Number(s.total) || 0), 0);
+  const todayProfit = todaySales.reduce((a, s) => a + saleProfit(s), 0);
+
+  const planLabel = db.settings._planLabel || '—';
+  const daysLeft = db.settings._daysLeft;
+
+  // last 7 days chart
+  const chart = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = dayStart(new Date());
+    d.setDate(d.getDate() - i);
+    const next = new Date(d);
+    next.setDate(d.getDate() + 1);
+    const total = db.sales
+      .filter((s) => {
+        const t = new Date(s.createdAt || 0);
+        return t >= d && t < next;
+      })
+      .reduce((a, s) => a + (Number(s.total) || 0), 0);
+    chart.push({ label: d.toLocaleDateString('en-US', { weekday: 'short' }), total });
+  }
+  const maxVal = Math.max(1, ...chart.map((c) => c.total));
+  const weekTotal = chart.reduce((a, c) => a + c.total, 0);
+  const chartBars = chart
+    .map(
+      (c) => `
+      <div class="bar-wrap" title="${money(c.total)}">
+        <div class="bar-val">${c.total ? money(c.total) : ''}</div>
+        <div class="bar" style="height:${Math.max(4, Math.round((c.total / maxVal) * 100))}%"></div>
+        <div class="bar-lbl">${esc(c.label)}</div>
+      </div>`
+    )
+    .join('');
+
+  const recent = db.sales.slice(-6).reverse();
 
   root.innerHTML = `
     <div class="page-head">
       <div class="grow">
         <h2>${greeting()}${db.settings.ownerName ? ', ' + esc(db.settings.ownerName) : ''} 👋</h2>
-        <p>Here is what is happening at ${esc(shop)} today.</p>
+        <p>${esc(shop)} — aaj ka overview</p>
       </div>
       <div class="head-actions">
         <button class="btn btn-primary" data-nav="pos">${icon('plus')} New Sale</button>
@@ -30,13 +99,39 @@ export function render(root) {
       </div>
     </div>
 
-    <div class="stat-strip">
-      <div><span class="lbl">Today Sales</span><b class="val">Rs ${esc(Number(sales || 0).toLocaleString())}</b></div>
-      <div><span class="lbl">Profit</span><b class="val">Rs ${esc(Number(profit || 0).toLocaleString())}</b></div>
-      <div><span class="lbl">Products</span><b class="val">${esc(db.products.length)}</b></div>
-      <div><span class="lbl">Low Stock</span><b class="val">${esc(low.length)}</b></div>
-      <div><span class="lbl">Plan</span><b class="val">${esc(db.settings._planLabel || '—')}</b></div>
-      <div><span class="lbl">Days Left</span><b class="val">${esc(db.settings._daysLeft == null ? '—' : db.settings._daysLeft + ' din')}</b></div>
+    <div class="kpi-grid">
+      ${kpi('check', 'green', 'Today Sales', money(todayTotal), todaySales.length + ' invoices')}
+      ${kpi('sparkle', 'blue', 'Today Profit', money(todayProfit), 'Aaj ka munafa')}
+      ${kpi('bag', 'violet', 'Products', db.products.length, low.length + ' low stock')}
+      ${kpi('alert', low.length ? 'amber' : 'green', 'Low Stock', low.length, low.length ? 'Restock karein' : 'Sab theek hai')}
+      ${kpi('sparkle', 'teal', 'Udhaar', money(receivable), 'Customers se lena hai')}
+      ${kpi('calendar', 'slate', 'Plan', planLabel, daysLeft == null ? '—' : daysLeft + ' din baqi')}
+    </div>
+
+    <div class="dashboard-row">
+      <div class="card chart-card">
+        <div class="card-head">
+          <h3>Last 7 Days Sales</h3>
+          <span class="right">${money(weekTotal)} total</span>
+        </div>
+        <div class="card-pad">
+          <div class="chart">${chartBars}</div>
+        </div>
+      </div>
+
+      <div class="card quick-card">
+        <div class="card-head"><h3>Quick Actions</h3></div>
+        <div class="card-pad">
+          <div class="quick-actions">
+            <button class="quick-btn" data-nav="pos">${icon('plus')} New Sale</button>
+            <button class="quick-btn" data-nav="products">${icon('bag')} Products</button>
+            <button class="quick-btn" data-nav="customers">${icon('bag')} Customers</button>
+            <button class="quick-btn" data-nav="purchases">${icon('alert')} Purchases</button>
+            <button class="quick-btn" data-nav="expenses">${icon('alert')} Expenses</button>
+            <button class="quick-btn" data-nav="reports">${icon('check')} Reports</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="dashboardAlert" class="alert-box mt" style="${dashboardAlertStyle()}">
@@ -49,25 +144,47 @@ export function render(root) {
 
     <div class="grid k2 mt">
       <div class="card">
-        <div class="card-head"><h3>Recent Sales</h3></div>
+        <div class="card-head"><h3>Recent Sales</h3><button class="link-btn" data-nav="sales">View all</button></div>
         <div class="card-pad">
-          ${db.sales.length ? `<table style="width:100%"><thead><tr><th style="text-align:left">Invoice</th><th style="text-align:left">Customer</th><th style="text-align:right">Total</th></tr></thead><tbody>${db.sales.slice(-5).reverse().map((s) => `<tr><td>${esc(s.invoiceNo || s.id)}</td><td>${esc(s.customerName || 'Walk-in')}</td><td style="text-align:right">Rs ${Number(s.total || 0).toLocaleString()}</td></tr>`).join('')}</tbody></table>` : emptyState('No sales yet.')}
+          ${
+            recent.length
+              ? `<table style="width:100%"><thead><tr><th style="text-align:left">Invoice</th><th style="text-align:left">Customer</th><th style="text-align:right">Total</th></tr></thead><tbody>${recent
+                  .map(
+                    (s) =>
+                      `<tr><td>${esc(s.invoiceNo || s.id)}</td><td>${esc(s.customerName || 'Walk-in')}</td><td style="text-align:right">${money(s.total)}</td></tr>`
+                  )
+                  .join('')}</tbody></table>`
+              : emptyState('No sales yet.')
+          }
         </div>
       </div>
 
       <div class="card">
-        <div class="card-head"><h3>Low Stock Alerts</h3></div>
+        <div class="card-head"><h3>Low Stock Alerts</h3><button class="link-btn" data-nav="products">Manage</button></div>
         <div class="card-pad">
-          ${low.length ? `<table style="width:100%"><thead><tr><th style="text-align:left">Product</th><th style="text-align:right">Stock</th><th style="text-align:right">Alert</th></tr></thead><tbody>${low.map((p) => `<tr><td>${esc(p.name)}</td><td style="text-align:right">${esc(p.stock)}</td><td style="text-align:right">${esc(p.lowStock)}</td></tr>`).join('')}</tbody></table>` : emptyState('All stock levels are good.')}
+          ${
+            low.length
+              ? `<table style="width:100%"><thead><tr><th style="text-align:left">Product</th><th style="text-align:right">Stock</th><th style="text-align:right">Alert</th></tr></thead><tbody>${low
+                  .map(
+                    (p) =>
+                      `<tr><td>${esc(p.name)}</td><td style="text-align:right">${esc(p.stock)}</td><td style="text-align:right"><span class="badge ${(p.stock ?? 0) === 0 ? 'danger' : 'warn'}">${esc(p.lowStock)}</span></td></tr>`
+                  )
+                  .join('')}</tbody></table>`
+              : emptyState('All stock levels are good.')
+          }
         </div>
       </div>
     </div>`;
 
-    // Auto-dismiss alert after 10 seconds
-    setTimeout(() => {
-      const el = document.getElementById('dashboardAlert');
-      if (el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }
-    }, 10000);
+  // Auto-dismiss alert after 10 seconds
+  setTimeout(() => {
+    const el = document.getElementById('dashboardAlert');
+    if (el) {
+      el.style.transition = 'opacity .4s ease';
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 450);
+    }
+  }, 10000);
 }
 
 function dashboardAlertStyle() {
