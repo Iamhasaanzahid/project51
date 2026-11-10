@@ -13,7 +13,7 @@ function currency() {
 }
 
 export function money(n) {
-  return `${currency()} ${Number(n || 0).toLocaleString()}`;
+  return `${currency()} ${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function saleTotals(sale) {

@@ -78,7 +78,7 @@ export function render(root) {
               ${CATEGORIES.map((c) => `<option value="${c}">${c}</option>`).join('')}
             </select>
           </label>
-          <label>Amount (Rs)
+          <label>Amount (${esc(db.settings.currency || 'Rs')})
             <input id="efAmount" type="number" min="0" step="0.01" placeholder="0" />
           </label>
           <label>Date

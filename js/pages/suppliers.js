@@ -89,7 +89,7 @@ export function render(root) {
           <label>Phone
             <input id="sfPhone" value="${esc(s.phone || '')}" placeholder="03xx-xxxxxxx" inputmode="tel" />
           </label>
-          <label>Payable balance (Rs)
+          <label>Payable balance (${esc(db.settings.currency || 'Rs')})
             <input id="sfBalance" type="number" min="0" step="0.01" value="${s.balance ?? 0}" />
           </label>
           <label style="grid-column:1/-1">Note (optional)

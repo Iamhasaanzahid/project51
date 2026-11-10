@@ -58,11 +58,11 @@ export function render(root) {
           </div>
 
           <div class="pos-summary">
-            <div class="pos-summary-row"><span>Subtotal</span><span id="posSubtotal">Rs 0</span></div>
-            <div class="pos-summary-row" id="posTaxRow" hidden><span>Tax (<span id="posTaxRate">0</span>%)</span><span id="posTax">Rs 0</span></div>
+            <div class="pos-summary-row"><span>Subtotal</span><span id="posSubtotal">${money(0)}</span></div>
+            <div class="pos-summary-row" id="posTaxRow" hidden><span>Tax (<span id="posTaxRate">0</span>%)</span><span id="posTax">${money(0)}</span></div>
           </div>
           <div class="pos-total">
-            <span>Total</span><span id="posTotal">Rs 0</span>
+            <span>Total</span><span id="posTotal">${money(0)}</span>
           </div>
         </div>
       </div>

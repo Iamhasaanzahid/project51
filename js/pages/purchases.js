@@ -98,11 +98,11 @@ export function render(root) {
           <label>Quantity
             <input id="pfQty" type="number" min="1" step="1" value="1" />
           </label>
-          <label>Cost per unit (Rs)
+          <label>Cost per unit (${esc(db.settings.currency || 'Rs')})
             <input id="pfCost" type="number" min="0" step="0.01" value="0" />
           </label>
           <div style="grid-column:1/-1" class="pos-total">
-            <span>Total cost</span><span id="pfTotal">Rs 0</span>
+            <span>Total cost</span><span id="pfTotal">${money(0)}</span>
           </div>
         </div>`,
       footer: `<button class="btn btn-ghost" data-cancel>Cancel</button>

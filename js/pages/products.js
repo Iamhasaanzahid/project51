@@ -102,10 +102,10 @@ export function render(root) {
           <label>SKU
             <input id="pfSku" value="${esc(p.sku || '')}" placeholder="optional" />
           </label>
-          <label>Cost price (Rs)
+          <label>Cost price (${esc(db.settings.currency || 'Rs')})
             <input id="pfCost" type="number" min="0" step="0.01" value="${p.cost ?? 0}" />
           </label>
-          <label>Selling price (Rs)
+          <label>Selling price (${esc(db.settings.currency || 'Rs')})
             <input id="pfPrice" type="number" min="0" step="0.01" value="${p.price ?? 0}" />
           </label>
           <label>Stock

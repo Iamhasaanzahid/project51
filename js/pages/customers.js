@@ -89,7 +89,7 @@ export function render(root) {
           <label>Phone
             <input id="cfPhone" value="${esc(c.phone || '')}" placeholder="03xx-xxxxxxx" inputmode="tel" />
           </label>
-          <label>Opening udhaar (Rs)
+          <label>Opening udhaar (${esc(db.settings.currency || 'Rs')})
             <input id="cfBalance" type="number" min="0" step="0.01" value="${c.balance ?? 0}" />
           </label>
           <label style="grid-column:1/-1">Note (optional)
