@@ -136,9 +136,56 @@ export function save() {
   if (syncEnabled) scheduleSync(JSON.stringify(db));
 }
 
-export async function loadSampleData() {
+export async function loadSampleData({ demo = false } = {}) {
   seedCommonProducts();
+  if (demo) seedDemoActivity();
   return db;
+}
+
+export function seedDemoActivity() {
+  if (db.sales.length || db.customers.length || db.expenses.length) return 0;
+  const products = db.products.slice(0, 12);
+  if (products.length < 3) return 0;
+  const now = Date.now();
+  const mkSale = (n, customer, phone, picks, pay, daysAgo) => {
+    const items = picks.map(([idx, qty]) => {
+      const p = products[idx % products.length];
+      p.stock = Math.max(0, (Number(p.stock) || 0) - qty);
+      return { id: p.id, name: p.name, price: Number(p.price) || 0, qty };
+    });
+    const subtotal = items.reduce((a, it) => a + it.qty * it.price, 0);
+    return {
+      id: uid('sale'),
+      invoiceNo: `INV-${String(n).padStart(6, '0')}`,
+      customerName: customer,
+      customerPhone: phone,
+      items,
+      subtotal,
+      tax: 0,
+      taxRate: 0,
+      total: subtotal,
+      paymentMethod: pay,
+      createdAt: new Date(now - daysAgo * 86400000).toISOString(),
+    };
+  };
+  const stamp = new Date(now).toISOString();
+  db.customers = [
+    { id: uid('cus'), name: 'Ali Khan', phone: '03001234567', balance: 1200, createdAt: stamp },
+    { id: uid('cus'), name: 'Sara Ahmed', phone: '03219876543', balance: 0, createdAt: stamp },
+  ];
+  db.sales = [
+    mkSale(1, 'Ali Khan', '03001234567', [[0, 2], [1, 1]], 'Cash', 0),
+    mkSale(2, 'Sara Ahmed', '03219876543', [[5, 2], [7, 1]], 'Card', 0),
+    mkSale(3, 'Ali Khan', '03001234567', [[3, 3]], 'Cash', 1),
+    mkSale(4, 'Bilal', '', [[2, 1], [8, 2]], 'Online', 2),
+    mkSale(5, 'Sara Ahmed', '03219876543', [[6, 1], [10, 2]], 'Cash', 3),
+  ];
+  db.expenses = [
+    { id: uid('exp'), title: 'Transport', category: 'Transport', amount: 500, note: 'Delivery', createdAt: stamp },
+    { id: uid('exp'), title: 'Shop rent', category: 'Rent', amount: 15000, note: 'Monthly', createdAt: new Date(now - 86400000).toISOString() },
+  ];
+  save();
+  return db.sales.length;
 }
 
 export function seedCommonProducts() {

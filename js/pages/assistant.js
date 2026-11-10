@@ -1,21 +1,24 @@
 /* ============================================================
    mhzaly — AI Assistant (offline, data-aware, free)
    Answers shop questions from the local database.
+   Voice input + mini charts + smart intents.
    ============================================================ */
 
 import { db, lowStockProducts, totalReceivable } from '../db.js';
-import { icon, esc } from '../ui.js';
+import { icon, esc, toast } from '../ui.js';
 import { money } from '../receipt-share.js';
 
 export const meta = { title: 'AI Assistant', subtitle: 'Aap ke shop data se smart jawab' };
 
 const EXAMPLES = [
   'Aaj ki sale kitni hai?',
+  'Kal se compare karo',
   'Is mahine ka profit?',
   'Low stock products?',
   'Sab se zyada kya bika?',
+  'Top customer?',
   'Udhaar kitna hai?',
-  'Aaj ka summary',
+  'Stock ki value?',
 ];
 
 function startOfDay(d) {
@@ -117,6 +120,19 @@ function topProducts(sales, limit = 5) {
   return [...map.values()].sort((a, b) => b.qty - a.qty).slice(0, limit);
 }
 
+function topCustomers(sales, limit = 5) {
+  const map = new Map();
+  for (const s of sales) {
+    const name = (s.customerName || 'Walk-in').trim() || 'Walk-in';
+    if (/^walk[- ]?in$/i.test(name)) continue;
+    const row = map.get(name) || { name, total: 0, count: 0 };
+    row.total += Number(s.total) || 0;
+    row.count += 1;
+    map.set(name, row);
+  }
+  return [...map.values()].sort((a, b) => b.total - a.total).slice(0, limit);
+}
+
 function paymentBreakdown(sales) {
   const map = new Map();
   for (const s of sales) {
@@ -124,6 +140,41 @@ function paymentBreakdown(sales) {
     map.set(m, (map.get(m) || 0) + (Number(s.total) || 0));
   }
   return [...map.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+function dailySeries(days = 7) {
+  const out = [];
+  const today = startOfDay(new Date());
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    const total = db.sales
+      .filter((s) => {
+        const t = new Date(s.createdAt || 0).getTime();
+        return t >= d.getTime() && t < next.getTime();
+      })
+      .reduce((a, s) => a + (Number(s.total) || 0), 0);
+    out.push({ date: d, total });
+  }
+  return out;
+}
+
+function barChart(series) {
+  const max = Math.max(...series.map((x) => x.total), 1);
+  return `<div class="ai-chart">${series
+    .map((x) => {
+      const h = Math.max(4, Math.round((x.total / max) * 100));
+      const label = x.date.toLocaleDateString('en-GB', { weekday: 'short' }).slice(0, 2);
+      return `<div class="ai-bar-col" title="${label}: ${money(x.total)}"><div class="ai-bar-track"><div class="ai-bar-fill" style="height:${h}%"></div></div><span>${label}</span></div>`;
+    })
+    .join('')}</div>`;
+}
+
+function hbar(label, value, max, right) {
+  const pct = max ? Math.max(3, Math.round((value / max) * 100)) : 0;
+  return `<div class="ai-hbar"><div class="ai-hbar-top"><span>${esc(label)}</span><b>${right}</b></div><div class="ai-hbar-track"><div class="ai-hbar-fill" style="width:${pct}%"></div></div></div>`;
 }
 
 const SKIP_WORDS = new Set([
@@ -134,6 +185,7 @@ const SKIP_WORDS = new Set([
   'month', 'saal', 'year', 'total', 'kul', 'kitna', 'kitni', 'kitne', 'hai', 'hain',
   'ka', 'ki', 'ke', 'low', 'out', 'the', 'and', 'for', 'kya', 'bika', 'bikta',
   'top', 'best', 'sab', 'se', 'zyada', 'kaisa', 'chal', 'raha', 'mujhe', 'batao',
+  'value', 'inventory', 'maal', 'compare', 'versus', 'vs', 'muqabla', 'dena', 'daina',
 ]);
 
 function findProduct(q) {
@@ -159,6 +211,26 @@ function findProduct(q) {
   return bestScore >= 0.5 ? best : null;
 }
 
+function findByName(list, q) {
+  const words = new Set(q.replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean));
+  let best = null;
+  let bestScore = 0;
+  for (const item of list) {
+    const name = String(item.name || '').toLowerCase().replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!name) continue;
+    const tokens = name.split(' ').filter((t) => t.length > 2);
+    if (!tokens.length) continue;
+    const hits = tokens.filter((t) => words.has(t)).length;
+    if (!hits) continue;
+    const score = hits / Math.min(tokens.length, 2);
+    if (score > bestScore) {
+      bestScore = score;
+      best = item;
+    }
+  }
+  return bestScore >= 0.5 ? best : null;
+}
+
 function stat(label, value) {
   return `<div class="ai-stat"><span>${esc(label)}</span><b>${value}</b></div>`;
 }
@@ -169,7 +241,45 @@ function summaryAnswer() {
   const gross = profitOf(sales);
   const exp = sum(expensesIn('today'), 'amount');
   const low = lowStockProducts();
-  return `<b>📊 Aaj ka summary</b>${stat('Sale', money(revenue))}${stat('Invoices', sales.length)}${stat('Gross profit', money(gross))}${stat('Kharcha', money(exp))}${stat('Net profit', money(gross - exp))}${stat('Low stock items', low.length)}${stat('Total udhaar', money(totalReceivable()))}${low.length ? `<br><b>⚠️ Low stock:</b> ${low.slice(0, 6).map((p) => esc(p.name)).join(', ')}${low.length > 6 ? '…' : ''}` : ''}`;
+  return `<b>📊 Aaj ka summary</b>${stat('Sale', money(revenue))}${stat('Invoices', sales.length)}${stat('Gross profit', money(gross))}${stat('Kharcha', money(exp))}${stat('Net profit', money(gross - exp))}${stat('Low stock items', low.length)}${stat('Total udhaar', money(totalReceivable()))}${low.length ? `<br><b>⚠️ Low stock:</b> ${low.slice(0, 6).map((p) => esc(p.name)).join(', ')}${low.length > 6 ? '…' : ''}` : ''}<div class="ai-chart-title">Pichhle 7 din</div>${barChart(dailySeries(7))}`;
+}
+
+function compareAnswer() {
+  const t = salesIn('today');
+  const y = salesIn('yesterday');
+  const tv = sum(t, 'total');
+  const yv = sum(y, 'total');
+  const diff = tv - yv;
+  const pct = yv ? Math.round((diff / yv) * 100) : tv ? 100 : 0;
+  const arrow = diff > 0 ? '📈' : diff < 0 ? '📉' : '➖';
+  const sign = diff > 0 ? '+' : diff < 0 ? '-' : '';
+  return `<b>${arrow} Aaj vs Kal</b>${stat('Aaj ki sale', money(tv))}${stat('Kal ki sale', money(yv))}${stat('Farq', `${sign}${money(Math.abs(diff))} (${pct >= 0 ? '+' : ''}${pct}%)`)}${stat('Aaj invoices', t.length)}${stat('Kal invoices', y.length)}`;
+}
+
+function bestDayAnswer() {
+  const map = new Map();
+  for (const s of db.sales) {
+    const d = new Date(s.createdAt || 0);
+    if (Number.isNaN(d.getTime())) continue;
+    const key = d.toISOString().slice(0, 10);
+    map.set(key, (map.get(key) || 0) + (Number(s.total) || 0));
+  }
+  const days = [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (!days.length) return 'Abhi koi sale record nahi.';
+  return `<b>🏅 Best sale days</b><ul>${days.map(([k, v]) => `<li><b>${new Date(k + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</b> — ${money(v)}</li>`).join('')}</ul>`;
+}
+
+function stockValueAnswer() {
+  let cost = 0;
+  let sale = 0;
+  let units = 0;
+  for (const p of db.products) {
+    const st = Number(p.stock) || 0;
+    units += st;
+    cost += st * (Number(p.cost) || 0);
+    sale += st * (Number(p.price) || 0);
+  }
+  return `<b>📦 Inventory value</b>${stat('Total units', units)}${stat('Cost value', money(cost))}${stat('Sale value', money(sale))}${stat('Potential profit', money(sale - cost))}`;
 }
 
 function answer(raw) {
@@ -178,11 +288,11 @@ function answer(raw) {
 
   if (/^(salam|assalam|asalam|aoa|hi|hello|hey|hy)\b/.test(q)) {
     const today = salesIn('today');
-    return `<b>Assalam-o-Alaikum! 👋</b><br>Main mhzaly AI hoon — aap ke shop data se jawab deta hoon.<br><br>${stat('Aaj ki sale', money(sum(today, 'total')))}${stat('Aaj ke invoices', today.length)}${stat('Low stock items', lowStockProducts().length)}<br>Aap poochh sakte hain: <i>"aaj ka summary"</i>, <i>"low stock"</i>, <i>"top product"</i>.`;
+    return `<b>Assalam-o-Alaikum! 👋</b><br>Main mhzaly AI hoon — aap ke shop data se jawab deta hoon.<br><br>${stat('Aaj ki sale', money(sum(today, 'total')))}${stat('Aaj ke invoices', today.length)}${stat('Low stock items', lowStockProducts().length)}<br>Aap poochh sakte hain: <i>"aaj ka summary"</i>, <i>"low stock"</i>, <i>"top product"</i>. 🎤 Mic button se bol kar bhi poochh sakte hain.`;
   }
 
   if (/\b(help|madad|kya kar sakte|kya kar sakti|commands|sikhao)\b/.test(q)) {
-    return `<b>Main ye sab bata sakta hoon:</b><ul><li>Aaj / kal / hafte / mahine ki sale</li><li>Profit aur kharcha</li><li>Low stock aur out of stock</li><li>Sab se zyada bikne wale products</li><li>Customer udhaar (receivable)</li><li>Supplier payable</li><li>Kisi product ka stock/price</li><li>Aaj ka poora summary</li></ul>Bas apna sawal likhein.`;
+    return `<b>Main ye sab bata sakta hoon:</b><ul><li>Aaj / kal / hafte / mahine ki sale</li><li>Aaj vs kal comparison</li><li>Profit aur kharcha</li><li>Low stock aur stock value</li><li>Top products aur top customers</li><li>Customer udhaar (receivable)</li><li>Supplier payable</li><li>Kisi product ka stock/price</li><li>Aaj ka poora summary</li><li>Best sale days</li></ul>Bas apna sawal likhein ya 🎤 mic dabayein.`;
   }
 
   if (/\b(low stock|stock kam|kam stock|khatam|out of stock|reorder|stock alert)\b/.test(q)) {
@@ -191,11 +301,44 @@ function answer(raw) {
     return `<b>⚠️ Low stock / khatam hone wale products (${low.length}):</b><ul>${low.slice(0, 12).map((p) => `<li><b>${esc(p.name)}</b> — ${p.stock ?? 0} left <span style="color:#64748b">(alert ${p.lowStock ?? 5})</span></li>`).join('')}</ul>${low.length > 12 ? '<br>…aur baaki Products page par.' : ''}`;
   }
 
+  if (/\b(best day|top day|best sale day|sab se zyada sale kis din)\b/.test(q)) {
+    return bestDayAnswer();
+  }
+
+  if (/\b(top customer|best customer|sab se zyada kharid|zyada khareed|top grahak)\b/.test(q)) {
+    const kind = detectRange(q);
+    const top = topCustomers(salesIn(kind));
+    if (!top.length) return `Is duration (${RANGE_LABEL[kind]}) mein koi customer sale nahi.`;
+    const max = top[0].total || 1;
+    return `<b>👑 Top customers (${RANGE_LABEL[kind]}):</b>${top.map((c) => hbar(c.name, c.total, max, `${money(c.total)} · ${c.count} bill`)).join('')}`;
+  }
+
   if (/\b(top|best|sab se zyada|sabse zyada|zyada bika|best seller|bikta)\b/.test(q)) {
     const kind = detectRange(q);
     const top = topProducts(salesIn(kind));
     if (!top.length) return `Is duration (${RANGE_LABEL[kind]}) mein koi sale nahi hui.`;
-    return `<b>🏆 Sab se zyada bikne wale products (${RANGE_LABEL[kind]}):</b><ul>${top.map((t, i) => `<li>${i + 1}. <b>${esc(t.name)}</b> — ${t.qty} qty · ${money(t.revenue)}</li>`).join('')}</ul>`;
+    const max = top[0].qty || 1;
+    return `<b>🏆 Sab se zyada bikne wale products (${RANGE_LABEL[kind]}):</b>${top.map((t) => hbar(t.name, t.qty, max, `${t.qty} qty · ${money(t.revenue)}`)).join('')}`;
+  }
+
+  if (/\b(stock value|inventory value|maal ki value|kitna maal|stock ki value|inventory)\b/.test(q)) {
+    return stockValueAnswer();
+  }
+
+  if (/\b(vs|versus|compare|muqabla)\b/.test(q) || (/\bkal\b/.test(q) && /\baaj\b/.test(q))) {
+    return compareAnswer();
+  }
+
+  const cust = findByName(db.customers, q);
+  if (cust && /\b(udhaar|udhar|balance|baqaya|khata|lena)\b/.test(q)) {
+    const bal = Number(cust.balance) || 0;
+    return `<b>👤 ${esc(cust.name)}</b>${stat('Udhaar / balance', money(bal))}${cust.phone ? stat('Phone', esc(cust.phone)) : ''}${stat('Status', bal > 0 ? 'Baqi hai' : 'Clear')}`;
+  }
+
+  const sup = findByName(db.suppliers, q);
+  if (sup && /\b(balance|payable|dena|daina|baqaya)\b/.test(q)) {
+    const bal = Number(sup.balance) || 0;
+    return `<b>🚚 ${esc(sup.name)}</b>${stat('Payable / balance', money(bal))}${sup.phone ? stat('Phone', esc(sup.phone)) : ''}${stat('Status', bal > 0 ? 'Dena baqi hai' : 'Clear')}`;
   }
 
   if (/\b(udhaar|udhar|receivable|baqaya|lena|khata)\b/.test(q)) {
@@ -245,13 +388,21 @@ function answer(raw) {
     return `<b>🧮 Tax setting:</b> ${rate}%<br><b>${RANGE_LABEL[kind]} tax collected:</b> ${money(tax)}<br><span style="color:#64748b">Tax rate Settings → Billing preferences se change hota hai.</span>`;
   }
 
+  if (/\b(cash|naqad|card|online|bank)\b/.test(q) && /\b(sale|aaya|collection|total|kitna)\b/.test(q)) {
+    const kind = detectRange(q);
+    const sales = salesIn(kind);
+    const method = /card/.test(q) ? 'Card' : /online|bank/.test(q) ? 'Online' : 'Cash';
+    const list = sales.filter((s) => (s.paymentMethod || 'Cash') === method);
+    return `<b>💵 ${method} collection (${RANGE_LABEL[kind]}): ${money(sum(list, 'total'))}</b>${stat('Invoices', list.length)}${stat('Average bill', money(list.length ? sum(list, 'total') / list.length : 0))}`;
+  }
+
   if (/\b(sale|sales|bikri|revenue|turnover|bika|bill|invoice|order)\b/.test(q)) {
     const kind = detectRange(q);
     const sales = salesIn(kind);
     const revenue = sum(sales, 'total');
     const avg = sales.length ? revenue / sales.length : 0;
     const pay = paymentBreakdown(sales);
-    return `<b>🧾 ${RANGE_LABEL[kind]} ki sale:</b>${stat('Total sale', money(revenue))}${stat('Invoices', sales.length)}${stat('Average bill', money(avg))}${pay.length ? `<br><b>Payment method:</b><ul>${pay.map(([m, v]) => `<li>${esc(m)} — ${money(v)}</li>`).join('')}</ul>` : ''}`;
+    return `<b>🧾 ${RANGE_LABEL[kind]} ki sale:</b>${stat('Total sale', money(revenue))}${stat('Invoices', sales.length)}${stat('Average bill', money(avg))}${pay.length ? `<br><b>Payment method:</b><ul>${pay.map(([m, v]) => `<li>${esc(m)} — ${money(v)}</li>`).join('')}</ul>` : ''}<div class="ai-chart-title">Pichhle 7 din</div>${barChart(dailySeries(7))}`;
   }
 
   const p = findProduct(q);
@@ -273,7 +424,7 @@ function answer(raw) {
     return `<b>📦 ${esc(p.name)}</b>${stat('Stock', p.stock ?? 0)}${stat('Sale price', money(p.price))}${stat('Cost', money(p.cost))}${stat('Category', esc(p.category || '—'))}`;
   }
 
-  return `Main ye sawal samajh nahi saka. 🤔<br>Ye try karein:<ul><li>"Aaj ki sale kitni hai?"</li><li>"Is mahine ka profit?"</li><li>"Low stock products?"</li><li>"Sab se zyada kya bika?"</li><li>"Udhaar kitna hai?"</li><li>"Aaj ka summary"</li></ul>`;
+  return `Main ye sawal samajh nahi saka. 🤔<br>Ye try karein:<ul><li>"Aaj ki sale kitni hai?"</li><li>"Kal se compare karo"</li><li>"Is mahine ka profit?"</li><li>"Low stock products?"</li><li>"Top customer?"</li><li>"Stock ki value?"</li><li>"Aaj ka summary"</li></ul>`;
 }
 
 export function render(root) {
@@ -303,8 +454,9 @@ export function render(root) {
           ${EXAMPLES.map((e) => `<button class="ai-chip" type="button" data-q="${esc(e)}">${esc(e)}</button>`).join('')}
         </div>
         <form class="ai-input" id="aiForm">
-          <input class="input" id="aiText" placeholder="Sawal likhein… jaise 'aaj ki sale kitni hai?'" autocomplete="off" />
-          <button class="btn btn-primary ai-send" type="submit">${icon('check')} Bhejein</button>
+          <input class="input" id="aiText" placeholder="Sawal likhein… ya 🎤 dabayein" autocomplete="off" />
+          <button class="btn btn-ghost ai-mic" id="aiMic" type="button" title="Voice se poochhein" aria-label="Voice input">${icon('mic')}</button>
+          <button class="btn btn-primary ai-send" type="submit">${icon('check')} <span class="ai-send-text">Bhejein</span></button>
         </form>
       </div>
       <p class="ai-note">Ye assistant aap ke browser mein hi chalta hai — data kahin nahi jata. Jawab aap ke products, sales, customers aur expenses se bante hain.</p>
@@ -339,7 +491,7 @@ export function render(root) {
   }
 
   add(
-    `<b>Assalam-o-Alaikum! 👋</b><br>Main mhzaly AI hoon. Apne shop ke baare mein kuch bhi poochhein — sale, profit, stock, udhaar, top products.`,
+    `<b>Assalam-o-Alaikum! 👋</b><br>Main mhzaly AI hoon. Apne shop ke baare mein kuch bhi poochhein — sale, profit, stock, udhaar, top products. 🎤 Mic se bol kar bhi poochh sakte hain.`,
     'bot'
   );
 
@@ -355,5 +507,47 @@ export function render(root) {
     log.innerHTML = '';
     add('<b>Chat clear ho gayi.</b> Naya sawal poochhein.', 'bot');
   });
+
+  // Voice input (free, browser-native)
+  const micBtn = root.querySelector('#aiMic');
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    micBtn.disabled = true;
+    micBtn.title = 'Voice is browser mein support nahi (Chrome try karein)';
+  } else {
+    let rec = null;
+    let listening = false;
+    micBtn.addEventListener('click', () => {
+      if (listening && rec) {
+        rec.stop();
+        return;
+      }
+      rec = new SR();
+      rec.lang = 'ur-PK';
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      listening = true;
+      micBtn.classList.add('listening');
+      rec.onresult = (e) => {
+        const text = e.results?.[0]?.[0]?.transcript || '';
+        if (text) {
+          input.value = text;
+          ask(text);
+        }
+      };
+      rec.onerror = () => toast('Voice sun nahi saka — dobara try karein', 'error');
+      rec.onend = () => {
+        listening = false;
+        micBtn.classList.remove('listening');
+      };
+      try {
+        rec.start();
+      } catch {
+        listening = false;
+        micBtn.classList.remove('listening');
+      }
+    });
+  }
+
   setTimeout(() => input.focus(), 80);
 }

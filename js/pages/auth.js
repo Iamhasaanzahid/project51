@@ -248,7 +248,7 @@ export function render(root, { mode = 'login', shopCode = '' } = {}) {
       clearSession();
       setDemo(true);
       configureShop({ demo: true });
-      await loadSampleData();
+      await loadSampleData({ demo: true });
     } catch (err) {
       console.error('demo setup failed', err);
     }

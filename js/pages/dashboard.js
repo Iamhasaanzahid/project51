@@ -87,6 +87,39 @@ export function render(root) {
 
   const recent = db.sales.slice(-6).reverse();
 
+  // AI insight strip
+  const yStart = dayStart(new Date());
+  yStart.setDate(yStart.getDate() - 1);
+  const yEnd = new Date(yStart);
+  yEnd.setDate(yEnd.getDate() + 1);
+  const yTotal = db.sales
+    .filter((s) => {
+      const t = new Date(s.createdAt || 0);
+      return t >= yStart && t < yEnd;
+    })
+    .reduce((a, s) => a + (Number(s.total) || 0), 0);
+
+  const tips = [];
+  if (low.length) {
+    const worst = low.slice().sort((a, b) => (a.stock ?? 0) - (b.stock ?? 0))[0];
+    tips.push(`<b>${low.length} product${low.length > 1 ? 's' : ''} low stock</b> mein hain — sab se kam <b>${esc(worst.name)}</b> (${worst.stock ?? 0} left). Restock karein.`);
+  }
+  if (receivable > 0) {
+    tips.push(`Customers se <b>${money(receivable)}</b> udhaar baqi hai — reminder bhejne ka achha waqt hai.`);
+  }
+  if (todaySales.length && yTotal > 0) {
+    const pct = Math.round(((todayTotal - yTotal) / yTotal) * 100);
+    if (pct !== 0) {
+      tips.push(`Aaj kal se <b>${pct > 0 ? '+' : ''}${pct}%</b> sale ho rahi hai (${money(todayTotal)} vs ${money(yTotal)}).`);
+    }
+  }
+  if (!todaySales.length) {
+    tips.push(`Aaj ab tak koi sale nahi hui. <b>New Sale</b> se pehla bill banayein.`);
+  }
+  if (!tips.length) {
+    tips.push(`Sab theek chal raha hai — aaj <b>${money(todayTotal)}</b> ki sale ho chuki hai.`);
+  }
+
   root.innerHTML = `
     <div class="page-head">
       <div class="grow">
@@ -106,6 +139,15 @@ export function render(root) {
       ${kpi('alert', low.length ? 'amber' : 'green', 'Low Stock', low.length, low.length ? 'Restock karein' : 'Sab theek hai')}
       ${kpi('sparkle', 'teal', 'Udhaar', money(receivable), 'Customers se lena hai')}
       ${kpi('calendar', 'slate', 'Plan', planLabel, daysLeft == null ? '—' : daysLeft + ' din baqi')}
+    </div>
+
+    <div class="card ai-insight">
+      <div class="ai-insight-ico">${icon('sparkle')}</div>
+      <div class="grow">
+        <div class="ai-insight-title">mhzaly AI insight</div>
+        <div class="ai-insight-text">${tips.slice(0, 2).map((t) => `<div>• ${t}</div>`).join('')}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" data-nav="assistant">Ask AI</button>
     </div>
 
     <div class="dashboard-row">

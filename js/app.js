@@ -152,6 +152,10 @@ function shell() {
         </header>
         <main class="content" id="main"></main>
       </div>
+
+      <button class="ai-fab" id="aiFab" type="button" title="Ask AI (Ctrl+K)" aria-label="Ask AI (Ctrl+K)">
+        ${icon('sparkle')} <span>Ask AI</span>
+      </button>
     </div>`;
 
   document.getElementById('todayPill').textContent = new Date().toLocaleDateString('en-GB', {
@@ -163,6 +167,25 @@ function shell() {
   document.getElementById('menuBtn').addEventListener('click', () => {
     document.getElementById('sidebar').classList.toggle('open');
   });
+
+  const aiFab = document.getElementById('aiFab');
+  if (aiFab) {
+    aiFab.addEventListener('click', () => {
+      navigate('#/assistant');
+      document.getElementById('sidebar').classList.remove('open');
+      setTimeout(() => document.getElementById('aiText')?.focus(), 120);
+    });
+  }
+  if (!document.body.dataset.aiShortcut) {
+    document.body.dataset.aiShortcut = '1';
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 'k') {
+        e.preventDefault();
+        navigate('#/assistant');
+        setTimeout(() => document.getElementById('aiText')?.focus(), 140);
+      }
+    });
+  }
 
   document.getElementById('accountBtn').addEventListener('click', openAccountModal);
   document.getElementById('sidebarAccount').addEventListener('click', openAccountModal);
@@ -263,6 +286,8 @@ function navigate(hash) {
     document.getElementById('main').innerHTML = `<div class="empty-state">Page not found: ${esc(pageId)}</div>`;
   }
   currentPage = pageId;
+  document.body.classList.toggle('on-assistant', pageId === 'assistant');
+  if (location.hash !== hash) history.replaceState(null, '', hash);
 }
 
 function openAccountModal() {
