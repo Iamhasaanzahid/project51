@@ -2,7 +2,7 @@
    mhzaly — Sales
    ============================================================ */
 
-import { db } from '../db.js';
+import { db, save } from '../db.js';
 import { icon, esc, emptyState, openModal, downloadFile } from '../ui.js';
 import { money, printReceipt, shareWhatsApp } from '../receipt-share.js';
 
@@ -43,10 +43,22 @@ function showInvoice(sale) {
       <button class="btn btn-ghost" id="invPrint">${icon('download')} Print</button>
       <button class="btn btn-primary" id="invWhatsapp">${icon('check')} WhatsApp</button>`,
     onMount: (bd) => {
+      const phoneEl = bd.querySelector('#invPhone');
+      const syncPhone = () => {
+        const value = String(phoneEl.value || '').trim();
+        if (value !== (sale.customerPhone || '')) {
+          sale.customerPhone = value;
+          save();
+        }
+        return value;
+      };
       bd.querySelector('[data-close-inv]').addEventListener('click', () => bd.remove());
-      bd.querySelector('#invPrint').addEventListener('click', () => printReceipt(sale));
+      bd.querySelector('#invPrint').addEventListener('click', () => {
+        syncPhone();
+        printReceipt(sale);
+      });
       bd.querySelector('#invWhatsapp').addEventListener('click', () => {
-        shareWhatsApp(sale, bd.querySelector('#invPhone').value);
+        shareWhatsApp(sale, syncPhone());
       });
     },
   });

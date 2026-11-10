@@ -4,6 +4,7 @@
 
 import { db, uid, save } from '../db.js';
 import { icon, esc, toast, openModal, confirmDialog, downloadFile } from '../ui.js';
+import { money } from '../receipt-share.js';
 
 export function render(root) {
   root.innerHTML = `
@@ -67,8 +68,8 @@ export function render(root) {
         <td><b>${esc(p.name)}</b></td>
         <td>${esc(p.category || '')}</td>
         <td style="text-align:right"><span class="mono">${esc(p.sku || '')}</span></td>
-        <td style="text-align:right">Rs ${Number(p.cost || 0).toLocaleString()}</td>
-        <td style="text-align:right">Rs ${Number(p.price || 0).toLocaleString()}</td>
+        <td style="text-align:right">${money(p.cost)}</td>
+        <td style="text-align:right">${money(p.price)}</td>
         <td style="text-align:right">${low ? `<span class="badge ${(p.stock ?? 0) === 0 ? 'danger' : 'warn'}">${esc(p.stock || 0)}</span>` : esc(p.stock || 0)}</td>
         <td style="text-align:right">${esc(p.lowStock || 5)}</td>
         <td style="text-align:right">

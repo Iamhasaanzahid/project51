@@ -43,17 +43,19 @@ export function toast(message, type = '') {
     el = document.createElement('div');
     document.body.appendChild(el);
   }
+  clearTimeout(el._hideTimer);
   el.className = `owner-toast ${type}`;
   el.textContent = message;
-  setTimeout(() => { if (el.parentNode) el.remove(); }, 4000);
+  el._hideTimer = setTimeout(() => { if (el.parentNode) el.remove(); }, 4000);
 }
 
 export function confirmDialog(message, onConfirm, onCancel) {
+  const destructive = /delete|clear|remove|erase|hata|mita|khatam|barbad/i.test(message);
   const backdrop = openModal({
-    title: 'Confirm',
+    title: 'Please confirm',
     body: `<p style="margin:0;font-size:13.5px;line-height:1.6;color:#334155">${esc(message)}</p>`,
     footer: `<button class="btn btn-ghost" data-no>Cancel</button>
-             <button class="btn btn-danger" data-yes>Delete</button>`,
+             <button class="btn ${destructive ? 'btn-danger' : 'btn-primary'}" data-yes>${destructive ? 'Delete' : 'Confirm'}</button>`,
     onMount: (bd) => {
       bd.querySelector('[data-no]').addEventListener('click', () => {
         bd.remove();
@@ -84,11 +86,30 @@ export function openModal({ title, subtitle, body, footer, onMount }) {
       ${footer ? `<div class="owner-modal-actions">${footer}</div>` : ''}
     </div>`;
   document.body.appendChild(backdrop);
-  const close = () => backdrop.remove();
+  linkLabels(backdrop);
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const close = () => {
+    document.removeEventListener('keydown', onKey);
+    if (backdrop.parentNode) backdrop.remove();
+  };
   backdrop.querySelector('[data-close]').addEventListener('click', close);
+  backdrop.querySelectorAll('[data-modal-close]').forEach((btn) => btn.addEventListener('click', close));
   backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+  document.addEventListener('keydown', onKey);
   if (onMount) onMount(backdrop);
   return backdrop;
+}
+
+export function linkLabels(scope = document) {
+  scope.querySelectorAll('label').forEach((label) => {
+    if (label.htmlFor) return;
+    if (label.querySelector('input, select, textarea')) return;
+    let el = label.nextElementSibling;
+    while (el && !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) el = el.nextElementSibling;
+    if (!el) return;
+    if (!el.id) el.id = 'mz_fld_' + Math.random().toString(36).slice(2, 9);
+    label.htmlFor = el.id;
+  });
 }
 
 export function downloadFile(name, content, mime = 'application/json') {

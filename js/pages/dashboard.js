@@ -13,7 +13,7 @@ function greeting() {
 }
 
 function money(n) {
-  return 'Rs ' + Number(n || 0).toLocaleString();
+  return `${db.settings.currency || 'Rs'} ${Number(n || 0).toLocaleString()}`;
 }
 
 function saleProfit(s) {
@@ -148,12 +148,12 @@ export function render(root) {
         <div class="card-pad">
           ${
             recent.length
-              ? `<table style="width:100%"><thead><tr><th style="text-align:left">Invoice</th><th style="text-align:left">Customer</th><th style="text-align:right">Total</th></tr></thead><tbody>${recent
+              ? `<div class="table-wrap"><table style="width:100%"><thead><tr><th style="text-align:left">Invoice</th><th style="text-align:left">Customer</th><th style="text-align:right">Total</th></tr></thead><tbody>${recent
                   .map(
                     (s) =>
                       `<tr><td>${esc(s.invoiceNo || s.id)}</td><td>${esc(s.customerName || 'Walk-in')}</td><td style="text-align:right">${money(s.total)}</td></tr>`
                   )
-                  .join('')}</tbody></table>`
+                  .join('')}</tbody></table></div>`
               : emptyState('No sales yet.')
           }
         </div>
@@ -164,12 +164,12 @@ export function render(root) {
         <div class="card-pad">
           ${
             low.length
-              ? `<table style="width:100%"><thead><tr><th style="text-align:left">Product</th><th style="text-align:right">Stock</th><th style="text-align:right">Alert</th></tr></thead><tbody>${low
+              ? `<div class="table-wrap"><table style="width:100%"><thead><tr><th style="text-align:left">Product</th><th style="text-align:right">Stock</th><th style="text-align:right">Alert</th></tr></thead><tbody>${low
                   .map(
                     (p) =>
                       `<tr><td>${esc(p.name)}</td><td style="text-align:right">${esc(p.stock)}</td><td style="text-align:right"><span class="badge ${(p.stock ?? 0) === 0 ? 'danger' : 'warn'}">${esc(p.lowStock)}</span></td></tr>`
                   )
-                  .join('')}</tbody></table>`
+                  .join('')}</tbody></table></div>`
               : emptyState('All stock levels are good.')
           }
         </div>

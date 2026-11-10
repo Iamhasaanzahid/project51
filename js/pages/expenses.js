@@ -4,6 +4,7 @@
 
 import { db, uid, save } from '../db.js';
 import { icon, esc, toast, openModal, confirmDialog } from '../ui.js';
+import { money } from '../receipt-share.js';
 
 const CATEGORIES = ['Rent', 'Utilities', 'Salary', 'Transport', 'Other'];
 
@@ -51,7 +52,7 @@ export function render(root) {
       <tr>
         <td><b>${esc(e.title)}</b>${e.note ? `<div class="pos-meta">${esc(e.note)}</div>` : ''}</td>
         <td><span class="badge neutral">${esc(e.category || 'Other')}</span></td>
-        <td style="text-align:right">Rs ${Number(e.amount || 0).toLocaleString()}</td>
+        <td style="text-align:right">${money(e.amount)}</td>
         <td>${new Date(e.createdAt).toLocaleDateString('en-GB')}</td>
         <td style="text-align:right">
           <button class="btn btn-ghost btn-sm" data-del="${esc(e.id)}" title="Delete">${icon('trash')}</button>

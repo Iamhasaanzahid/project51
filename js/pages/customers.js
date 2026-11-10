@@ -4,6 +4,7 @@
 
 import { db, uid, save } from '../db.js';
 import { icon, esc, toast, openModal, confirmDialog } from '../ui.js';
+import { money } from '../receipt-share.js';
 
 export function render(root) {
   root.innerHTML = `
@@ -59,7 +60,7 @@ export function render(root) {
         <td><b>${esc(c.name)}</b></td>
         <td>${esc(c.phone || '')}</td>
         <td style="text-align:right">
-          ${bal > 0 ? `<span class="badge warn">Rs ${bal.toLocaleString()}</span>` : `<span class="badge ok">Rs 0</span>`}
+          ${bal > 0 ? `<span class="badge warn">${money(bal)}</span>` : `<span class="badge ok">${money(0)}</span>`}
         </td>
         <td style="text-align:right">
           <button class="btn btn-ghost btn-sm" data-edit="${esc(c.id)}" title="Edit">${icon('settings')}</button>

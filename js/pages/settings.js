@@ -2,17 +2,8 @@
    mhzaly — Settings & data management
    ============================================================ */
 
-import {
-  db, save, exportDb, importDb, clearAll, loadSampleData, defaultSettings,
-  SHOP_TYPES,
-} from '../db.js';
-import {
-  getStoredShop, isDemo, clearSession, deleteAccount, changePassword,
-} from '../api.js';
-import {
-  icon, esc, initials, toast, confirmDialog, downloadFile, emptyState,
-  openModal, closeModal,
-} from '../ui.js';
+import { db, save, exportDb, importDb, clearAll, loadSampleData, SHOP_TYPES } from '../db.js';
+import { icon, esc, toast, confirmDialog, downloadFile, linkLabels } from '../ui.js';
 
 export const meta = { title: 'Settings', subtitle: 'Shop details, backup and preferences' };
 
@@ -171,6 +162,7 @@ export function render(root) {
     </div>`;
 
   syncShell();
+  const rerender = () => { render(root); linkLabels(root); };
 
   root.querySelector('#shopForm').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -184,7 +176,7 @@ export function render(root) {
     save();
     syncShell();
     toast('Shop details saved');
-    refresh();
+    rerender();
   });
 
   root.querySelector('#prefForm').addEventListener('submit', (e) => {
@@ -197,7 +189,7 @@ export function render(root) {
     db.settings.lowStock = Number.isFinite(low) && low >= 0 ? low : 5;
     save();
     toast('Preferences saved');
-    refresh();
+    rerender();
   });
 
   root.querySelector('#exportBackup').addEventListener('click', () => {
@@ -218,7 +210,7 @@ export function render(root) {
       try {
         importDb(ev.target.result);
         toast('Backup restored');
-        refresh();
+        rerender();
       } catch (err) {
         toast(err.message, 'error');
       }
@@ -227,11 +219,10 @@ export function render(root) {
   });
 
   root.querySelector('#loadDemo').addEventListener('click', () => {
-    confirmDialog('Demo data load karne se aap ka current data replace ho jayega. Pehle backup le lein.', () => {
-      import('../api.js').then(({ setDemo }) => setDemo(false));
+    confirmDialog('Sample products load kiye jayenge (mojooda data safe rahega). Pehle backup le lein.', () => {
       loadSampleData();
-      toast('Demo data loaded');
-      refresh();
+      toast('Sample products loaded');
+      rerender();
     });
   });
 
@@ -239,15 +230,20 @@ export function render(root) {
     confirmDialog('Poori data delete ho jayegi — ye step undo nahi kiya ja sakta. Backup zaroor le lein.', () => {
       clearAll();
       toast('All data cleared');
-      refresh();
+      rerender();
     });
   });
 }
 
 function storageSize() {
   try {
-    const raw = localStorage.getItem(db.settings.shopName ? `mhzaly_db_${getStoredShop?.()?.id || 'legacy'}` : 'mart_manager_db_v1') || '';
-    const bytes = new Blob([raw]).size;
+    let bytes = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('mhzaly_db')) {
+        bytes += new Blob([localStorage.getItem(key) || '']).size;
+      }
+    }
     return (bytes / 1024).toFixed(1) + ' KB';
   } catch { return '0 KB'; }
 }

@@ -47,7 +47,20 @@ export function render(root) {
             <label>Phone (WhatsApp receipt ke liye)</label>
             <input class="input" id="posPhone" placeholder="03xx-xxxxxxx" inputmode="tel" />
           </div>
+          <div class="field">
+            <label>Payment method</label>
+            <select class="input" id="posPayment">
+              <option value="Cash">Cash</option>
+              <option value="Card">Card</option>
+              <option value="Online">Online / Bank</option>
+              <option value="Udhaar">Udhaar (credit)</option>
+            </select>
+          </div>
 
+          <div class="pos-summary">
+            <div class="pos-summary-row"><span>Subtotal</span><span id="posSubtotal">Rs 0</span></div>
+            <div class="pos-summary-row" id="posTaxRow" hidden><span>Tax (<span id="posTaxRate">0</span>%)</span><span id="posTax">Rs 0</span></div>
+          </div>
           <div class="pos-total">
             <span>Total</span><span id="posTotal">Rs 0</span>
           </div>
@@ -62,10 +75,25 @@ export function render(root) {
   const checkoutBtn = root.querySelector('#checkoutBtn');
   const search = root.querySelector('#posSearch');
 
+  function cartTotals() {
+    const subtotal = cart.reduce((sum, i) => sum + i.qty * i.price, 0);
+    const rate = Math.max(0, Math.min(100, Number(db.settings.taxRate) || 0));
+    const tax = Math.round(subtotal * rate) / 100;
+    return { subtotal, rate, tax, total: subtotal + tax };
+  }
+
   function refresh() {
     listEl.innerHTML = renderProductList(db.products, cart);
     cartEl.innerHTML = renderCart(cart);
-    const total = cart.reduce((sum, i) => sum + i.qty * i.price, 0);
+    const { subtotal, rate, tax, total } = cartTotals();
+    const subEl = root.querySelector('#posSubtotal');
+    if (subEl) subEl.textContent = money(subtotal);
+    const taxRow = root.querySelector('#posTaxRow');
+    if (taxRow) {
+      taxRow.hidden = !(rate > 0);
+      root.querySelector('#posTaxRate').textContent = rate;
+      root.querySelector('#posTax').textContent = money(tax);
+    }
     totalEl.textContent = money(total);
     const count = cart.reduce((sum, i) => sum + i.qty, 0);
     countEl.textContent = count + ' item' + (count === 1 ? '' : 's');
@@ -140,15 +168,18 @@ export function render(root) {
 
   checkoutBtn.addEventListener('click', () => {
     if (!cart.length) return toast('Cart is empty', 'error');
-    const total = cart.reduce((sum, i) => sum + i.qty * i.price, 0);
+    const { subtotal, rate, tax, total } = cartTotals();
     const sale = {
       id: uid('sale'),
       invoiceNo: 'INV-' + String(Date.now()).slice(-6),
       customerName: (customerName || '').trim() || 'Walk-in',
       customerPhone: (customerPhone || '').trim(),
       items: [...cart],
+      subtotal,
+      taxRate: rate,
+      tax,
       total,
-      paymentMethod: 'Cash',
+      paymentMethod: (root.querySelector('#posPayment') || {}).value || 'Cash',
       createdAt: new Date().toISOString(),
     };
 
@@ -188,7 +219,7 @@ function showSaleComplete(sale) {
       <div class="sale-done">
         <div class="sale-done-ico">${icon('check')}</div>
         <div class="sale-done-total">${money(sale.total)}</div>
-        <div class="sale-done-sub">${esc(sale.customerName || 'Walk-in')} · ${esc(sale.items.length)} item(s)</div>
+        <div class="sale-done-sub">${esc(sale.customerName || 'Walk-in')} · ${esc(sale.items.reduce((a, it) => a + (Number(it.qty) || 1), 0))} item(s) · ${esc(sale.paymentMethod || 'Cash')}</div>
       </div>
       <div class="table-wrap">
         <table style="width:100%">
@@ -209,6 +240,8 @@ function showSaleComplete(sale) {
       bd.querySelector('#salePrint').addEventListener('click', () => printReceipt(sale));
       bd.querySelector('#saleWhatsapp').addEventListener('click', () => {
         const phone = bd.querySelector('#salePhone').value;
+        sale.customerPhone = String(phone || '').trim();
+        save();
         shareWhatsApp(sale, phone);
       });
     },

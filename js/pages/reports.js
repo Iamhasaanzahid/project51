@@ -6,7 +6,7 @@ import { db } from '../db.js';
 import { icon, esc, emptyState, downloadFile } from '../ui.js';
 
 function money(n) {
-  return 'Rs ' + Number(n || 0).toLocaleString();
+  return `${db.settings.currency || 'Rs'} ${Number(n || 0).toLocaleString()}`;
 }
 
 function cutoff(range) {

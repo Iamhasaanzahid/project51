@@ -4,6 +4,7 @@
 
 import { db, uid, save } from '../db.js';
 import { icon, esc, toast, openModal, confirmDialog } from '../ui.js';
+import { money } from '../receipt-share.js';
 
 export function render(root) {
   root.innerHTML = `
@@ -51,7 +52,7 @@ export function render(root) {
         <td><b>${esc(p.productName)}</b></td>
         <td>${esc(p.supplierName || '')}</td>
         <td style="text-align:right">${esc(p.qty)}</td>
-        <td style="text-align:right">Rs ${Number(p.totalCost || 0).toLocaleString()}</td>
+        <td style="text-align:right">${money(p.totalCost)}</td>
         <td>${new Date(p.createdAt).toLocaleDateString('en-GB')}</td>
         <td style="text-align:right">
           <button class="btn btn-ghost btn-sm" data-del="${esc(p.id)}" title="Delete">${icon('trash')}</button>
@@ -116,7 +117,7 @@ export function render(root) {
 
         const updateTotal = () => {
           const total = Number(qtyInput.value || 0) * Number(costInput.value || 0);
-          totalEl.textContent = 'Rs ' + total.toLocaleString();
+          totalEl.textContent = money(total);
         };
 
         const toggleName = () => {

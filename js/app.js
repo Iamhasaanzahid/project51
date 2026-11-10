@@ -3,13 +3,14 @@
    ============================================================ */
 
 import { db, lowStockProducts, totalReceivable, totalSales, totalProfit, configureShop, hydrate, save } from './db.js';
-import { icon, esc, initials, toast, openModal, closeModal } from './ui.js';
+import { icon, esc, initials, toast, openModal, closeModal, linkLabels } from './ui.js';
 import {
   getToken, getStoredShop, isDemo, bootstrap, clearSession,
   changePassword, onSyncStatus, getSyncStatus, markSynced,
 } from './api.js';
 import * as authPage from './pages/auth.js';
 import * as dashboard from './pages/dashboard.js';
+import * as assistant from './pages/assistant.js';
 import * as pos from './pages/pos.js';
 import * as products from './pages/products.js';
 import * as sales from './pages/sales.js';
@@ -21,11 +22,12 @@ import * as reports from './pages/reports.js';
 import * as settings from './pages/settings.js';
 
 const PAGES = {
-  dashboard, login: authPage, pos, products, sales, purchases, customers, suppliers, expenses, reports, settings,
+  dashboard, assistant, login: authPage, pos, products, sales, purchases, customers, suppliers, expenses, reports, settings,
 };
 
 const PAGE_TITLES = {
   dashboard: 'Dashboard',
+  assistant: 'AI Assistant',
   pos: 'POS Billing',
   products: 'Products',
   sales: 'Sales',
@@ -46,6 +48,7 @@ function renderAuthView() {
   const shopCode = (params.get('shop') || '').trim().toLowerCase();
   document.title = 'mhzaly — Shop Manager';
   authPage.render(document.getElementById('app'), { mode, shopCode });
+  linkLabels(document.getElementById('app'));
 }
 
 export function init() {
@@ -199,6 +202,7 @@ function shell() {
 function navHTML(active) {
   const items = [
     { id: 'dashboard', label: 'Dashboard', icon: icon('calendar') },
+    { id: 'assistant', label: 'AI Assistant', icon: icon('sparkle') },
     { id: 'pos', label: 'POS Billing', icon: icon('plus') },
     { id: 'products', label: 'Products', icon: icon('bag') },
     { id: 'sales', label: 'Sales', icon: icon('check') },
@@ -254,6 +258,7 @@ function navigate(hash) {
   if (mod && mod.render) {
     const root = document.getElementById('main');
     mod.render(root, rest.join('/'));
+    linkLabels(root);
   } else {
     document.getElementById('main').innerHTML = `<div class="empty-state">Page not found: ${esc(pageId)}</div>`;
   }
@@ -366,7 +371,27 @@ function openChangePassword() {
 }
 
 function copyText(text) {
-  navigator.clipboard.writeText(text || '').then(() => toast('Copied'));
+  const value = text || '';
+  const fallback = () => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = value;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      toast('Copied');
+    } catch {
+      toast('Copy nahi ho saka', 'error');
+    }
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(value).then(() => toast('Copied')).catch(fallback);
+  } else {
+    fallback();
+  }
 }
 
 window.addEventListener('hashchange', () => {
