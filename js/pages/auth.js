@@ -155,7 +155,7 @@ export function render(root, { mode = 'login', shopCode = '' } = {}) {
   function showPending(res) {
     const shop = res.shop || {};
     const emailLine = res.emailSent
-      ? `Approval ke liye <b>mhzcyb@gmail.com</b> par email bheja gaya hai.`
+      ? `Approval ke liye owner ko email bhej di gayi hai.`
       : `Approval request owner ke paas pahunch gayi hai. Owner approve karte hi aap login kar sakte hain.`;
     registerForm.hidden = true;
     const panel = root.querySelector('#registerPending');

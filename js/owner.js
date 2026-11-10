@@ -106,7 +106,7 @@ function showLogin(message = '') {
         <p>Sirf mhzaly owner ke liye. Shops, subscriptions aur payments manage karein.</p>
         <form id="ownerLoginForm">
           <label>Email</label>
-          <input name="email" type="email" value="mhzcyb@gmail.com" required autocomplete="username" />
+          <input name="email" type="email" required autocomplete="off" spellcheck="false" />
           <label>Password</label>
           <input name="password" type="password" required autocomplete="current-password" />
           <button type="submit">Login</button>
@@ -248,7 +248,7 @@ function renderDashboard() {
           <div><b>mhzaly</b><span>Owner Panel</span></div>
         </div>
         <div class="owner-actions">
-          <span class="owner-email">${esc(state.owner?.email || 'mhzcyb@gmail.com')}</span>
+          <span class="owner-email">${esc(state.owner?.email || 'Owner')}</span>
           <button class="owner-btn ghost" data-action="refresh">Refresh</button>
           <button class="owner-btn ghost" data-action="password">Change password</button>
           <button class="owner-btn danger" data-action="logout">Logout</button>
@@ -492,7 +492,7 @@ function openPassword() {
       <div class="owner-modal-head">
         <div>
           <h2>Change owner password</h2>
-          <p>Owner account: ${esc(state.owner?.email || 'mhzcyb@gmail.com')}</p>
+          <p>Owner account: ${esc(state.owner?.email || 'Owner')}</p>
         </div>
         <button class="owner-modal-close" data-close>×</button>
       </div>
