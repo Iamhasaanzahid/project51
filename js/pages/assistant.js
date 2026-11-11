@@ -242,9 +242,9 @@ function answer(raw) {
   if (!q) return 'Kuch likhein — jaise "aaj ki sale kitni hai?"';
 
   /* greeting */
-  if (/^(salam|assalam|asalam|aoa|hi|hello|hey|hy)\b/.test(q)) {
+  if (/^(salam|assalam|asalam|aoa|hi|hello|hey|hy)\b/.test(q) || /\b(kya haal|haal hai|how are you|kaisa ho|kya chal raha)\b/.test(q)) {
     const today = salesIn('today');
-    return `<b>Assalam-o-Alaikum! 👋</b><br>Main mhzaly AI hoon — aap ke shop data se jawab deta hoon.<br><br>${stat('Aaj ki sale', money(sum(today,'total')))}${stat('Aaj ke invoices', today.length)}${stat('Low stock items', lowStockProducts().length)}<br>Aap kuch bhi poochh sakte hain: <i>"aaj ka summary"</i>, <i>"low stock"</i>, <i>"top product"</i>, <i>"udhaar kitna hai"</i> ya <i>"stock ki value"</i>.`;
+    return `<b>Assalam-o-Alaikum! 👋</b><br>Main mhzaly AI hoon — aap ke shop data se jawab deta hoon.<br><br>${stat('Aaj ki sale', money(sum(today,'total')))}${stat('Aaj ke invoices', today.length)}${stat('Low stock items', lowStockProducts().length)}<br>Aap kuch bhi shop ke baare mein poochh sakte hain: <i>"aaj ka summary"</i>, <i>"low stock"</i>, <i>"top product"</i>, <i>"udhaar kitna hai"</i> ya <i>"stock ki value"</i>.`;
   }
 
   /* help */
