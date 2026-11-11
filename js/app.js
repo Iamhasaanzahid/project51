@@ -8,6 +8,8 @@ import {
   getToken, getStoredShop, isDemo, bootstrap, clearSession,
   changePassword, onSyncStatus, getSyncStatus, markSynced,
 } from './api.js';
+import { resolvedTheme, applyTheme, toggleTheme, watchSystemTheme } from './theme.js';
+
 import * as authPage from './pages/auth.js';
 import * as dashboard from './pages/dashboard.js';
 import * as assistant from './pages/assistant.js';
@@ -43,8 +45,7 @@ const PAGE_TITLES = {
 
 let currentPage = null;
 
-/* ---------- theme, install prompt & command palette ---------- */
-const THEME_KEY = 'mhzaly_theme';
+/* ---------- install prompt & command palette ---------- */
 let deferredInstall = null;
 
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -53,19 +54,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
   const btn = document.getElementById('installBtn');
   if (btn) btn.hidden = false;
 });
-
-function getTheme() {
-  try { return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'; } catch { return 'light'; }
-}
-function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-}
-function toggleTheme() {
-  const next = getTheme() === 'dark' ? 'light' : 'dark';
-  try { localStorage.setItem(THEME_KEY, next); } catch { /* ignore */ }
-  applyTheme(next);
-  toast(next === 'dark' ? 'Dark mode on' : 'Light mode on');
-}
 
 function openCommandPalette() {
   const actions = [
@@ -132,7 +120,11 @@ function renderAuthView() {
 }
 
 export function init() {
-  applyTheme(getTheme());
+  applyTheme();
+  watchSystemTheme((resolved) => {
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.innerHTML = icon(resolved === 'dark' ? 'sun' : 'moon');
+  });
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
@@ -277,11 +269,15 @@ function shell() {
 
   const themeBtn = document.getElementById('themeBtn');
   if (themeBtn) {
-    themeBtn.innerHTML = icon(getTheme() === 'dark' ? 'sun' : 'moon');
+    const paintThemeBtn = () => {
+      themeBtn.innerHTML = icon(resolvedTheme() === 'dark' ? 'sun' : 'moon');
+      themeBtn.title = resolvedTheme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    };
+    paintThemeBtn();
     themeBtn.addEventListener('click', () => {
       toggleTheme();
-      themeBtn.innerHTML = icon(getTheme() === 'dark' ? 'sun' : 'moon');
-      themeBtn.title = getTheme() === 'dark' ? 'Light mode' : 'Dark mode';
+      paintThemeBtn();
+      toast(resolvedTheme() === 'dark' ? 'Dark mode on' : 'Light mode on');
     });
   }
 

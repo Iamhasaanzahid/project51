@@ -4,6 +4,7 @@
 
 import { db, save, exportDb, importDb, clearAll, loadSampleData, SHOP_TYPES } from '../db.js';
 import { icon, esc, toast, confirmDialog, downloadFile, linkLabels } from '../ui.js';
+import { getThemeChoice, setThemeChoice } from '../theme.js';
 
 export const meta = { title: 'Settings', subtitle: 'Shop details, backup and preferences' };
 
@@ -98,6 +99,24 @@ export function render(root) {
       </div>
     </div>
 
+    <div class="card mt">
+      <div class="card-head"><h3>Appearance</h3><div class="right"><span class="hint">Light, dark ya device ke mutabiq</span></div></div>
+      <div class="card-pad">
+        <div class="theme-choices" id="themeChoices">
+          <button class="theme-choice ${getThemeChoice() === 'light' ? 'active' : ''}" type="button" data-theme-choice="light">
+            ${icon('sun')}<b>Light</b><span>Din wali bright look</span>
+          </button>
+          <button class="theme-choice ${getThemeChoice() === 'dark' ? 'active' : ''}" type="button" data-theme-choice="dark">
+            ${icon('moon')}<b>Dark</b><span>Raat wali soft look</span>
+          </button>
+          <button class="theme-choice ${getThemeChoice() === 'system' ? 'active' : ''}" type="button" data-theme-choice="system">
+            ${icon('settings')}<b>System</b><span>Device ke theme ke mutabiq</span>
+          </button>
+        </div>
+        <p class="small muted mt-sm" style="margin-bottom:0">Login page hamesha waisa hi rehta hai — ye choice sirf app ke andar lagti hai.</p>
+      </div>
+    </div>
+
     <div class="grid k2 mt">
       <div class="card">
         <div class="card-head"><h3>Backup & restore</h3><div class="right"><span class="badge">${storageSize()}</span></div></div>
@@ -165,6 +184,15 @@ export function render(root) {
 
   syncShell();
   const rerender = () => { render(root); linkLabels(root); };
+
+  root.querySelectorAll('[data-theme-choice]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const choice = btn.dataset.themeChoice;
+      setThemeChoice(choice);
+      root.querySelectorAll('[data-theme-choice]').forEach((b) => b.classList.toggle('active', b === btn));
+      toast(choice === 'system' ? 'Theme: device ke mutabiq' : `Theme: ${choice === 'dark' ? 'Dark' : 'Light'} mode`, 'success');
+    });
+  });
 
   root.querySelector('#shopForm').addEventListener('submit', (e) => {
     e.preventDefault();
