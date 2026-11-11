@@ -235,7 +235,7 @@ async function generateImageCore(env, { prompt, refBytes, w, h, steps, quality }
 
   const wantBest = String(quality || "fast") === "best";
   if (env && env.AI && Date.now() > aiDeadUntil) {
-    if (refBytes && wantBest) {
+    if (wantBest) {
       try {
         bytes = await flux2Image(env, "@cf/black-forest-labs/flux-2-klein-4b", { prompt, width: w, height: h, steps, refBytes });
         model = "flux-2-klein-4b";

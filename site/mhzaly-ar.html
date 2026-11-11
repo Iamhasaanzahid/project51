@@ -3,12 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MHZALY — Create AR in Seconds</title>
-    <meta name="description" content="MHZALY — Create Web-Based AR Experiences. Upload a 3D model or generate one with AI. Turn any idea, image, or 3D model into a scannable AR experience. No App Needed." />
+    <title>AI studio — product shots &amp; try-on | MHZALY</title>
+    <meta name="description" content="Upload a garment, bag, shoe or furniture photo. The MHZALY AI studio keeps the design and colour, then rebuilds the item in a new scene. Free, no account." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="AI studio — product shots &amp; try-on | MHZALY" />
+    <meta property="og:description" content="One photo in. A campaign frame out. Same design, same colour, new scene." />
+    <meta property="og:image" content="https://mhzaly.pages.dev/img/lookbook/kurta-cream.jpg" />
+    <meta property="og:url" content="https://mhzaly.pages.dev/mhzaly-ar" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#f5f0e8" />
-    <link rel="canonical" href="https://mhzaly.pages.dev/mhzaly-ar.html" />
+    <link rel="canonical" href="https://mhzaly.pages.dev/mhzaly-ar" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="img/icon-192.png" />
     <link rel="stylesheet" href="fonts.css?v=1" />
-    <link rel="stylesheet" href="mhzaly-ar.css?v=20261106c" />
+    <link rel="stylesheet" href="mhzaly-ar.css?v=20261111a" />
     <script type="importmap">
       {
         "imports": {
@@ -27,14 +35,14 @@
             MHZALY
           </a>
           <nav class="ar-nav">
-            <a href="#top">Home</a>
+            <a href="index.html">3D room</a>
             <a href="#examples">Examples</a>
             <a href="#how">How it works</a>
-            <a href="#pricing">Pricing</a>
+            <a href="#pricing">Free</a>
+            <a href="lookbook.html">Lookbook</a>
           </nav>
           <div class="ar-header-actions">
-            <a class="ar-login" href="#pricing">Log in</a>
-            <a class="ar-btn" href="#cta">Create AR for Free (No CC)</a>
+            <a class="ar-btn" href="#create">Open the studio</a>
           </div>
         </div>
       </header>
@@ -45,26 +53,27 @@
           <div class="ar-wrap">
             <div class="ar-hero-in">
               <div>
-                <span class="ar-eyebrow">WebAR · No app needed</span>
-                <h1>Create <em>AR</em> in seconds</h1>
-                <p class="ar-hero-sub">Upload a photo or a 3D model — our AI does the rest</p>
+                <span class="ar-eyebrow">AI try-on · product shots · no app</span>
+                <h1>Your product, <em>reimagined</em>.</h1>
+                <p class="ar-hero-sub">One photo in. A campaign frame out.</p>
                 <p class="ar-hero-lede">
-                  Turn any idea, image, or 3D model into a scannable AR experience.
-                  No app needed · works everywhere · instant publishing.
+                  Upload a garment, bag, shoe or piece of furniture. The studio reads the
+                  design, measures the colour, and rebuilds the item in a new scene —
+                  without changing what it is.
                 </p>
                 <ul class="ar-hero-points">
-                  <li>No app download</li>
+                  <li>No sign-up</li>
+                  <li>No credit card</li>
                   <li>Works on any phone</li>
-                  <li>Browser-based</li>
                 </ul>
                 <div class="ar-hero-ctas">
-                  <a class="ar-btn ar-btn-lg" href="#cta">Create AR for Free (No CC)</a>
-                  <a class="ar-btn ar-btn-ghost ar-btn-lg" href="#examples">See Examples</a>
+                  <a class="ar-btn ar-btn-lg" href="#create">Upload a photo</a>
+                  <a class="ar-btn ar-btn-ghost ar-btn-lg" href="lookbook.html">See real renders</a>
                 </div>
                 <div class="ar-hero-meta">
-                  <span>✓ Free plan</span>
-                  <span>✓ No credit card</span>
-                  <span>✓ Public AR link</span>
+                  <span>✓ Free</span>
+                  <span>✓ Same colour, same design</span>
+                  <span>✓ 1024×1536 download</span>
                 </div>
               </div>
               <figure class="ar-phone">
@@ -77,35 +86,36 @@
         </section>
 
         <!-- ================= EXAMPLES ================= -->
-        <section class="ar-section" id="examples">
+                <section class="ar-section" id="examples">
           <div class="ar-wrap">
             <div class="ar-section-head">
-              <span class="ar-eyebrow">Get inspired</span>
-              <h2>Real-world WebAR campaigns</h2>
-              <p>Explore campaigns that deliver fresh ideas and solid values.</p>
+              <span class="ar-eyebrow">Real renders</span>
+              <h2>Made with this studio</h2>
+              <p>No stock photos. Every frame below was generated by the same engine you are about to use.</p>
             </div>
             <div class="ar-inspo-grid">
               <article class="ar-card">
-                <div class="ar-card-media"><img src="img/1494790108377.jpg" alt="Animated 3D character" /><span class="ar-card-tag">Face AR</span></div>
-                <div class="ar-card-body"><h3>Animated 3D character</h3><p>Characters that come alive in your world.</p></div>
+                <div class="ar-card-media"><img src="img/lookbook/kurta-cream.jpg" alt="Ivory chikankari kurta render" loading="lazy" /><span class="ar-card-tag">Apparel</span></div>
+                <div class="ar-card-body"><h3>Ivory chikankari kurta</h3><p>Embroidery and colour kept, scene rebuilt.</p></div>
               </article>
               <article class="ar-card">
-                <div class="ar-card-media"><img src="img/1441986300917.jpg" alt="Business card that comes alive" /><span class="ar-card-tag">World AR</span></div>
-                <div class="ar-card-body"><h3>Business card that comes alive</h3><p>One scan and the story starts.</p></div>
+                <div class="ar-card-media"><img src="img/lookbook/saree-emerald.jpg" alt="Emerald silk saree render" loading="lazy" /><span class="ar-card-tag">Apparel</span></div>
+                <div class="ar-card-body"><h3>Emerald silk saree</h3><p>Drape, border and zari preserved.</p></div>
               </article>
               <article class="ar-card">
-                <div class="ar-card-media"><img src="img/1519567241046.jpg" alt="Furniture preview at home" /><span class="ar-card-tag">World AR</span></div>
-                <div class="ar-card-body"><h3>Furniture preview at home</h3><p>See how it looks in their space before buying.</p></div>
+                <div class="ar-card-media"><img src="img/lookbook/bag-tan.jpg" alt="Tan leather handbag render" loading="lazy" /><span class="ar-card-tag">Accessories</span></div>
+                <div class="ar-card-body"><h3>Tan leather handbag</h3><p>Grain and hardware locked, backdrop replaced.</p></div>
               </article>
               <article class="ar-card">
-                <div class="ar-card-media"><img src="img/1533900298318.jpg" alt="AR restaurant menu" /><span class="ar-card-tag">Image AR</span></div>
-                <div class="ar-card-body"><h3>AR restaurant menu</h3><p>Scan a menu, taste the dish in 3D.</p></div>
+                <div class="ar-card-media"><img src="img/lookbook/sneakers-white.jpg" alt="White leather sneakers render" loading="lazy" /><span class="ar-card-tag">Footwear</span></div>
+                <div class="ar-card-body"><h3>White leather sneakers</h3><p>Catalogue framing, no studio booking.</p></div>
               </article>
               <article class="ar-card">
-                <div class="ar-card-media"><img src="img/1554118811.jpg" alt="Retail product showcase" /><span class="ar-card-tag">Model AR</span></div>
-                <div class="ar-card-body"><h3>Retail product showcase</h3><p>Products that pop off the shelf.</p></div>
+                <div class="ar-card-media"><img src="img/lookbook/sofa-terracotta.jpg" alt="Terracotta linen sofa render" loading="lazy" /><span class="ar-card-tag">Home</span></div>
+                <div class="ar-card-body"><h3>Terracotta linen sofa</h3><p>Same sofa, new room, real morning light.</p></div>
               </article>
             </div>
+            <p class="ar-muted" style="margin-top:16px">See the full set in the <a href="lookbook.html">lookbook</a>.</p>
           </div>
         </section>
 
@@ -113,9 +123,9 @@
         <section class="ar-section" id="create">
           <div class="ar-wrap">
             <div class="ar-section-head">
-              <span class="ar-eyebrow">Agentic AI</span>
-              <h2>Upload an image, AI builds the 3D</h2>
-              <p>Bring a sketch or a product photo — the agent plans and generates the 3D AR asset in seconds.</p>
+              <span class="ar-eyebrow">The studio</span>
+              <h2>Upload a photo, get a campaign frame</h2>
+              <p>Pick the item, add any details you want, and render. Your words are used exactly as written.</p>
             </div>
             <div class="ar-create-grid">
               <article class="ar-upload-card">
@@ -126,9 +136,14 @@
                   <span class="ar-drop-sub">PNG, JPG or WEBP — or drag &amp; drop</span>
                   <img id="ar-img-preview" alt="Selected image preview" />
                 </label>
+                <div class="ar-capture-row">
+                  <label class="ar-capture-btn" for="ar-cam-input">📷 Take a photo</label>
+                  <span class="ar-capture-hint">or drop a file above</span>
+                </div>
+                <input id="ar-cam-input" type="file" accept="image/*" capture="environment" hidden />
                 <div class="body">
-                  <h3>Image to 3D AR</h3>
-                  <p>Upload any photo — a model wearing an outfit, curtains by a window, furniture — and tell the AI what to build.</p>
+                  <h3>Photo to AI render</h3>
+                  <p>Upload a garment, bag, shoe or furniture photo. The studio reads the design and measures the colour, then rebuilds the item in a new scene.</p>
                   <div class="ar-chips" id="ar-chips" role="group" aria-label="What should the AI build?">
                     <button type="button" class="ar-chip is-on" data-opt="Auto">✨ Auto (AI decides)</button>
                     <button type="button" class="ar-chip" data-opt="Kurta">Kurta</button>
@@ -183,12 +198,12 @@
                 <div class="ar-result-media">
                   <img id="ar-result-img" alt="Generated AR asset preview" />
                   <canvas id="ar-3d-canvas"></canvas>
-                  <span class="ar-card-tag">AR ready</span>
+                  <span class="ar-card-tag">Render ready</span>
                   <div class="ar-progress" id="ar-progress" hidden><i></i></div>
                 </div>
                 <div class="body">
-                  <h3 id="ar-result-title">Your 3D AR asset</h3>
-                  <p id="ar-result-desc">The agent is reading your image…</p>
+                  <h3 id="ar-result-title">Your render</h3>
+                  <p id="ar-result-desc">Reading your image…</p>
                   <div class="ar-result-meta" id="ar-result-meta" hidden></div>
                   <div class="ar-steps" id="ar-steps">
                     <span>Analyzing image</span>
@@ -199,6 +214,7 @@
                   <div class="foot">
                     <a class="ar-btn" href="index.html#fabric-ai">Open in 3D Studio</a>
                     <a class="ar-btn ar-btn-ghost" id="ar-download" href="#" download="mhzaly-ar-asset.jpg" hidden>⬇ Save image</a>
+                    <button class="ar-btn ar-btn-ghost" id="ar-share" type="button" hidden>↗ Share</button>
                     <button class="ar-btn ar-btn-ghost" id="ar-reroll" type="button" hidden>🔄 New variation</button>
                     <button class="ar-btn ar-btn-ghost" id="ar-compare" type="button" hidden>⇄ See original</button>
                     <button class="ar-btn ar-btn-ghost" id="ar-expand" type="button" hidden>⤢ View full</button>
@@ -222,36 +238,36 @@
         </div>
 
         <!-- ================= GENERATE WITH AI ================= -->
-        <section class="ar-section" id="generate">
+                <section class="ar-section" id="generate">
           <div class="ar-wrap">
             <div class="ar-section-head">
-              <span class="ar-eyebrow">Generate 3D assets with AI</span>
-              <h2>Turn flat media into AR magic</h2>
-              <p>From sketches and product photos to text prompts — production-ready AR models in seconds.</p>
+              <span class="ar-eyebrow">What you can make</span>
+              <h2>One engine, three kinds of subject</h2>
+              <p>The studio changes its framing, lighting and prompt structure based on what you upload.</p>
             </div>
             <div class="ar-gen-grid">
               <article class="ar-gen-card">
-                <div class="media"><img src="https://arviewer.io/images/examples/drag_chair.jpg" alt="Image to 3D AR" /><img src="https://arviewer.io/images/examples/chair_qr.jpg" alt="QR code" style="opacity:.55" /><span class="ar-card-tag">Image → 3D</span></div>
+                <div class="media"><img src="img/lookbook/sherwani-navy.jpg" alt="Navy sherwani render" loading="lazy" /><span class="ar-card-tag">Apparel</span></div>
                 <div class="body">
-                  <h3>Image to 3D AR</h3>
-                  <p>Got a sketch or a product photo? Turn it into a 3D AR model instantly. Bring flat images to life in the real world with incredible detail and accuracy.</p>
-                  <div class="foot"><a class="ar-btn" href="#cta">Transform Image</a><span class="ar-muted">GLB</span></div>
+                  <h3>Apparel &amp; tailoring</h3>
+                  <p>Kurtas, shalwar kameez, sarees, lehengas, sherwanis and suits — shown on a model with the fabric, print and embroidery kept in place.</p>
+                  <div class="foot"><a class="ar-btn" href="#create">Try apparel</a><span class="ar-muted">1024×1536</span></div>
                 </div>
               </article>
               <article class="ar-gen-card">
-                <div class="media"><img src="https://arviewer.io/images/examples/prompt_lamp.jpg" alt="Text to 3D AR" /><img src="https://arviewer.io/images/examples/lamp_qr.jpg" alt="QR code" style="opacity:.55" /><span class="ar-card-tag">Text → 3D</span></div>
+                <div class="media"><img src="img/lookbook/bag-tan.jpg" alt="Leather bag render" loading="lazy" /><span class="ar-card-tag">Accessories</span></div>
                 <div class="body">
-                  <h3>Text to 3D AR</h3>
-                  <p>Describe what you want, and our AI builds it instantly. Perfect for unique assets, prototypes, and creative concepts.</p>
-                  <div class="foot"><a class="ar-btn" href="#cta">Generate Now</a><span class="ar-muted">GLB</span></div>
+                  <h3>Bags, shoes &amp; leather</h3>
+                  <p>Product-only framing with no model: seamless backdrop, softbox light and the hardware left exactly where it belongs.</p>
+                  <div class="foot"><a class="ar-btn" href="#create">Try a product</a><span class="ar-muted">No model</span></div>
                 </div>
               </article>
               <article class="ar-gen-card">
-                <div class="media"><img src="img/1507525428034.jpg" alt="See it in action" /><span class="ar-card-tag">Live</span></div>
+                <div class="media"><img src="img/lookbook/sofa-terracotta.jpg" alt="Sofa in a living room render" loading="lazy" /><span class="ar-card-tag">Home</span></div>
                 <div class="body">
-                  <h3>See it in action</h3>
-                  <p>Your browser doesn't support video here — scan a QR from any generated asset and watch the 3D object place itself in the real world.</p>
-                  <div class="foot"><a class="ar-btn" href="#cta">See in Action</a><span class="ar-muted">GLB</span></div>
+                  <h3>Home &amp; furniture</h3>
+                  <p>Place a piece in a real room — limewash walls, oak floors and window light — so customers can see it in context.</p>
+                  <div class="foot"><a class="ar-btn" href="#create">Try a room</a><span class="ar-muted">Scene build</span></div>
                 </div>
               </article>
             </div>
@@ -259,140 +275,117 @@
         </section>
 
         <!-- ================= SUITE ================= -->
-        <section class="ar-section" id="suite">
+                <section class="ar-section" id="suite">
           <div class="ar-wrap">
             <div class="ar-section-head">
-              <span class="ar-eyebrow">Comprehensive AR suite</span>
-              <h2>Every AR type, one simple flow</h2>
-              <p>From generative AI to precise file uploads, we have the tools for every business need.</p>
+              <span class="ar-eyebrow">Categories</span>
+              <h2>Built for the things people actually sell</h2>
+              <p>Pick a category, or leave it on Auto and let the studio decide.</p>
             </div>
             <div class="ar-suite-flow">
-              <span>Choose type</span><b>→</b><span>Upload or create</span><b>→</b><span>Get QR Code</span><b>→</b><span>Scan &amp; Experience</span>
+              <span>Upload</span><b>→</b><span>Pick the item</span><b>→</b><span>Render</span><b>→</b><span>Download</span>
             </div>
             <div class="ar-suite-grid">
-              <article class="ar-type"><div class="icon">◫</div><h3>Model AR</h3><p>Place 3D models on surfaces — furniture, products, sculptures.</p><span class="flow">Model AR</span></article>
-              <article class="ar-type"><div class="icon">◎</div><h3>Face AR</h3><p>Face filters and effects — glasses, masks, accessories.</p><span class="flow">Face AR</span></article>
-              <article class="ar-type"><div class="icon">▣</div><h3>Image AR</h3><p>Scan images to trigger AR — posters, packaging, markers.</p><span class="flow">Image AR</span></article>
-              <article class="ar-type"><div class="icon">▤</div><h3>Picture Frame</h3><p>Framed images for walls — art, photos, posters.</p><span class="flow">Picture Frame</span></article>
-              <article class="ar-type"><div class="icon">✎</div><h3>3D Text</h3><p>Custom 3D text messages — names, quotes, signage.</p><span class="flow">3D Text</span></article>
-              <article class="ar-type"><div class="icon">✦</div><h3>SVG to 3D</h3><p>Extruded logos &amp; icons — logos, graphics, branding.</p><span class="flow">SVG to 3D</span></article>
+              <article class="ar-type"><div class="icon">◫</div><h3>Kurta &amp; shalwar kameez</h3><p>Everyday and formal South Asian cuts, with embroidery kept intact.</p><span class="flow">Apparel</span></article>
+              <article class="ar-type"><div class="icon">◎</div><h3>Saree &amp; lehenga</h3><p>Drape, border and zari work preserved on a standing model.</p><span class="flow">Apparel</span></article>
+              <article class="ar-type"><div class="icon">▣</div><h3>Sherwani &amp; suits</h3><p>Structured tailoring, tonal embroidery and mandarin collars.</p><span class="flow">Apparel</span></article>
+              <article class="ar-type"><div class="icon">▤</div><h3>Bags &amp; leather goods</h3><p>Grain, stitching and hardware, shot as a clean product still.</p><span class="flow">Accessories</span></article>
+              <article class="ar-type"><div class="icon">✎</div><h3>Footwear</h3><p>Pairs framed straight-on, catalogue ready, no studio required.</p><span class="flow">Accessories</span></article>
+              <article class="ar-type"><div class="icon">✦</div><h3>Home &amp; furniture</h3><p>Sofas, curtains and decor placed in a believable room.</p><span class="flow">Home</span></article>
             </div>
           </div>
         </section>
 
         <!-- ================= WHY ================= -->
-        <section class="ar-section ar-why">
+                <section class="ar-section ar-why">
           <div class="ar-wrap">
             <div class="ar-section-head">
-              <span class="ar-eyebrow">Why MHZALY</span>
-              <h2>Built for business growth</h2>
-              <p>Maximize engagement and conversion with zero-friction AR technology.</p>
+              <span class="ar-eyebrow">Why it works</span>
+              <h2>Fidelity first, then speed</h2>
+              <p>The hard part is not generating an image. It is keeping the item the same.</p>
             </div>
             <div class="ar-why-grid">
-              <div class="ar-why-item"><span class="num">01</span><div><h3>Browser-Based WebAR</h3><p>No app installs. Works directly in Safari, Chrome — any mobile browser with WebXR support.</p></div></div>
-              <div class="ar-why-item"><span class="num">02</span><div><h3>Works on Any Phone</h3><p>iPhone, Android, tablets — if it has a camera, it works. Universal AR compatibility.</p></div></div>
-              <div class="ar-why-item"><span class="num">03</span><div><h3>Real-Time Tracking</h3><p>Face tracking follows movements. World tracking anchors to surfaces accurately.</p></div></div>
-              <div class="ar-why-item"><span class="num">04</span><div><h3>Easy Upload</h3><p>Support for GLB and GLTF formats — the industry standards for 3D models on the web.</p></div></div>
-              <div class="ar-why-item"><span class="num">05</span><div><h3>Instant Publishing</h3><p>Every item gets a QR code — scan, share, done. Public AR links included.</p></div></div>
-              <div class="ar-why-item"><span class="num">06</span><div><h3>AI + Precise</h3><p>Generative AI for assets, real geometry for placement. The best of both.</p></div></div>
+              <div class="ar-why-item"><span class="num">01</span><div><h3>Colour measured, not guessed</h3><p>Vision models misname colour constantly. The studio strips colour words from the description and samples the centre of your photo instead, then locks the real palette into the prompt.</p></div></div>
+              <div class="ar-why-item"><span class="num">02</span><div><h3>Reference-guided design lock</h3><p>In Best AI mode your photo is sent to the model as a visual reference, so the silhouette, print and hardware stay anchored to the original.</p></div></div>
+              <div class="ar-why-item"><span class="num">03</span><div><h3>Your words, verbatim</h3><p>If you type a prompt, it is used exactly as written — no silent rewriting, no “enhancement” that changes the brief.</p></div></div>
+              <div class="ar-why-item"><span class="num">04</span><div><h3>No account, no card</h3><p>There is no sign-up, no trial timer and no payment page. Open the studio and render.</p></div></div>
+              <div class="ar-why-item"><span class="num">05</span><div><h3>Fast where it matters</h3><p>A design-locked render typically lands in 5–15 seconds. Re-rolling a variation reuses the same brief and only regenerates the frame.</p></div></div>
+              <div class="ar-why-item"><span class="num">06</span><div><h3>Always something to download</h3><p>If the AI allowance is spent, the studio falls back to a free renderer, and finally to a pixel-locked studio cut-out of your exact item.</p></div></div>
             </div>
           </div>
         </section>
 
         <!-- ================= HOW ================= -->
-        <section class="ar-section" id="how">
+                <section class="ar-section" id="how">
           <div class="ar-wrap">
             <div class="ar-section-head center">
               <span class="ar-eyebrow">How it works</span>
-              <h2>From idea to AR in 4 easy steps</h2>
-              <p>No coding required. That is it.</p>
+              <h2>Four steps, about ten seconds</h2>
+              <p>No account. No install. No card.</p>
             </div>
             <div class="ar-steps">
-              <div class="ar-step"><div class="step-no"></div><h3>Choose AR Type</h3><p>Model, Face, Image, Picture Frame, 3D Text, or SVG to 3D — pick what fits.</p></div>
-              <div class="ar-step"><div class="step-no"></div><h3>Upload or Create</h3><p>Upload 3D models, images, or create text/SVG — we handle the conversion.</p></div>
-              <div class="ar-step"><div class="step-no"></div><h3>Get QR Code</h3><p>Instantly generate a scannable QR code for your AR.</p></div>
-              <div class="ar-step"><div class="step-no"></div><h3>Scan &amp; Experience</h3><p>Anyone scans and sees the 3D in AR — no app needed.</p></div>
+              <div class="ar-step"><div class="step-no"></div><h3>Upload a photo</h3><p>A garment on a hanger, a bag on a table, a sofa in a showroom. Clear, evenly lit photos read best.</p></div>
+              <div class="ar-step"><div class="step-no"></div><h3>Pick the item</h3><p>Choose a category so the studio knows what it is looking at — or leave it on Auto.</p></div>
+              <div class="ar-step"><div class="step-no"></div><h3>Add details</h3><p>Optional. Anything you type is used exactly as written: colour, fabric, scene, pose.</p></div>
+              <div class="ar-step"><div class="step-no"></div><h3>Render &amp; download</h3><p>Get a 1024×1536 frame, re-roll a variation, or switch to Same photo for your exact pixels.</p></div>
             </div>
           </div>
         </section>
 
-        <!-- ================= BUSINESS ================= -->
+        <!-- ================= USE CASES ================= -->
         <section class="ar-section">
           <div class="ar-wrap">
             <div class="ar-section-head">
-              <span class="ar-eyebrow">Business applications</span>
-              <h2>AR that drives growth</h2>
-              <p>Four big areas where WebAR converts, engages and sells.</p>
+              <span class="ar-eyebrow">Use cases</span>
+              <h2>Where people use it</h2>
+              <p>Six honest examples — no enterprise buzzwords.</p>
             </div>
             <div class="ar-apps-grid">
-              <article class="ar-app"><span class="tag">Face AR</span><h3>Virtual Try-On</h3><p>Let customers try sunglasses, makeup, or jewelry virtually before buying.</p></article>
-              <article class="ar-app"><span class="tag">World AR</span><h3>Furniture Preview</h3><p>Show how furniture looks in customers' homes before buying.</p></article>
-              <article class="ar-app"><span class="tag">Image AR</span><h3>Marketing Materials</h3><p>Add AR to posters, flyers and packaging — scan to see the product.</p></article>
-              <article class="ar-app"><span class="tag">World AR</span><h3>Product Demos</h3><p>Show how products work with interactive 3D demonstrations.</p></article>
-              <article class="ar-app"><span class="tag">Face AR</span><h3>Social Effects</h3><p>Design fun face effects for marketing and social engagement.</p></article>
-              <article class="ar-app"><span class="tag">Image AR</span><h3>Education</h3><p>Bring textbooks to life — students scan to see 3D models of concepts.</p></article>
+              <article class="ar-app"><span class="tag">Apparel</span><h3>Boutique catalogues</h3><p>Photograph one kurta and produce a full set of on-model frames without booking a shoot.</p></article>
+              <article class="ar-app"><span class="tag">Accessories</span><h3>Marketplace listings</h3><p>Turn a phone photo of a bag into a clean, consistent product still for every listing.</p></article>
+              <article class="ar-app"><span class="tag">Social</span><h3>Content calendars</h3><p>Re-roll the same item into new scenes for a week of posts from a single upload.</p></article>
+              <article class="ar-app"><span class="tag">Home</span><h3>Furniture previews</h3><p>Show a sofa in a believable room so buyers can judge scale and colour in context.</p></article>
+              <article class="ar-app"><span class="tag">Small brands</span><h3>Launch lookbooks</h3><p>Build a launch page before the samples arrive, then swap in real photography later.</p></article>
+              <article class="ar-app"><span class="tag">Studio</span><h3>Design reviews</h3><p>Check how a print or embroidery reads at full-body distance before cutting fabric.</p></article>
             </div>
           </div>
         </section>
 
         <!-- ================= PRICING ================= -->
-        <section class="ar-section" id="pricing">
+                <section class="ar-section" id="pricing">
           <div class="ar-wrap">
             <div class="ar-section-head center">
-              <span class="ar-eyebrow">Simple pricing</span>
-              <h2>Start for free. Upgrade when you need more.</h2>
+              <span class="ar-eyebrow">Pricing</span>
+              <h2>Free. There is no paid plan.</h2>
+              <p>The studio runs on a free daily AI allowance. When it is spent, the fallback renderer takes over until it resets.</p>
             </div>
             <div class="ar-pricing">
-              <article class="ar-plan">
-                <h3>Free Plan</h3>
+              <article class="ar-plan popular">
+                <span class="plan-badge">Free forever</span>
+                <h3>Everything included</h3>
                 <p class="price">$0<small>/forever</small></p>
                 <ul>
-                  <li>Up to 5 AR experiences</li>
-                  <li>Picture AR</li>
-                  <li>3D Text</li>
-                  <li>SVG AR</li>
-                  <li>Auto-generated QR code</li>
-                  <li>Public AR link</li>
-                  <li>Personal use</li>
+                  <li>Design-locked AI renders (reference-guided)</li>
+                  <li>Unlimited “Same photo” renders — on your device</li>
+                  <li>1024×1536 downloads, no watermark</li>
+                  <li>3D preview + GLB export</li>
+                  <li>No account, no card, no trial timer</li>
+                  <li>Commercial use of your own renders</li>
+                  <li>Fair use: roughly 40–60 AI renders/day, shared</li>
                 </ul>
-                <a class="ar-btn ar-btn-ghost" href="#cta">Get Started Free</a>
-              </article>
-              <article class="ar-plan popular">
-                <span class="plan-badge">Most Popular</span>
-                <h3>Pro Plan</h3>
-                <p class="price">$12.99<small>/month</small></p>
-                <ul>
-                  <li>100 AR experiences</li>
-                  <li>10 free AI 3D generations/mo</li>
-                  <li>Model AR · Face AR · Image AR · Picture AR · Text · SVG</li>
-                  <li>Website embed (iframe)</li>
-                  <li>No watermark</li>
-                  <li>Commercial usage</li>
-                </ul>
-                <a class="ar-btn" href="#cta">Go Pro</a>
-              </article>
-              <article class="ar-plan">
-                <h3>Business Plan</h3>
-                <p class="price">$39.99<small>/month</small></p>
-                <ul>
-                  <li>1000 AR experiences</li>
-                  <li>50 AI 3D generations/mo</li>
-                  <li>All features incl. advanced editor</li>
-                  <li>Custom QR codes &amp; landing page</li>
-                  <li>White-label options</li>
-                </ul>
-                <a class="ar-btn ar-btn-ghost" href="#cta">Contact Sales</a>
+                <a class="ar-btn" href="#create">Open the studio</a>
               </article>
             </div>
+            <p class="ar-muted" style="text-align:center;margin-top:18px">No upgrade button, because there is nothing to upgrade to. If that ever changes, this page will say so.</p>
           </div>
         </section>
 
         <!-- ================= CTA ================= -->
-        <section class="ar-cta" id="cta">
+                <section class="ar-cta" id="cta">
           <div class="ar-wrap">
-            <h2>Ready to make AR?</h2>
-            <p>Choose from six AR types, upload or create with AI, get a QR code, and share in seconds.</p>
-            <a class="ar-btn ar-btn-lg" href="#top">Start Creating Now</a>
+            <h2>Make your first render.</h2>
+            <p>Upload a photo and watch the studio rebuild it in a new scene.</p>
+            <a class="ar-btn ar-btn-lg" href="#create">Open the studio</a>
           </div>
         </section>
       </main>
@@ -402,42 +395,36 @@
           <div>
             <a class="ar-logo" href="#top"><span class="ar-logo-mark">M</span>MHZALY</a>
             <ul>
-              <li><a href="#top">About</a></li>
-              <li><a href="#top">Careers</a></li>
-              <li><a href="#top">Press</a></li>
+              <li><a href="index.html">The Cloth Room</a></li>
+              <li><a href="lookbook.html">Lookbook</a></li>
+              <li><a href="about.html">About</a></li>
             </ul>
           </div>
           <div>
-            <h4>Product</h4>
+            <h4>Studio</h4>
             <ul>
-              <li><a href="#top">Features</a></li>
-              <li><a href="#top">Pricing</a></li>
-              <li><a href="#top">Examples</a></li>
-              <li><a href="#top">Changelog</a></li>
+              <li><a href="#create">AI creator</a></li>
+              <li><a href="index.html#studio">3D room</a></li>
+              <li><a href="index.html#fabrics">Fabric library</a></li>
             </ul>
           </div>
           <div>
-            <h4>Company</h4>
+            <h4>Learn</h4>
             <ul>
-              <li><a href="#top">Blog</a></li>
-              <li><a href="#top">Use Cases</a></li>
-              <li><a href="#top">Support</a></li>
-              <li><a href="#top">Contact</a></li>
+              <li><a href="#how">How it works</a></li>
+              <li><a href="#pricing">Free &amp; limits</a></li>
+              <li><a href="about.html#limits">Honest limits</a></li>
             </ul>
           </div>
           <div>
             <h4>Legal</h4>
             <ul>
-              <li><a href="#top">Terms of Service</a></li>
-              <li><a href="#top">Privacy Policy</a></li>
-              <li><a href="#top">Cookie Policy</a></li>
-              <li><a href="#top">Refund Policy</a></li>
+              <li><a href="terms.html">Terms of use</a></li>
+              <li><a href="privacy.html">Privacy policy</a></li>
             </ul>
           </div>
         </div>
-        <div class="ar-footer-bottom">
-          <span>© MHZALY</span>
-        </div>
+        <div class="ar-footer-bottom"><span>© MHZALY</span></div>
       </footer>
     </div>
 
@@ -605,6 +592,8 @@ Rules:
       const arLightbox = document.getElementById("ar-lightbox");
       const arLightboxImg = document.getElementById("ar-lightbox-img");
       const arDownload = document.getElementById("ar-download");
+      const arShare = document.getElementById("ar-share");
+      const arCamInput = document.getElementById("ar-cam-input");
 
       let selectedOption = "Auto";
       let selectedFile = null;
@@ -635,6 +624,20 @@ Rules:
       }
 
       arImgInput.addEventListener("change", () => pickFile(arImgInput.files && arImgInput.files[0]));
+
+      // Phone camera capture — feeds the same pipeline as a file pick.
+      if (arCamInput) {
+        arCamInput.addEventListener("change", () => {
+          const f = arCamInput.files && arCamInput.files[0];
+          if (!f) return;
+          pickFile(f);
+          try {
+            const dt = new DataTransfer();
+            dt.items.add(f);
+            arImgInput.files = dt.files;
+          } catch (e) {}
+        });
+      }
 
       arChips.addEventListener("click", (e) => {
         const chip = e.target.closest(".ar-chip");
@@ -670,6 +673,7 @@ Rules:
         arResult.hidden = true;
         arResultMeta.hidden = true;
         arDownload.hidden = true;
+        if (arShare) arShare.hidden = true;
         arGlb.hidden = true;
         showStatus("—");
       });
@@ -1629,6 +1633,7 @@ Rules:
               ? `Free limit reached — ${lastRetryAfter}s baad dobara try karein.`
               : "AI is busy right now — press Generate with AI once more.";
             arDownload.hidden = true;
+            if (arShare) arShare.hidden = true;
             arCompare.hidden = true;
             if (arReroll) arReroll.hidden = true;
             setStep(1);
@@ -1640,6 +1645,7 @@ Rules:
           arResultImg.classList.remove("is-empty");
           arDownload.href = gen.url;
           arDownload.hidden = false;
+          if (arShare) arShare.hidden = false;
           arCompare.hidden = !arPreview.src;
           arCompare.dataset.gen = gen.url;
           arCompare.dataset.orig = arPreview.src || "";
@@ -1649,7 +1655,7 @@ Rules:
           if (arReroll) arReroll.hidden = false;
           endProgress();
           if (gen.model === "pollinations-direct") freeCooldownUntil = Date.now() + 46000;
-          pushHistory(gen.url, gen.model);
+          pushHistory(gen.url, gen.model, gen.blob);
           if (window.__init3D) window.__init3D(gen.url);
 
           // ---- now collect the slower text work ---------------------------
@@ -1678,6 +1684,7 @@ Rules:
           arResultImg.removeAttribute("src");
           arResultImg.classList.add("is-empty");
           arDownload.hidden = true;
+          if (arShare) arShare.hidden = true;
           arCompare.hidden = true;
           arResultDesc.textContent = "Could not finish this one — please try again.";
           showStatus("failed", "AI unavailable, try again");
@@ -1707,12 +1714,13 @@ Rules:
               arResultImg.classList.remove("is-empty");
               arDownload.href = g.url;
               arDownload.hidden = false;
+              if (arShare) arShare.hidden = false;
               arCompare.hidden = !arPreview.src;
               arCompare.dataset.gen = g.url;
               arCompare.dataset.orig = arPreview.src || "";
               arCompare.dataset.mode = "ai";
               arCompare.textContent = "⇄ See original";
-              pushHistory(g.url, g.model);
+              pushHistory(g.url, g.model, g.blob);
               if (window.__init3D) window.__init3D(g.url);
               showStatus("ready", "new variation");
             } else {
@@ -1780,10 +1788,44 @@ Rules:
 
       // ---- recent renders -----------------------------------------------
       const historyItems = [];
-      function pushHistory(url, model) {
-        if (!url) return;
-        historyItems.unshift({ url, model: model || "" });
-        while (historyItems.length > 8) historyItems.pop();
+      // ---- recent renders, persisted in IndexedDB ----------------------
+      const IDB_NAME = "mhzaly-renders", IDB_STORE = "renders";
+      function idbOpen() {
+        return new Promise((resolve) => {
+          try {
+            const r = indexedDB.open(IDB_NAME, 1);
+            r.onupgradeneeded = () => { try { r.result.createObjectStore(IDB_STORE, { keyPath: "id" }); } catch (e) {} };
+            r.onsuccess = () => resolve(r.result);
+            r.onerror = () => resolve(null);
+          } catch (e) { resolve(null); }
+        });
+      }
+      async function idbPut(rec) {
+        const db = await idbOpen();
+        if (!db) return;
+        try {
+          await new Promise((resolve) => {
+            const tx = db.transaction(IDB_STORE, "readwrite");
+            tx.objectStore(IDB_STORE).put(rec);
+            tx.oncomplete = resolve; tx.onerror = resolve; tx.onabort = resolve;
+          });
+        } catch (e) {}
+        try { db.close(); } catch (e) {}
+      }
+      async function idbAll() {
+        const db = await idbOpen();
+        if (!db) return [];
+        try {
+          return await new Promise((resolve) => {
+            const tx = db.transaction(IDB_STORE, "readonly");
+            const req = tx.objectStore(IDB_STORE).getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+          });
+        } catch (e) { return []; }
+        finally { try { db.close(); } catch (e) {} }
+      }
+      function renderHistory() {
         if (arHistory) arHistory.hidden = historyItems.length < 2;
         if (arHistoryList) {
           arHistoryList.innerHTML = historyItems.map((h, i) =>
@@ -1791,6 +1833,25 @@ Rules:
           ).join("");
         }
       }
+      function pushHistory(url, model, blob) {
+        if (!url) return;
+        const rec = { id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), ts: Date.now(), model: model || "", url, blob: blob || null };
+        historyItems.unshift(rec);
+        while (historyItems.length > 8) historyItems.pop();
+        renderHistory();
+        if (blob) idbPut({ id: rec.id, ts: rec.ts, model: rec.model, blob }).catch(() => {});
+      }
+      // Restore previous renders (blob URLs do not survive a reload).
+      (async () => {
+        try {
+          const rows = (await idbAll()).sort((a, b) => b.ts - a.ts).slice(0, 8);
+          if (!rows.length) return;
+          rows.forEach((r) => {
+            if (r.blob) historyItems.push({ id: r.id, ts: r.ts, model: r.model || "", url: URL.createObjectURL(r.blob), blob: r.blob });
+          });
+          renderHistory();
+        } catch (e) {}
+      })();
       if (arHistoryList) {
         arHistoryList.addEventListener("click", (e) => {
           const b = e.target.closest(".ar-history-item");
@@ -1802,6 +1863,23 @@ Rules:
           arDownload.href = item.url;
           if (arCompare) arCompare.dataset.gen = item.url;
           if (window.__init3D) window.__init3D(item.url);
+        });
+      }
+
+      // ---- share -------------------------------------------------------
+      if (arShare) {
+        arShare.addEventListener("click", async () => {
+          const src = arResultImg.getAttribute("src");
+          if (!src) return;
+          try {
+            const blob = await (await fetch(src)).blob();
+            const file = new File([blob], "mhzaly-render.jpg", { type: blob.type || "image/jpeg" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({ files: [file], title: "MHZALY render", text: "Made with The Cloth Room" });
+              return;
+            }
+          } catch (e) {}
+          arDownload.click();
         });
       }
 

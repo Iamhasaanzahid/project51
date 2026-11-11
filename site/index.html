@@ -23,7 +23,36 @@
         }
       }
     </script>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="img/icon-192.png" />
     <link rel="stylesheet" href="styles.css?v=20261102b" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "MHZALY",
+            "url": "https://mhzaly.pages.dev/",
+            "logo": "https://mhzaly.pages.dev/img/icon-512.png"
+          },
+          {
+            "@type": "WebSite",
+            "name": "The Cloth Room",
+            "url": "https://mhzaly.pages.dev/",
+            "description": "Virtual try-on atelier with real 3D avatars and reference-guided AI renders."
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "The Cloth Room",
+            "applicationCategory": "DesignApplication",
+            "operatingSystem": "Any (web browser)",
+            "url": "https://mhzaly.pages.dev/mhzaly-ar",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div class="grain" aria-hidden="true"></div>
@@ -39,9 +68,9 @@
       <nav class="site-nav" id="site-nav">
         <a href="mhzaly-ar.html" class="nav-ai">AI AR <span>New</span></a>
         <a href="#studio">Studio</a>
+        <a href="lookbook.html">Lookbook</a>
         <a href="#how">How it works</a>
-        <a href="#fabrics">Fabrics</a>
-        <a href="#faq">FAQ</a>
+        <a href="about.html">About</a>
       </nav>
       <a class="btn btn-ai site-cta" href="mhzaly-ar.html">Try AI AR</a>
       <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="site-nav">Menu</button>
@@ -65,7 +94,7 @@
           </div>
           <ul class="hero-points">
             <li>No sign-up</li>
-            <li>No uploads to a server</li>
+            <li>3D room runs on-device</li>
             <li>Real 3D avatars</li>
           </ul>
         </div>
@@ -401,7 +430,7 @@
         <div class="faq-list">
           <details class="faq" open>
             <summary>Is my photo or fabric uploaded anywhere?</summary>
-            <p>No. Images are read in the browser, used to build a texture, and discarded when you close the tab. There is no server-side upload and no account.</p>
+            <p>In the <strong>3D room</strong>, no — images are read in your browser, used to build a texture, and discarded when you close the tab. In the <strong>AI studio</strong>, a photo you choose to render is sent to the render service for that one request only and is not stored. There is no account either way.</p>
           </details>
           <details class="faq">
             <summary>Which garments can I try?</summary>
@@ -439,37 +468,29 @@
         <div class="footer-brand">
           <span class="brand-mark">CR</span>
           <strong>The Cloth Room</strong>
-          <p>A virtual try-on atelier for South Asian cuts — built to show how fabric actually falls.</p>
+          <p>A virtual try-on atelier by MHZALY — real 3D avatars, real fabric, real light.</p>
         </div>
         <div class="footer-col">
           <span class="footer-head">Studio</span>
-          <a href="#studio">Models</a>
-          <a href="#studio">Clothing</a>
-          <a href="#studio">Scenes</a>
-          <a href="#studio">My Looks</a>
-        </div>
-        <div class="footer-col">
-          <span class="footer-head">AI Studio</span>
-          <a href="mhzaly-ar.html">AI AR creator</a>
-          <a href="mhzaly-ar.html">Upload &amp; generate</a>
-          <a href="mhzaly-ar.html">3D preview &amp; GLB</a>
-        </div>
-        <div class="footer-col">
-          <span class="footer-head">Learn</span>
-          <a href="#how">How it works</a>
+          <a href="#studio">3D room</a>
           <a href="#fabrics">Fabric library</a>
+          <a href="#how">How it works</a>
           <a href="#faq">FAQ</a>
         </div>
         <div class="footer-col">
-          <span class="footer-head">The fine print</span>
-          <span class="footer-note">Runs entirely in your browser.</span>
-          <span class="footer-note">No accounts. No uploads.</span>
-          <span class="footer-note">Renders are yours to keep.</span>
+          <span class="footer-head">AI</span>
+          <a href="mhzaly-ar.html">AI creator</a>
+          <a href="lookbook.html">Lookbook</a>
+          <a href="about.html">How it works</a>
+        </div>
+        <div class="footer-col">
+          <span class="footer-head">Company</span>
+          <a href="about.html">About</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
         </div>
       </div>
-      <div class="footer-bottom">
-        <span>© MHZALY</span>
-      </div>
+      <div class="footer-bottom"><span>© MHZALY</span></div>
     </footer>
 
     <script type="module" src="app.js?v=20261102b"></script>

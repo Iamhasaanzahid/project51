@@ -1,0 +1,37 @@
+{
+  "name": "The Cloth Room — MHZALY",
+  "short_name": "Cloth Room",
+  "description": "Virtual try-on atelier: real 3D avatars and reference-guided AI renders. No account needed.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f0e8",
+  "theme_color": "#f5f0e8",
+  "categories": ["shopping", "photo", "graphics", "productivity"],
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "AI studio",
+      "short_name": "AI studio",
+      "url": "/mhzaly-ar.html",
+      "icons": [{ "src": "img/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Lookbook",
+      "short_name": "Lookbook",
+      "url": "/lookbook.html",
+      "icons": [{ "src": "img/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "3D room",
+      "short_name": "3D room",
+      "url": "/index.html#studio",
+      "icons": [{ "src": "img/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

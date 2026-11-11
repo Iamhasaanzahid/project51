@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Page not found | The Cloth Room</title>
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#f5f0e8" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="img/icon-192.png" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23fbf6ec'/%3E%3Crect x='9' y='9' width='46' height='46' fill='none' stroke='%23211e19' stroke-width='3'/%3E%3Ctext x='32' y='41' font-family='Georgia,serif' font-size='21' fill='%23a94e31' text-anchor='middle'%3ECR%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="fonts.css?v=1" />
+    <link rel="stylesheet" href="styles.css?v=20261102b" />
+    <link rel="stylesheet" href="pages.css?v=20261111a" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="site-header" id="top">
+      <a class="site-brand" href="index.html">
+        <span class="brand-mark">CR</span>
+        <span class="site-brand-text">The Cloth Room<em>Virtual try-on atelier</em></span>
+      </a>
+      <nav class="site-nav" id="site-nav">
+        <a href="index.html#studio">Studio</a>
+        <a href="lookbook.html">Lookbook</a>
+        <a href="mhzaly-ar.html" class="nav-ai">AI AR <span>New</span></a>
+        <a href="about.html">About</a>
+      </nav>
+      <a class="btn btn-ai site-cta" href="mhzaly-ar.html">Try AI AR</a>
+      <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    </header>
+
+    <main class="page-main">
+      <section class="notfound">
+        <div>
+          <span class="code">404</span>
+          <h1>This rail is empty.</h1>
+          <p>
+            The page you asked for does not exist — or it was moved when the studio was
+            rebuilt. The fitting room is still open.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-ai btn-lg" href="index.html">Back to the atelier</a>
+            <a class="btn btn-ghost btn-lg" href="lookbook.html">Browse the lookbook</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="brand-mark">CR</span>
+          <strong>The Cloth Room</strong>
+          <p>A virtual try-on atelier by MHZALY — real 3D avatars, real fabric, real light.</p>
+        </div>
+        <div class="footer-col">
+          <span class="footer-head">Studio</span>
+          <a href="index.html#studio">3D studio</a>
+          <a href="index.html#fabrics">Fabric library</a>
+          <a href="index.html#faq">FAQ</a>
+        </div>
+        <div class="footer-col">
+          <span class="footer-head">AI</span>
+          <a href="mhzaly-ar.html">AI creator</a>
+          <a href="lookbook.html">Lookbook</a>
+          <a href="about.html">How it works</a>
+        </div>
+        <div class="footer-col">
+          <span class="footer-head">Company</span>
+          <a href="about.html">About</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+        </div>
+      </div>
+      <div class="footer-bottom"><span>© MHZALY</span></div>
+    </footer>
+
+    <script>
+      (() => {
+        const menuBtn = document.getElementById("menu-btn");
+        const nav = document.getElementById("site-nav");
+        if (!menuBtn || !nav) return;
+        menuBtn.addEventListener("click", () => {
+          const open = nav.classList.toggle("is-open");
+          menuBtn.setAttribute("aria-expanded", String(open));
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>About — How the studio works | The Cloth Room</title>
+    <meta name="description" content="How MHZALY builds virtual try-on: on-device 3D avatars, reference-guided AI renders, and an honest look at what the free tier can and cannot do." />
+    <meta name="theme-color" content="#f5f0e8" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="About — How the studio works | The Cloth Room" />
+    <meta property="og:description" content="On-device 3D, reference-guided AI, no accounts. An honest look at the technology and its limits." />
+    <meta property="og:image" content="https://mhzaly.pages.dev/hero-look.jpg" />
+    <meta property="og:url" content="https://mhzaly.pages.dev/about" />
+    <link rel="canonical" href="https://mhzaly.pages.dev/about" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="img/icon-192.png" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23fbf6ec'/%3E%3Crect x='9' y='9' width='46' height='46' fill='none' stroke='%23211e19' stroke-width='3'/%3E%3Ctext x='32' y='41' font-family='Georgia,serif' font-size='21' fill='%23a94e31' text-anchor='middle'%3ECR%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="fonts.css?v=1" />
+    <link rel="stylesheet" href="styles.css?v=20261102b" />
+    <link rel="stylesheet" href="pages.css?v=20261111a" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="site-header" id="top">
+      <a class="site-brand" href="index.html">
+        <span class="brand-mark">CR</span>
+        <span class="site-brand-text">The Cloth Room<em>Virtual try-on atelier</em></span>
+      </a>
+      <nav class="site-nav" id="site-nav">
+        <a href="index.html#studio">Studio</a>
+        <a href="lookbook.html">Lookbook</a>
+        <a href="mhzaly-ar.html" class="nav-ai">AI AR <span>New</span></a>
+        <a href="about.html">About</a>
+      </nav>
+      <a class="btn btn-ai site-cta" href="mhzaly-ar.html">Try AI AR</a>
+      <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    </header>
+
+    <main class="page-main">
+      <section class="page-hero">
+        <div>
+          <span class="eyebrow">About the atelier</span>
+          <h1>A fitting room that<br />runs in your <em>browser</em>.</h1>
+          <p>
+            The Cloth Room is a small, independent project by MHZALY. It exists for one
+            reason: fabric is expensive to sample and slow to photograph. We wanted to see
+            the drape before a single stitch was sewn — without a studio, a photographer
+            or an account.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-ai btn-lg" href="mhzaly-ar.html">Try the AI studio <span aria-hidden="true">→</span></a>
+            <a class="btn btn-primary btn-lg" href="index.html#studio">Open the 3D room</a>
+          </div>
+        </div>
+        <aside class="page-hero-aside">
+          <span class="aside-label">At a glance</span>
+          <dl>
+            <dt>Built by</dt><dd>MHZALY — independent studio</dd>
+            <dt>Runs on</dt><dd>WebGL in your browser + a Cloudflare Worker</dd>
+            <dt>Accounts</dt><dd>None. There is no sign-up.</dd>
+            <dt>Price</dt><dd>Free. There is no paid plan.</dd>
+          </dl>
+        </aside>
+      </section>
+
+      <section class="page-section">
+        <div class="fact-grid">
+          <div class="fact"><span class="num">01</span><h3>Two engines, one room</h3><p>A real 3D avatar you can rotate, and a reference-guided AI renderer for photoreal frames.</p></div>
+          <div class="fact"><span class="num">02</span><h3>Colour measured, not guessed</h3><p>The studio samples the centre of your photo and locks the dominant colour into the prompt.</p></div>
+          <div class="fact"><span class="num">03</span><h3>No account, no card</h3><p>Open the page, upload, render, download. Nothing is stored on a server.</p></div>
+        </div>
+      </section>
+
+      <section class="page-section">
+        <div class="legal-layout">
+          <aside class="legal-toc" aria-label="On this page">
+            <span>On this page</span>
+            <a href="#what">What it does</a>
+            <a href="#how">How it works</a>
+            <a href="#tech">Technology</a>
+            <a href="#limits">Honest limits</a>
+            <a href="#privacy">Your images</a>
+          </aside>
+
+          <div class="prose">
+            <h2 id="what">What it actually does</h2>
+            <p>
+              There are two separate tools, and it helps to know which one you are using.
+            </p>
+            <ul>
+              <li><strong>The 3D room</strong> builds a real, rotatable avatar in WebGL, maps your fabric onto a chosen cut, and composites it into a scene. Nothing leaves your device.</li>
+              <li><strong>The AI studio</strong> takes a photo (or a written brief) and generates a new photoreal image of that item in a new scene. The render is produced by an AI model, not by a camera.</li>
+            </ul>
+            <p>
+              In <strong>Best AI</strong> mode the model receives your photo as a visual reference, so the
+              design, print and colour stay anchored. In <strong>Fast AI</strong> mode it works from text only —
+              quicker, but the design can drift. In <strong>Same photo</strong> mode the studio keeps your exact
+              pixels and only replaces the background.
+            </p>
+
+            <h2 id="how">How a render is made</h2>
+            <ol>
+              <li><strong>Read.</strong> A vision model describes the item — silhouette, material, hardware, pattern. Colour words are stripped out on purpose, because models are unreliable at naming colour.</li>
+              <li><strong>Measure.</strong> The centre 66% of your photo is sampled and neutral backdrop pixels are ignored, giving a real palette with hex values.</li>
+              <li><strong>Compose.</strong> A prompt is assembled from your own words (used verbatim), the item description, the measured palette and a lighting/composition brief.</li>
+              <li><strong>Render.</strong> FLUX.2 klein generates the frame at 1024×1536. If the AI quota is spent, the studio falls back to a free renderer or to a pixel-locked studio cut-out.</li>
+            </ol>
+
+            <h2 id="tech">Technology</h2>
+            <p>
+              The 3D room is three.js running locally — glTF avatars, procedural fabric materials and
+              real-time shadows. The AI studio is a small Cloudflare Worker that talks to Workers AI
+              (FLUX.2 klein) and, as a fallback, to a free keyless image service. No API keys are
+              shipped to your browser and none are required from you.
+            </p>
+
+            <h2 id="limits">Honest limits</h2>
+            <p>
+              Free AI compute is finite. The Worker has a daily neuron allowance, which works out to
+              roughly <strong>40–60 high-quality renders per day</strong> across everyone using the site. When it
+              runs out, quality drops to the free fallback renderer until the allowance resets.
+            </p>
+            <ul>
+              <li>Generated images can still get small details wrong — a buckle, a stitch line, a logo.</li>
+              <li>Very dark or very reflective photos give a weaker colour reading.</li>
+              <li>The AI renderer is not a colourimeter. For exact brand colour matching, use <strong>Same photo</strong>.</li>
+            </ul>
+
+            <h2 id="privacy">Your images</h2>
+            <p>
+              In the 3D room, images never leave the browser. In the AI studio, the photo is sent to the
+              Worker for the duration of the request and is not written to storage. Recent renders are
+              kept in your own browser's local storage so you can re-download them; clearing site data
+              removes them. See the <a href="privacy.html">privacy policy</a> for the full detail.
+            </p>
+
+            <hr class="divider" />
+            <p class="muted-note">
+              Questions about the project, a bug, or a use case that does not fit? The
+              <a href="index.html#faq">FAQ</a> covers the common ones, and the
+              <a href="mhzaly-ar.html">studio</a> is the fastest way to see what it can do.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="page-cta">
+        <span class="eyebrow">See it for yourself</span>
+        <h2>Two minutes, one photo.</h2>
+        <p>No sign-up, no card, no install. Open the studio and render your first frame.</p>
+        <div class="hero-actions">
+          <a class="btn btn-ai btn-lg" href="mhzaly-ar.html">Open the AI studio <span aria-hidden="true">→</span></a>
+          <a class="btn btn-ghost btn-lg" href="lookbook.html">See the lookbook</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <span class="brand-mark">CR</span>
+          <strong>The Cloth Room</strong>
+          <p>A virtual try-on atelier by MHZALY — real 3D avatars, real fabric, real light.</p>
+        </div>
+        <div class="footer-col">
+          <span class="footer-head">Studio</span>
+          <a href="index.html#studio">3D studio</a>
+          <a href="index.html#fabrics">Fabric library</a>
+          <a href="index.html#faq">FAQ</a>
+        </div>
+        <div class="footer-col">
+          <span class="footer-head">AI</span>
+          <a href="mhzaly-ar.html">AI creator</a>
+          <a href="lookbook.html">Lookbook</a>
+          <a href="about.html">How it works</a>
+        </div>
+        <div class="footer-col">
+          <span class="footer-head">Company</span>
+          <a href="about.html">About</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+        </div>
+      </div>
+      <div class="footer-bottom"><span>© MHZALY</span></div>
+    </footer>
+
+    <script>
+      (() => {
+        const menuBtn = document.getElementById("menu-btn");
+        const nav = document.getElementById("site-nav");
+        if (!menuBtn || !nav) return;
+        menuBtn.addEventListener("click", () => {
+          const open = nav.classList.toggle("is-open");
+          menuBtn.setAttribute("aria-expanded", String(open));
+        });
+        nav.addEventListener("click", (e) => {
+          if (e.target.tagName === "A") {
+            nav.classList.remove("is-open");
+            menuBtn.setAttribute("aria-expanded", "false");
+          }
+        });
+      })();
+    </script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+      }
+    </script>
+  </body>
+</html>
