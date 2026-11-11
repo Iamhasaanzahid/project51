@@ -22,9 +22,12 @@ function saleTotals(sale) {
     (sum, it) => sum + (Number(it.qty) || 1) * (Number(it.price) || 0),
     0
   );
-  const total = Number(sale.total ?? subtotal) || 0;
-  const tax = Math.max(0, total - subtotal);
-  return { items, subtotal, tax, total };
+  const discount = Math.max(0, Number(sale.discount) || 0);
+  const taxable = Math.max(0, subtotal - discount);
+  const rate = Math.max(0, Math.min(100, Number(sale.taxRate) || 0));
+  const tax = Number.isFinite(Number(sale.tax)) ? Math.max(0, Number(sale.tax)) : Math.round(taxable * rate) / 100;
+  const total = Number(sale.total ?? (taxable + tax)) || 0;
+  return { items, subtotal, discount, tax, total };
 }
 
 function shopInitials(name) {
@@ -53,7 +56,7 @@ export function escapeHtml(value) {
 
 export function receiptText(sale) {
   const s = settings();
-  const { items, subtotal, tax, total } = saleTotals(sale);
+  const { items, subtotal, discount, tax, total } = saleTotals(sale);
   const cur = currency();
   const fmt = (n) => `${cur} ${Number(n || 0).toLocaleString()}`;
   const lines = [];
@@ -75,8 +78,12 @@ export function receiptText(sale) {
     lines.push(`   ${qty} x ${fmt(price)} = ${fmt(qty * price)}`);
   }
   lines.push('━━━━━━━━━━━━━━━');
-  if (tax > 0) {
+  if (discount > 0) {
     lines.push(`Subtotal: ${fmt(subtotal)}`);
+    lines.push(`Discount: -${fmt(discount)}`);
+  }
+  if (tax > 0) {
+    if (!(discount > 0)) lines.push(`Subtotal: ${fmt(subtotal)}`);
     lines.push(`Tax: ${fmt(tax)}`);
   }
   lines.push(`*Total: ${fmt(total)}*`);
@@ -90,7 +97,7 @@ export function receiptText(sale) {
 
 export function receiptHtml(sale) {
   const s = settings();
-  const { items, subtotal, tax, total } = saleTotals(sale);
+  const { items, subtotal, discount, tax, total } = saleTotals(sale);
   const cur = currency();
   const fmt = (n) => `${cur} ${Number(n || 0).toLocaleString()}`;
   const shopName = s.shopName || 'My Mart';
@@ -109,9 +116,10 @@ export function receiptHtml(sale) {
     </tr>`;
   }).join('');
 
-  const taxRows = tax > 0
-    ? `<tr><td class="muted">Subtotal</td><td class="r">${fmt(subtotal)}</td></tr>
-       <tr><td class="muted">Tax</td><td class="r">${fmt(tax)}</td></tr>`
+  const taxRows = (discount > 0 || tax > 0)
+    ? `${(discount > 0 || tax > 0) ? `<tr><td class="muted">Subtotal</td><td class="r">${fmt(subtotal)}</td></tr>` : ''}
+       ${discount > 0 ? `<tr><td class="muted">Discount</td><td class="r">−${fmt(discount)}</td></tr>` : ''}
+       ${tax > 0 ? `<tr><td class="muted">Tax</td><td class="r">${fmt(tax)}</td></tr>` : ''}`
     : '';
 
   return `<!doctype html>

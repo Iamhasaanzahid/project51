@@ -63,13 +63,19 @@ export function render(root) {
     const from = cutoff(rangeSel.value);
     const sales = db.sales.filter((s) => !from || new Date(s.createdAt || 0) >= from);
     const expenses = db.expenses.filter((e) => !from || new Date(e.createdAt || 0) >= from);
-    return { sales, expenses };
+    const returns = (db.returns || []).filter((r) => !from || new Date(r.createdAt || 0) >= from);
+    return { sales, expenses, returns };
   }
 
   function renderBody() {
-    const { sales, expenses } = filtered();
+    const { sales, expenses, returns } = filtered();
 
-    const revenue = sales.reduce((a, s) => a + (Number(s.total) || 0), 0);
+    const returnsTotal = returns.reduce((a, r) => a + (r.items || []).reduce((x, it) => x + (Number(it.qty) || 0) * (Number(it.price) || 0), 0), 0);
+    let returnsProfit = 0;
+    for (const r of returns) {
+      for (const it of r.items || []) returnsProfit += itemProfit(it);
+    }
+    const revenue = sales.reduce((a, s) => a + (Number(s.total) || 0), 0) - returnsTotal;
     let profit = 0;
     const productMap = new Map();
     for (const s of sales) {
@@ -83,6 +89,7 @@ export function render(root) {
       }
     }
     const expenseTotal = expenses.reduce((a, e) => a + (Number(e.amount) || 0), 0);
+    profit -= returnsProfit;
     const net = profit - expenseTotal;
     const top = [...productMap.entries()].sort((a, b) => b[1].revenue - a[1].revenue).slice(0, 10);
 
@@ -95,7 +102,7 @@ export function render(root) {
 
     body.innerHTML = `
       <div class="kpi-grid">
-        ${kpi('check', 'green', 'Revenue', money(revenue), sales.length + ' invoices')}
+        ${kpi('check', 'green', 'Revenue', money(revenue), `${sales.length} invoices${returns.length ? ` · ${returns.length} returns` : ''}`)}
         ${kpi('sparkle', 'blue', 'Gross Profit', money(profit), 'Sales − cost')}
         ${kpi('alert', 'amber', 'Expenses', money(expenseTotal), expenses.length + ' entries')}
         ${kpi('sparkle', net >= 0 ? 'teal' : 'amber', 'Net Profit', money(net), 'Profit − expenses')}

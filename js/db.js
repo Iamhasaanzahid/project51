@@ -70,6 +70,7 @@ function freshDb() {
     sales: [],
     purchases: [],
     payments: [],
+    returns: [],
     expenses: [],
     counters: { invoice: 1, purchase: 1 },
     createdAt: new Date().toISOString(),
@@ -90,6 +91,7 @@ export function normalizeDb(parsed) {
     sales: Array.isArray(data.sales) ? data.sales : [],
     purchases: Array.isArray(data.purchases) ? data.purchases : [],
     payments: Array.isArray(data.payments) ? data.payments : [],
+    returns: Array.isArray(data.returns) ? data.returns : [],
     expenses: Array.isArray(data.expenses) ? data.expenses : [],
   };
 }

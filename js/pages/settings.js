@@ -7,7 +7,7 @@ import { icon, esc, toast, confirmDialog, downloadFile, linkLabels } from '../ui
 
 export const meta = { title: 'Settings', subtitle: 'Shop details, backup and preferences' };
 
-const VERSION = '2.0.0';
+const VERSION = '2.1.0';
 
 function syncShell() {
   const shop = db.settings.shopName || 'My Mart';
@@ -152,6 +152,8 @@ export function render(root) {
           <span class="badge">Multi-shop accounts</span>
           <span class="badge">POS billing</span>
           <span class="badge">Barcode ready</span>
+          <span class="badge">Returns & refunds</span>
+          <span class="badge">Hold bills</span>
           <span class="badge">Udhaar khata</span>
           <span class="badge">Purchases</span>
           <span class="badge">Reports</span>

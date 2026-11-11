@@ -63,6 +63,7 @@ export function render(root) {
           ${bal > 0 ? `<span class="badge danger">${money(bal)}</span>` : `<span class="badge ok">${money(0)}</span>`}
         </td>
         <td style="text-align:right">
+          ${bal > 0 ? `<button class="btn btn-primary btn-sm" data-pay="${esc(s.id)}" title="Pay supplier">${icon('wallet')}</button>` : ''}
           <button class="btn btn-ghost btn-sm" data-edit="${esc(s.id)}" title="Edit">${icon('settings')}</button>
           <button class="btn btn-ghost btn-sm" data-del="${esc(s.id)}" title="Delete">${icon('trash')}</button>
         </td>
@@ -130,9 +131,68 @@ export function render(root) {
     });
   }
 
+  function openPay(s) {
+    const bal = Number(s.balance) || 0;
+    openModal({
+      title: 'Pay supplier',
+      subtitle: `${s.name} · payable ${money(bal)}`,
+      body: `
+        <div class="form-grid">
+          <div class="field">
+            <label>Amount paid (${esc(db.settings.currency || 'Rs')})</label>
+            <input class="input" id="payAmt" type="number" min="0" step="0.01" value="${bal}" />
+          </div>
+          <div class="field">
+            <label>Method</label>
+            <select class="input" id="payMethod">
+              <option value="Cash">Cash</option>
+              <option value="Card">Card</option>
+              <option value="Online">Online / Bank</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Note (optional)</label>
+            <input class="input" id="payNote" placeholder="e.g. weekly payment" />
+          </div>
+        </div>`,
+      footer: `<button class="btn btn-ghost" data-cancel>Cancel</button>
+               <button class="btn btn-primary" id="paySave">${icon('check')} Pay</button>`,
+      onMount: (bd) => {
+        bd.querySelector('[data-cancel]').addEventListener('click', () => bd.remove());
+        bd.querySelector('#paySave').addEventListener('click', () => {
+          const amount = Math.max(0, Number(bd.querySelector('#payAmt').value) || 0);
+          if (!amount) return toast('Amount likhein', 'error');
+          const applied = Math.min(amount, bal);
+          s.balance = Math.max(0, bal - applied);
+          s.updatedAt = new Date().toISOString();
+          db.payments = db.payments || [];
+          db.payments.push({
+            id: uid('pay'),
+            type: 'supplier',
+            party: s.name,
+            amount: applied,
+            method: bd.querySelector('#payMethod').value || 'Cash',
+            note: bd.querySelector('#payNote').value.trim(),
+            createdAt: new Date().toISOString(),
+          });
+          save();
+          bd.remove();
+          renderTable();
+          toast(`${money(applied)} paid`, 'success');
+        });
+      },
+    });
+  }
+
   root.querySelector('#addSupplierBtn').addEventListener('click', () => openForm(null));
 
   root.querySelector('#supplierTableBody').addEventListener('click', (e) => {
+    const pay = e.target.closest('[data-pay]');
+    if (pay) {
+      const s = db.suppliers.find((x) => x.id === pay.dataset.pay);
+      if (s) openPay(s);
+      return;
+    }
     const edit = e.target.closest('[data-edit]');
     if (edit) {
       const s = db.suppliers.find((x) => x.id === edit.dataset.edit);

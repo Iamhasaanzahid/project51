@@ -20,9 +20,10 @@ import * as suppliers from './pages/suppliers.js';
 import * as expenses from './pages/expenses.js';
 import * as reports from './pages/reports.js';
 import * as settings from './pages/settings.js';
+import * as returns from './pages/returns.js';
 
 const PAGES = {
-  dashboard, assistant, login: authPage, pos, products, sales, purchases, customers, suppliers, expenses, reports, settings,
+  dashboard, assistant, login: authPage, pos, products, sales, purchases, customers, suppliers, expenses, reports, settings, returns,
 };
 
 const PAGE_TITLES = {
@@ -37,9 +38,88 @@ const PAGE_TITLES = {
   expenses: 'Expenses',
   reports: 'Reports',
   settings: 'Settings',
+  returns: 'Returns & Refunds',
 };
 
 let currentPage = null;
+
+/* ---------- theme, install prompt & command palette ---------- */
+const THEME_KEY = 'mhzaly_theme';
+let deferredInstall = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstall = e;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.hidden = false;
+});
+
+function getTheme() {
+  try { return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'; } catch { return 'light'; }
+}
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+}
+function toggleTheme() {
+  const next = getTheme() === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem(THEME_KEY, next); } catch { /* ignore */ }
+  applyTheme(next);
+  toast(next === 'dark' ? 'Dark mode on' : 'Light mode on');
+}
+
+function openCommandPalette() {
+  const actions = [
+    { label: 'New sale (POS)', hint: 'Create an invoice', go: 'pos', icon: 'plus' },
+    { label: 'AI Assistant', hint: 'Ask about shop data', go: 'assistant', icon: 'sparkle' },
+    { label: 'Dashboard', hint: 'Today overview', go: 'dashboard', icon: 'calendar' },
+    { label: 'Products', hint: 'Inventory', go: 'products', icon: 'bag' },
+    { label: 'Sales', hint: 'All invoices', go: 'sales', icon: 'check' },
+    { label: 'Returns & refunds', hint: 'Return items', go: 'returns', icon: 'return' },
+    { label: 'Purchases', hint: 'Supplier stock', go: 'purchases', icon: 'alert' },
+    { label: 'Customers', hint: 'Udhaar khata', go: 'customers', icon: 'bag' },
+    { label: 'Suppliers', hint: 'Payables', go: 'suppliers', icon: 'bag' },
+    { label: 'Expenses', hint: 'Record costs', go: 'expenses', icon: 'alert' },
+    { label: 'Reports', hint: 'Profit & summary', go: 'reports', icon: 'chart' },
+    { label: 'Settings', hint: 'Shop & backup', go: 'settings', icon: 'settings' },
+    { label: 'Toggle dark mode', hint: 'Theme', theme: true, icon: 'moon' },
+  ];
+  openModal({
+    title: 'Quick actions',
+    subtitle: 'Type to filter · Enter to open · Ctrl+/ anytime',
+    body: `<input class="input" id="cmdInput" placeholder="Type a page or action…" autocomplete="off" />
+      <div class="cmd-list" id="cmdList"></div>`,
+    onMount: (bd) => {
+      const input = bd.querySelector('#cmdInput');
+      const list = bd.querySelector('#cmdList');
+      let filtered = actions;
+      const paint = () => {
+        list.innerHTML = filtered.length
+          ? filtered.map((a, i) => `<button class="cmd-item" data-i="${i}" type="button">${icon(a.icon)}<span>${esc(a.label)}</span><em>${esc(a.hint || '')}</em></button>`).join('')
+          : '<div class="empty-state">Kuch match nahi hua.</div>';
+      };
+      const run = (a) => {
+        if (!a) return;
+        bd.remove();
+        if (a.theme) toggleTheme();
+        else if (a.go) navigate('#/' + a.go);
+      };
+      paint();
+      input.addEventListener('input', () => {
+        const q = input.value.toLowerCase().trim();
+        filtered = actions.filter((a) => a.label.toLowerCase().includes(q) || (a.hint || '').toLowerCase().includes(q));
+        paint();
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); run(filtered[0]); }
+      });
+      list.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-i]');
+        if (btn) run(filtered[Number(btn.dataset.i)]);
+      });
+      setTimeout(() => input.focus(), 60);
+    },
+  });
+}
 
 function renderAuthView() {
   const hash = location.hash.replace(/^#\/?/, '');
@@ -52,6 +132,7 @@ function renderAuthView() {
 }
 
 export function init() {
+  applyTheme(getTheme());
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
@@ -145,6 +226,9 @@ function shell() {
           <div class="topbar-right">
             <span class="pill sync-pill idle" id="syncPill">${syncPillHTML('idle')}</span>
             <span class="pill date-pill">${icon('calendar')}<span id="todayPill"></span></span>
+            <button class="icon-btn" id="installBtn" title="Install app" hidden>${icon('download')}</button>
+            <button class="icon-btn" id="themeBtn" title="Dark mode">${icon('moon')}</button>
+            <button class="icon-btn" id="cmdBtn" title="Quick actions (Ctrl+/)" aria-label="Quick actions">${icon('search')}</button>
             <button class="icon-btn account-btn" id="accountBtn" title="Shop account">${esc(initials(db.settings.ownerName || shop))}</button>
             <button class="btn btn-ghost btn-sm" id="logoutTopBtn" title="${isDemo() ? 'Exit demo' : 'Logout'}">${isDemo() ? 'Exit' : 'Logout'}</button>
             <button class="btn btn-primary btn-sm" data-nav="pos">${icon('plus')} New Sale</button>
@@ -184,7 +268,42 @@ function shell() {
         navigate('#/assistant');
         setTimeout(() => document.getElementById('aiText')?.focus(), 140);
       }
+      if ((e.ctrlKey || e.metaKey) && String(e.key) === '/') {
+        e.preventDefault();
+        openCommandPalette();
+      }
     });
+  }
+
+  const themeBtn = document.getElementById('themeBtn');
+  if (themeBtn) {
+    themeBtn.innerHTML = icon(getTheme() === 'dark' ? 'sun' : 'moon');
+    themeBtn.addEventListener('click', () => {
+      toggleTheme();
+      themeBtn.innerHTML = icon(getTheme() === 'dark' ? 'sun' : 'moon');
+      themeBtn.title = getTheme() === 'dark' ? 'Light mode' : 'Dark mode';
+    });
+  }
+
+  const cmdBtn = document.getElementById('cmdBtn');
+  if (cmdBtn) cmdBtn.addEventListener('click', openCommandPalette);
+
+  const installBtn = document.getElementById('installBtn');
+  if (installBtn) {
+    if (deferredInstall && !window.matchMedia('(display-mode: standalone)').matches) installBtn.hidden = false;
+    installBtn.addEventListener('click', async () => {
+      if (!deferredInstall) return;
+      deferredInstall.prompt();
+      try { await deferredInstall.userChoice; } catch { /* ignore */ }
+      deferredInstall = null;
+      installBtn.hidden = true;
+    });
+  }
+
+  if (!document.body.dataset.netShortcut) {
+    document.body.dataset.netShortcut = '1';
+    window.addEventListener('offline', () => paintSyncPill('offline'));
+    window.addEventListener('online', () => paintSyncPill(getSyncStatus()));
   }
 
   document.getElementById('accountBtn').addEventListener('click', openAccountModal);
@@ -229,6 +348,7 @@ function navHTML(active) {
     { id: 'pos', label: 'POS Billing', icon: icon('plus') },
     { id: 'products', label: 'Products', icon: icon('bag') },
     { id: 'sales', label: 'Sales', icon: icon('check') },
+    { id: 'returns', label: 'Returns', icon: icon('return') },
     { id: 'purchases', label: 'Purchases', icon: icon('alert') },
     { id: 'customers', label: 'Customers', icon: icon('bag') },
     { id: 'suppliers', label: 'Suppliers', icon: icon('bag') },

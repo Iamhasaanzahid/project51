@@ -63,6 +63,7 @@ export function render(root) {
           ${bal > 0 ? `<span class="badge warn">${money(bal)}</span>` : `<span class="badge ok">${money(0)}</span>`}
         </td>
         <td style="text-align:right">
+          ${bal > 0 ? `<button class="btn btn-primary btn-sm" data-receive="${esc(c.id)}" title="Payment receive">${icon('wallet')}</button>` : ''}
           <button class="btn btn-ghost btn-sm" data-edit="${esc(c.id)}" title="Edit">${icon('settings')}</button>
           <button class="btn btn-ghost btn-sm" data-del="${esc(c.id)}" title="Delete">${icon('trash')}</button>
         </td>
@@ -130,9 +131,68 @@ export function render(root) {
     });
   }
 
+  function openReceive(c) {
+    const bal = Number(c.balance) || 0;
+    openModal({
+      title: 'Receive payment',
+      subtitle: `${c.name} · baqi ${money(bal)}`,
+      body: `
+        <div class="form-grid">
+          <div class="field">
+            <label>Amount received (${esc(db.settings.currency || 'Rs')})</label>
+            <input class="input" id="recAmt" type="number" min="0" step="0.01" value="${bal}" />
+          </div>
+          <div class="field">
+            <label>Method</label>
+            <select class="input" id="recMethod">
+              <option value="Cash">Cash</option>
+              <option value="Card">Card</option>
+              <option value="Online">Online / Bank</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Note (optional)</label>
+            <input class="input" id="recNote" placeholder="e.g. partial payment" />
+          </div>
+        </div>`,
+      footer: `<button class="btn btn-ghost" data-cancel>Cancel</button>
+               <button class="btn btn-primary" id="recSave">${icon('check')} Receive</button>`,
+      onMount: (bd) => {
+        bd.querySelector('[data-cancel]').addEventListener('click', () => bd.remove());
+        bd.querySelector('#recSave').addEventListener('click', () => {
+          const amount = Math.max(0, Number(bd.querySelector('#recAmt').value) || 0);
+          if (!amount) return toast('Amount likhein', 'error');
+          const applied = Math.min(amount, bal);
+          c.balance = Math.max(0, bal - applied);
+          c.updatedAt = new Date().toISOString();
+          db.payments = db.payments || [];
+          db.payments.push({
+            id: uid('pay'),
+            type: 'customer',
+            party: c.name,
+            amount: applied,
+            method: bd.querySelector('#recMethod').value || 'Cash',
+            note: bd.querySelector('#recNote').value.trim(),
+            createdAt: new Date().toISOString(),
+          });
+          save();
+          bd.remove();
+          renderTable();
+          toast(`${money(applied)} receive ho gaya`, 'success');
+        });
+      },
+    });
+  }
+
   root.querySelector('#addCustomerBtn').addEventListener('click', () => openForm(null));
 
   root.querySelector('#customerTableBody').addEventListener('click', (e) => {
+    const receive = e.target.closest('[data-receive]');
+    if (receive) {
+      const c = db.customers.find((x) => x.id === receive.dataset.receive);
+      if (c) openReceive(c);
+      return;
+    }
     const edit = e.target.closest('[data-edit]');
     if (edit) {
       const c = db.customers.find((x) => x.id === edit.dataset.edit);
