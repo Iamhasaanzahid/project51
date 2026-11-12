@@ -376,3 +376,20 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
   html{scroll-behavior:auto}
   *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
 }
+
+/* ---------------- Real measurements + fit ---------------- */
+.measure-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 6px}
+.measure-row label{display:flex;align-items:center;gap:4px;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+.measure-row input{width:100%;min-width:0;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper-white);color:var(--ink);font:inherit;font-size:.82rem}
+.measure-row input:focus{border-color:var(--rust);outline:none}
+.measure-row span{font-size:.6rem;color:var(--ink-soft)}
+.fit-verdict{font-size:.66rem;font-weight:700;letter-spacing:.06em;padding:3px 9px;border-radius:999px;background:rgba(24,20,15,.08);color:var(--ink)}
+.fit-verdict[data-fit="tight"]{background:#f6d9d2;color:#8a2f1c}
+.fit-verdict[data-fit="fitted"]{background:#e6ecdc;color:#3f5c26}
+.fit-verdict[data-fit="regular"]{background:#e4e7ee;color:#33405c}
+.fit-verdict[data-fit="relaxed"]{background:#f2e7d4;color:#6b4a1d}
+.fit-verdict[data-fit="oversized"]{background:#e8e2f2;color:#4a3668}
+
+.stage-overlay{ }
+.stage-overlay .btn{margin-top:14px}
+.stage-overlay p{margin:0 0 4px}

@@ -211,6 +211,21 @@
                 <div class="stage-actions">
                   <button class="btn btn-primary" id="render-look">Apply fabric</button>
                   <button class="btn btn-ghost" id="save-look">Save PNG</button>
+                  <button class="btn btn-ghost" id="copy-look" type="button">Copy look link</button>
+                  <button class="btn btn-ghost" id="save-spec" type="button">Spec sheet</button>
+                </div>
+
+                <div class="stylist-card measure-card" id="measure-card">
+                  <div class="stylist-top">
+                    <span class="stylist-eyebrow"><span class="spark">◎</span> Your measurements</span>
+                    <span class="fit-verdict" id="fit-verdict">—</span>
+                  </div>
+                  <div class="measure-row">
+                    <label>Height<input id="m-height" type="number" min="120" max="220" step="1" placeholder="178" inputmode="numeric" /><span>cm</span></label>
+                    <label>Chest<input id="m-chest" type="number" min="60" max="160" step="1" placeholder="96" inputmode="numeric" /><span>cm</span></label>
+                    <label>Waist<input id="m-waist" type="number" min="50" max="150" step="1" placeholder="82" inputmode="numeric" /><span>cm</span></label>
+                  </div>
+                  <p class="stylist-note" id="measure-note">Add your height and chest — the model scales to you and the fit reading is measured from the 3D garment, not guessed.</p>
                 </div>
 
                 <div class="stylist-card">
@@ -522,7 +537,7 @@
       <div class="footer-bottom"><span>© MHZALY</span></div>
     </footer>
 
-    <script type="module" src="app.js?v=20261112a"></script>
+    <script type="module" src="app.js?v=20261112j"></script>
     <script>
       (() => {
         const menuBtn = document.getElementById("menu-btn");

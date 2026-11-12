@@ -191,6 +191,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     fit: "regular",
     scene: SCENES[0],
     fabric: null,
+    fabricKind: "",
   };
 
   const looks = [];
@@ -307,6 +308,76 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   }
 
   /* ---------------- Avatar ---------------- */
+  // The avatar's outfit mesh is skinned, so the torso can be isolated from
+  // the arms by looking at which bone each vertex follows. That gives an
+  // exact body measurement instead of a guess.
+  const TORSO_BONE = /spine|neck|chest|hip|pelvis/i;
+
+  function torsoMesh() {
+    let found = null;
+    if (avatar) avatar.traverse((o) => { if (!found && o.isMesh && o.userData.role === "top") found = o; });
+    return found;
+  }
+
+  function torsoFilter(o) {
+    const gi = o.geometry && o.geometry.attributes;
+    const si = gi && gi.skinIndex, sw = gi && gi.skinWeight;
+    const bones = o.skeleton ? o.skeleton.bones : null;
+    if (!si || !sw || !bones || !bones.length) return null;
+    return (i) => {
+      let best = -1, bi = 0;
+      const w = [sw.getX(i), sw.getY(i), sw.getZ(i), sw.getW(i)];
+      const ix = [si.getX(i), si.getY(i), si.getZ(i), si.getW(i)];
+      for (let k = 0; k < 4; k++) if (w[k] > best) { best = w[k]; bi = ix[k]; }
+      const b = bones[bi];
+      return b ? TORSO_BONE.test(b.name) : false;
+    };
+  }
+
+  // Measured half-width (x) and half-depth (z) of the torso at a height.
+  function torsoRadii(mesh, yLocal, sy, filter) {
+    const pos = mesh.geometry.attributes.position, e = mesh.matrixWorld.elements;
+    const target = yLocal * sy, band = 0.016 * sy;
+    let ax = 0, az = 0, n = 0;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      const wy = e[1] * x + e[5] * y + e[9] * z + e[13];
+      if (Math.abs(wy - target) > band) continue;
+      if (filter && !filter(i)) continue;
+      const wx = e[0] * x + e[4] * y + e[8] * z + e[12];
+      const wz = e[2] * x + e[6] * y + e[10] * z + e[14];
+      ax = Math.max(ax, Math.abs(wx) / sy);
+      az = Math.max(az, Math.abs(wz) / sy);
+      n++;
+    }
+    return n > 3 ? { x: ax, z: az } : null;
+  }
+
+  // A profile that follows the body: garments are built from this so they
+  // sit on the shoulders and follow the waist instead of hanging like a box.
+  function torsoProfile(yHem, yTop, samples = 9) {
+    const mesh = torsoMesh();
+    if (!mesh || !avatar) return null;
+    const sy = avatar.scale.y;
+    const rot = avatar.rotation.y;
+    avatar.rotation.y = 0;
+    avatar.updateMatrixWorld(true);
+    const filter = torsoFilter(mesh);
+    const pts = [];
+    for (let i = 0; i < samples; i++) {
+      const y = yHem + ((yTop - yHem) * i) / (samples - 1);
+      const m = torsoRadii(mesh, y, sy, filter);
+      if (m) pts.push({ y, x: m.x, z: m.z });
+      else if (pts.length) {
+        const prev = pts[pts.length - 1];
+        pts.push({ y, x: prev.x, z: prev.z });
+      }
+    }
+    avatar.rotation.y = rot;
+    avatar.updateMatrixWorld(true);
+    return pts.length >= 3 ? pts : null;
+  }
+
   const loader = new GLTFLoader();
   const AVATAR_URL = { him: "models/thanh.glb", her: "models/tham.glb" };
   const avatarCache = {};
@@ -363,9 +434,82 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     root.rotation.set(0, 0, 0);
   }
 
+  /* ---------------- Resilient model download ----------------
+     Avatar files are large and a weak connection can cut them in half.
+     The download is verified against Content-Length, retried when it
+     arrives short, and the progress is reported — so a dropped
+     connection never leaves a half broken model on screen. */
+  async function fetchChunk(url, start, end, tries = 8) {
+    const want = end - start + 1;
+    let last = null;
+    for (let i = 0; i < tries; i++) {
+      try {
+        const res = await fetch(url, {
+          headers: { Range: `bytes=${start}-${end}` },
+          cache: "reload",
+        });
+        if (res.status !== 206 && res.status !== 200) throw new Error("HTTP " + res.status);
+        const buf = await res.arrayBuffer();
+        if (res.status === 206 && buf.byteLength === want) return buf;
+        if (res.status === 200 && buf.byteLength === want) return buf;
+        throw new Error("short chunk " + buf.byteLength + " of " + want);
+      } catch (err) {
+        last = err;
+        await new Promise((r) => setTimeout(r, 250 * (i + 1)));
+      }
+    }
+    throw last || new Error("chunk failed");
+  }
+
+  // Long connections get cut on some networks, so the model is pulled in
+  // small ranged pieces. Each piece is retried on its own and the whole
+  // file is verified before it is handed to the loader.
+  async function fetchModel(url, onProgress) {
+    let total = 0;
+    try {
+      const head = await fetch(url, { method: "HEAD", cache: "reload" });
+      total = Number(head.headers.get("content-length") || 0);
+    } catch (e) {}
+    if (!total) throw new Error("Could not read the model size.");
+
+    const CHUNK = 128 * 1024;
+    const ranges = [];
+    for (let s = 0; s < total; s += CHUNK) ranges.push([s, Math.min(total - 1, s + CHUNK - 1)]);
+    const buffers = new Array(ranges.length);
+    let done = 0;
+    let next = 0;
+    const worker = async () => {
+      for (;;) {
+        const i = next++;
+        if (i >= ranges.length) return;
+        const [s, e] = ranges[i];
+        buffers[i] = await fetchChunk(url, s, e);
+        done += buffers[i].byteLength;
+        if (onProgress) onProgress(done, total);
+      }
+    };
+    await Promise.all([worker(), worker(), worker()]);
+    const out = new Uint8Array(total);
+    let off = 0;
+    for (const b of buffers) {
+      if (!b) throw new Error("missing part");
+      out.set(new Uint8Array(b), off);
+      off += b.byteLength;
+    }
+    if (off !== total) throw new Error("Incomplete model download.");
+    return out.buffer;
+  }
+
   async function ensureAvatar(gender) {
     if (avatarCache[gender]) return avatarCache[gender];
-    const gltf = await loader.loadAsync(AVATAR_URL[gender]);
+    const buf = await fetchModel(AVATAR_URL[gender], (got, expected) => {
+      if (expected) {
+        const pct = Math.min(100, Math.round((got / expected) * 100));
+        setStatus("Downloading model " + pct + "%");
+        stageOverlay.textContent = "Downloading 3D model… " + pct + "%";
+      }
+    });
+    const gltf = await loader.parseAsync(buf, "");
     const root = gltf.scene;
     prepareAvatar(root, gender);
     avatarCache[gender] = root;
@@ -400,6 +544,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
       avatar = root;
       scene.add(avatar);
       styleAvatar();
+      applyBodyScale();
       buildOverlay();
       stageOverlay.hidden = false;
       updateOverlay();
@@ -407,8 +552,17 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
       setStatus("Live 3D");
     } catch (err) {
       if (token !== loadToken) return;
-      stageOverlay.textContent = "Could not load the 3D model.";
-      setStatus("Model failed to load");
+      // Big GLB downloads can drop on a weak connection — offer a real retry.
+      stageOverlay.innerHTML = "";
+      const msg = document.createElement("p");
+      msg.textContent = "The 3D model did not finish downloading.";
+      const retry = document.createElement("button");
+      retry.type = "button";
+      retry.className = "btn btn-primary";
+      retry.textContent = "Retry download";
+      retry.addEventListener("click", () => setModel(state.model, state.garment));
+      stageOverlay.append(msg, retry);
+      setStatus("Model download interrupted — retry");
     }
   }
 
@@ -456,6 +610,46 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
       v.z = Math.sin(ang) * nr;
       pos.setXYZ(i, v.x, v.y, v.z);
     }
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  // A garment shell whose cross section is the body's own ellipse at every
+  // height, so it sits on the shoulders, follows the waist and keeps the
+  // real depth of the body instead of being a flat tube.
+  function drapedShell(points, ease, folds = 8, depth = 0.005) {
+    const P = points.map((p) => ({ y: p.y, x: p.x + ease, z: p.z + ease }));
+    const last = P[P.length - 1];
+    P.push({ y: last.y + 0.045, x: last.x * 0.74, z: last.z * 0.92 });
+    const yMin = P[0].y, yMax = P[P.length - 1].y;
+    const RAD = 48, HS = 16;
+    const positions = [], uvs = [], indices = [];
+    for (let h = 0; h <= HS; h++) {
+      const t = h / HS;
+      const y = yMin + (yMax - yMin) * t;
+      const f = t * (P.length - 1);
+      const i0 = Math.max(0, Math.min(P.length - 1, Math.floor(f)));
+      const i1 = Math.min(P.length - 1, i0 + 1);
+      const k = f - i0;
+      const rx = P[i0].x + (P[i1].x - P[i0].x) * k;
+      const rz = P[i0].z + (P[i1].z - P[i0].z) * k;
+      for (let s = 0; s <= RAD; s++) {
+        const ang = (s / RAD) * Math.PI * 2;
+        const wave = Math.sin(ang * folds + t * 2.4) * depth * (1 - t * 0.6);
+        positions.push((rx + wave) * Math.cos(ang), y, (rz + wave) * Math.sin(ang));
+        uvs.push(s / RAD, t);
+      }
+    }
+    for (let h = 0; h < HS; h++) {
+      for (let s = 0; s < RAD; s++) {
+        const a = h * (RAD + 1) + s, b = a + RAD + 1;
+        indices.push(a, b, a + 1, b, b + 1, a + 1);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geo.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    geo.setIndex(indices);
     geo.computeVertexNormals();
     return geo;
   }
@@ -536,6 +730,14 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
       addOverlayMesh(overlayGroup, new THREE.BoxGeometry(0.055 * fs, 0.22, 0.012), [-0.075 * fs, y, 0.145], null, [0, 0, -0.16]);
       addOverlayMesh(overlayGroup, new THREE.BoxGeometry(0.055 * fs, 0.22, 0.012), [0.075 * fs, y, 0.145], null, [0, 0, 0.16]);
     };
+    // A garment shell built on the measured body: follows the shoulders and
+    // the waist, with the ease the fit setting asks for.
+    const shell = (yHem, yTop, ease, folds = 8, depth = 0.005) => {
+      const pts = torsoProfile(yHem, yTop);
+      if (!pts) return false;
+      addOverlayMesh(overlayGroup, drapedShell(pts, ease, folds, depth), null, null);
+      return true;
+    };
     const tunic = (profile, zs, folds = 9, depth = 0.008) => {
       const scaled = profile.map(([r, y]) => [r * fs, y]);
       addOverlayMesh(overlayGroup, drapedLathe(scaled, folds, depth), null, [1, 1, zs]);
@@ -546,10 +748,11 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
         top(0.19, 0.20, 0.62, 1.13, 0.80, 7, 0.007, 0.62);
         lapels(1.34);
       } else if (g === "shirt") {
-        // fitted shirt: hem sits on the hip so the belt never shows through,
-        // top edge reaches the shoulders so the avatar's own collar lines up.
-        top(0.168, 0.19, 0.56, 1.27, 0.80, 7, 0.006, 0.18);
-        band(0.19, 1.00, 0.80);
+        // fitted shirt built on the measured body: hem on the hip so the belt
+        // never shows, shoulders and waist follow the real silhouette.
+        if (!shell(0.93, 1.50, 0.013 * fitScale(), 8, 0.005)) {
+          top(0.152, 0.152, 0.56, 1.27, 0.91, 7, 0.005, 0);
+        }
       } else if (g === "kurta") {
         tunic([[0.205,0.47],[0.20,0.60],[0.196,0.72],[0.19,0.84],[0.19,0.93],[0.175,1.00],[0.158,1.03],[0.143,1.06],[0.138,1.10]], 0.90, 9, 0.008);
         band(0.205, 0.47, 0.80);
@@ -575,9 +778,10 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
       }
     } else {
       if (g === "set") {
-        // fitted two-piece: covers the waist the same way the men's shirt does
-        top(0.158, 0.172, 0.52, 1.30, 0.82, 7, 0.005, 0.20);
-        band(0.172, 1.04, 0.82);
+        // fitted two-piece, built on the measured body like the men's shirt
+        if (!shell(0.94, 1.48, 0.012 * fitScale(), 8, 0.005)) {
+          top(0.146, 0.146, 0.52, 1.30, 0.90, 7, 0.005, 0);
+        }
       } else if (g === "kurti") {
         // short tunic — the avatar's own fitted top already sits at hip length
       } else if (g === "kurta") {
@@ -908,6 +1112,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
   function updateStyle() {
+    updateFit();
     const g = garmentById(state.garment);
     const s = state.scene;
     const f = state.fabric?.analysis || { h: 35, s: 0.3, l: 0.7, busy: 0.15, colorName: "oat" };
@@ -917,7 +1122,8 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     const harmony = warmFabric === warmScene ? 90 : 76;
     const contrast = Math.min(100, Math.round(Math.abs(f.l - s.lum) * 160 + 40));
     const texture = f.busy > 0.34 ? 82 : 92;
-    const score = Math.round(clamp(0.34 * harmony + 0.24 * contrast + 0.18 * texture + 0.24 * g.fit, 68, 97));
+    const fitScore = lastFit ? lastFit.fitScore : 88;
+    const score = Math.round(clamp(0.34 * harmony + 0.24 * contrast + 0.18 * texture + 0.24 * fitScore, 68, 97));
 
     styleScore.textContent = String(score);
     styleBar.style.width = `${score}%`;
@@ -939,6 +1145,173 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     ];
 
     styleTips.innerHTML = tips.map((t) => `<li>${esc(t)}</li>`).join("");
+  }
+
+  /* ---------------- Real body measurements + fit engine ----------------
+     The fit reading is measured from the actual 3D geometry: the body
+     circumference at the chest is compared with the garment overlay at the
+     same height, and the ease is expressed against the user's own chest. */
+  const BASE_HEIGHT_CM = 178;
+  const BODY_KEY = "mhzaly_body";
+  const body = (() => {
+    try { return Object.assign({ height: 0, chest: 0, waist: 0 }, JSON.parse(localStorage.getItem(BODY_KEY) || "{}")); }
+    catch (e) { return { height: 0, chest: 0, waist: 0 }; }
+  })();
+  const mHeight = $("m-height"), mChest = $("m-chest"), mWaist = $("m-waist");
+  const fitVerdict = $("fit-verdict"), measureNote = $("measure-note"), copyLookBtn = $("copy-look");
+  let lastFit = null;
+
+  function saveBody() {
+    try { localStorage.setItem(BODY_KEY, JSON.stringify(body)); } catch (e) {}
+  }
+
+  function applyBodyScale() {
+    if (!avatar) return;
+    const h = body.height > 0 ? body.height : BASE_HEIGHT_CM;
+    const k = clamp(h / BASE_HEIGHT_CM, 0.55, 1.35);
+    avatar.scale.setScalar(2.0 * k);
+    const topY = 3.712 * k;
+    camera.position.y = topY * 0.544;
+    camera.lookAt(0, topY * 0.517, 0);
+    camera.updateProjectionMatrix();
+  }
+
+  // Ellipse circumference (Ramanujan) of a horizontal ring of vertices.
+  // maxHalf is a half-width limit (world units at scale 2) that drops the arms.
+  function ringCirc(obj, frac, bandFrac, maxHalf, torsoOnly) {
+    if (!obj || !avatar) return 0;
+    const sy = avatar.scale.y;
+    const worldH = 1.856 * sy;
+    const target = worldH * frac;
+    const band = Math.max(0.006, worldH * bandFrac);
+    const lim = maxHalf * (sy / 2);
+    let a = 0, b = 0, n = 0;
+    obj.updateMatrixWorld(true);
+    obj.traverse((o) => {
+      if (!o.isMesh || !o.geometry || !o.geometry.attributes || !o.geometry.attributes.position) return;
+      const pos = o.geometry.attributes.position, e = o.matrixWorld.elements;
+      const keep = torsoOnly ? torsoFilter(o) : null;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+        const wy = e[1] * x + e[5] * y + e[9] * z + e[13];
+        if (Math.abs(wy - target) > band) continue;
+        if (keep && !keep(i)) continue;
+        const wx = e[0] * x + e[4] * y + e[8] * z + e[12];
+        if (maxHalf && Math.abs(wx) > lim) continue;
+        const wz = e[2] * x + e[6] * y + e[10] * z + e[14];
+        a = Math.max(a, Math.abs(wx));
+        b = Math.max(b, Math.abs(wz));
+        n++;
+      }
+    });
+    if (n < 8 || a === 0 || b === 0) return 0;
+    return Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));
+  }
+
+  function measureFit() {
+    if (!avatar) return null;
+    let topMesh = null;
+    avatar.traverse((o) => { if (!topMesh && o.isMesh && o.userData.role === "top") topMesh = o; });
+    if (!topMesh) return null;
+    const rot = avatar.rotation.y;
+    avatar.rotation.y = 0;
+    avatar.updateMatrixWorld(true);
+    const bodyChest = ringCirc(topMesh, 0.727, 0.016, 0, true);
+    const bodyWaist = ringCirc(topMesh, 0.566, 0.016, 0, true);
+    const gChest = overlayGroup ? ringCirc(overlayGroup, 0.727, 0.022, 0.60) : 0;
+    const gWaist = overlayGroup ? ringCirc(overlayGroup, 0.566, 0.022, 0.60) : 0;
+    avatar.rotation.y = rot;
+    avatar.updateMatrixWorld(true);
+    if (!bodyChest) return null;
+
+    const h = body.height > 0 ? body.height : BASE_HEIGHT_CM;
+    const cmPerWorld = h / (1.856 * avatar.scale.y);
+    const bodyChestCm = bodyChest * cmPerWorld;
+    const bodyWaistCm = bodyWaist * cmPerWorld;
+    const gChestCm = (gChest || bodyChest * 1.06) * cmPerWorld;
+    const gWaistCm = (gWaist || bodyWaist * 1.06) * cmPerWorld;
+
+    // Ease on the mannequin, then expressed against the user's own chest.
+    const userChest = body.chest > 0 ? body.chest : bodyChestCm;
+    const easeCm = Math.max(0, (gChestCm / bodyChestCm - 1) * userChest);
+    const waistEaseCm = bodyWaistCm > 0 ? Math.max(0, (gWaistCm / bodyWaistCm - 1) * userChest) : 0;
+
+    let verdict = "Regular";
+    if (easeCm < 2) verdict = "Tight";
+    else if (easeCm < 6) verdict = "Fitted";
+    else if (easeCm < 12) verdict = "Regular";
+    else if (easeCm < 20) verdict = "Relaxed";
+    else verdict = "Oversized";
+
+    const fitScore = Math.round(clamp(100 - Math.abs(easeCm - 8) * 3.2, 45, 99));
+    return { verdict, easeCm, waistEaseCm, fitScore, bodyChestCm, gChestCm };
+  }
+
+  function updateFit() {
+    lastFit = measureFit();
+    if (!fitVerdict) return;
+    if (!lastFit) { fitVerdict.textContent = "—"; return; }
+    const e = lastFit.easeCm;
+    fitVerdict.textContent = `${lastFit.verdict} · ${e >= 0 ? "+" : ""}${e.toFixed(1)} cm`;
+    fitVerdict.dataset.fit = lastFit.verdict.toLowerCase();
+    if (measureNote) {
+      measureNote.textContent = body.chest > 0
+        ? `Chest ${body.chest} cm · garment ease ${e.toFixed(1)} cm at the chest, measured from the 3D garment.`
+        : `The model measures ${lastFit.bodyChestCm.toFixed(0)} cm at your height. Add your chest for an exact ease figure.`;
+    }
+  }
+
+  function syncBodyInputs() {
+    if (mHeight) mHeight.value = body.height || "";
+    if (mChest) mChest.value = body.chest || "";
+    if (mWaist) mWaist.value = body.waist || "";
+  }
+
+  function onBodyInput() {
+    body.height = parseFloat(mHeight && mHeight.value) || 0;
+    body.chest = parseFloat(mChest && mChest.value) || 0;
+    body.waist = parseFloat(mWaist && mWaist.value) || 0;
+    saveBody();
+    applyBodyScale();
+    updateFit();
+  }
+  [mHeight, mChest, mWaist].forEach((el) => {
+    if (!el) return;
+    el.addEventListener("input", onBodyInput);
+    el.addEventListener("change", onBodyInput);
+  });
+
+  /* ---------------- Shareable look link (no server) ---------------- */
+  function lookLink() {
+    const p = new URLSearchParams();
+    p.set("m", state.model.id);
+    p.set("g", state.garment);
+    p.set("s", state.scene.id);
+    p.set("fit", state.fit);
+    p.set("t", state.bottomTone);
+    if (state.fabricKind) p.set("f", state.fabricKind);
+    return `${location.origin}${location.pathname}#${p.toString()}`;
+  }
+
+  if (copyLookBtn) {
+    copyLookBtn.addEventListener("click", async () => {
+      const link = lookLink();
+      try {
+        await navigator.clipboard.writeText(link);
+        setStatus("Look link copied — it reopens this exact model, garment, scene and fit.");
+      } catch (e) {
+        const ta = document.createElement("textarea");
+        ta.value = link;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand("copy"); } catch (e2) {}
+        ta.remove();
+        setStatus(ok ? "Look link copied." : link);
+      }
+    });
   }
 
   /* ---------------- Image helpers ---------------- */
@@ -1027,6 +1400,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     const url = URL.createObjectURL(file);
     try {
       const img = await loadImage(url);
+      state.fabricKind = "";
       applyFabric(img, file.name.replace(/\.[^.]+$/, ""));
       fabricStatus.textContent = "Textile mapped onto the 3D garment.";
     } catch {
@@ -1119,6 +1493,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   }
 
   function loadSample(kind) {
+    state.fabricKind = kind;
     const name = kind === "denim" ? "Indigo twill"
       : kind === "silk" ? "Plum silk"
       : kind === "block" ? "Block print"
@@ -1264,14 +1639,128 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
       link.download = `cloth-room-${state.gender}-${state.garment}.png`;
       link.href = dataUrl;
       link.click();
-      looks.unshift({
+      const saved = {
         url: dataUrl,
         title: `${state.model.name} · ${garmentLabel(state.garment)} · ${state.scene.name}`,
-      });
+      };
+      looks.unshift(saved);
+      persistLook(saved);
       renderLooks();
       setStatus("Look saved to My Looks.");
     } catch {
       setStatus("Could not save. Try again.");
+    }
+  }
+
+  /* ---------------- Saved looks persist on this device ---------------- */
+  const LOOKS_DB = "mhzaly-looks";
+  function looksDB() {
+    return new Promise((resolve) => {
+      let r;
+      try { r = indexedDB.open(LOOKS_DB, 1); } catch (e) { resolve(null); return; }
+      r.onupgradeneeded = () => { try { r.result.createObjectStore("looks", { keyPath: "id", autoIncrement: true }); } catch (e) {} };
+      r.onerror = () => resolve(null);
+      r.onsuccess = () => resolve(r.result);
+    });
+  }
+  async function persistLook(look) {
+    const db = await looksDB();
+    if (!db) return;
+    try {
+      await new Promise((res) => {
+        const tx = db.transaction("looks", "readwrite");
+        tx.objectStore("looks").add({ url: look.url, title: look.title, ts: Date.now() });
+        tx.oncomplete = res; tx.onerror = res; tx.onabort = res;
+      });
+    } catch (e) {}
+    try { db.close(); } catch (e) {}
+  }
+  async function restoreLooks() {
+    const db = await looksDB();
+    if (!db) return;
+    try {
+      const rows = await new Promise((res) => {
+        const out = [];
+        const tx = db.transaction("looks", "readonly");
+        const req = tx.objectStore("looks").openCursor(null, "prev");
+        req.onsuccess = () => {
+          const cur = req.result;
+          if (cur) { out.push(cur.value); cur.continue(); } else res(out);
+        };
+        req.onerror = () => res(out);
+      });
+      rows.slice(0, 12).forEach((r2) => looks.push({ url: r2.url, title: r2.title }));
+      if (looks.length) renderLooks();
+    } catch (e) {}
+    try { db.close(); } catch (e) {}
+  }
+
+  /* ---------------- Tailor spec sheet ---------------- */
+  async function saveSpec() {
+    if (!avatar) { setStatus("Model is still loading."); return; }
+    try {
+      const bg = await loadImage(state.scene.image);
+      const W = 1000, LOOK = 1080, H = 1440;
+      const out = document.createElement("canvas");
+      out.width = W; out.height = H;
+      const c = out.getContext("2d");
+      const sc = Math.max(W / bg.width, LOOK / bg.height);
+      c.filter = "blur(2.5px) saturate(1.05) brightness(0.94)";
+      c.drawImage(bg, (W - bg.width * sc) / 2, (LOOK - bg.height * sc) / 2, bg.width * sc, bg.height * sc);
+      c.filter = "none";
+      const grd = c.createRadialGradient(W / 2, LOOK * 0.36, W * 0.18, W / 2, LOOK * 0.5, W * 0.78);
+      grd.addColorStop(0, "rgba(15,10,6,0)");
+      grd.addColorStop(1, "rgba(15,10,6,0.38)");
+      c.fillStyle = grd; c.fillRect(0, 0, W, LOOK);
+      c.drawImage(renderer.domElement, 0, 0, W, LOOK);
+
+      c.fillStyle = "#f7f2ea"; c.fillRect(0, LOOK, W, H - LOOK);
+      c.fillStyle = "#b5502e"; c.fillRect(0, LOOK, W, 3);
+
+      c.fillStyle = "#1b1712"; c.font = "600 32px Georgia, 'Times New Roman', serif";
+      c.fillText("MHZALY", 54, LOOK + 60);
+      c.fillStyle = "#b5502e"; c.font = "700 13px Arial, sans-serif";
+      c.fillText("FIT SPEC SHEET", 54, LOOK + 86);
+      c.fillStyle = "#6f6557"; c.font = "14px Arial, sans-serif";
+      c.textAlign = "right";
+      c.fillText(new Date().toLocaleDateString(), W - 54, LOOK + 60);
+      c.textAlign = "left";
+
+      const f = state.fabric && state.fabric.analysis;
+      const rows = [
+        ["Model", state.model.name],
+        ["Garment", garmentLabel(state.garment)],
+        ["Scene", state.scene.name],
+        ["Fabric", state.fabric ? state.fabric.name : "Not set"],
+        ["Fit", lastFit ? `${lastFit.verdict} · ${lastFit.easeCm.toFixed(1)} cm ease` : "Measuring…"],
+        ["Height", body.height ? `${body.height} cm` : "178 cm (default)"],
+        ["Chest", body.chest ? `${body.chest} cm` : lastFit ? `${lastFit.bodyChestCm.toFixed(0)} cm (model)` : "—"],
+        ["Waist", body.waist ? `${body.waist} cm` : "—"],
+        ["Dominant colour", f ? f.colorName : "—"],
+        ["Garment chest", lastFit ? `${lastFit.gChestCm.toFixed(0)} cm` : "—"],
+      ];
+      const colW = (W - 108) / 2;
+      rows.forEach(([k, v], i) => {
+        const col = i % 2, row = Math.floor(i / 2);
+        const x = 54 + col * (colW + 10);
+        const y = LOOK + 122 + row * 40;
+        c.fillStyle = "#6f6557"; c.font = "11px Arial, sans-serif";
+        c.fillText(String(k).toUpperCase(), x, y);
+        c.fillStyle = "#1b1712"; c.font = "600 16px Arial, sans-serif";
+        c.fillText(String(v).slice(0, 32), x, y + 20);
+      });
+
+      c.fillStyle = "#6f6557"; c.font = "12px Arial, sans-serif";
+      c.fillText("Measured from the 3D garment on this device — share it with your tailor.", 54, H - 22);
+
+      const dataUrl = out.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = `mhzaly-spec-${state.garment}.png`;
+      link.href = dataUrl;
+      link.click();
+      setStatus("Spec sheet saved.");
+    } catch (e) {
+      setStatus("Could not build the spec sheet. Try again.");
     }
   }
 
@@ -1313,6 +1802,8 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   });
 
   saveBtn.addEventListener("click", saveLook);
+  const saveSpecBtn = $("save-spec");
+  if (saveSpecBtn) saveSpecBtn.addEventListener("click", saveSpec);
 
   fitRow.querySelectorAll("[data-fit]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -1331,11 +1822,23 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   renderGarmentGrid();
   renderToneRow();
   renderLooks();
+  restoreLooks();
   loadSample("linen");
   aiStatus.textContent = "3D engine ready";
+  syncBodyInputs();
   const startParams = new URLSearchParams(location.search);
-  const startModel = MODELS.find((m) => m.id === startParams.get("m")) || MODELS[0];
-  setModel(startModel, startParams.get("g") || undefined);
+  const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const startModel = MODELS.find((m) => m.id === (hashParams.get("m") || startParams.get("m"))) || MODELS[0];
+  (async () => {
+    await setModel(startModel, hashParams.get("g") || startParams.get("g") || undefined);
+    const hs = hashParams.get("s");
+    if (hs) setScene(hs);
+    const hfit = hashParams.get("fit");
+    if (hfit) { state.fit = hfit; syncFitRow(); styleAvatar(); buildOverlay(); }
+    const hf = hashParams.get("f");
+    if (hf && ["linen", "denim", "silk", "block"].includes(hf)) loadSample(hf);
+    updateStyle();
+  })();
   animate();
 
   window.__cloth = {
