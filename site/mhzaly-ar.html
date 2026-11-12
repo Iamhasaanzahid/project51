@@ -2,21 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://mhzaly-ai.mhzaly.workers.dev https://mhzaly-ai.you.workers.dev https://generativelanguage.googleapis.com https://api.groq.com https://api.cerebras.ai https://api.deepinfra.com https://api-inference.huggingface.co https://api.mistral.ai https://api.sambanova.ai https://api.together.xyz https://openrouter.ai https://image.pollinations.ai https://text.pollinations.ai https://*.hf.space; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AI studio — product shots &amp; try-on | MHZALY</title>
     <meta name="description" content="Upload a garment, bag, shoe or furniture photo. The MHZALY AI studio keeps the design and colour, then rebuilds the item in a new scene. Free, no account." />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="AI studio — product shots &amp; try-on | MHZALY" />
     <meta property="og:description" content="One photo in. A campaign frame out. Same design, same colour, new scene." />
-    <meta property="og:image" content="https://mhzaly.pages.dev/img/lookbook/kurta-cream.jpg" />
-    <meta property="og:url" content="https://mhzaly.pages.dev/mhzaly-ar" />
+    <meta property="og:image" content="https://mhzaly-fabric.surge.sh/img/lookbook/kurta-cream.jpg" />
+    <meta property="og:url" content="https://mhzaly-fabric.surge.sh/mhzaly-ar.html" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#f5f0e8" />
-    <link rel="canonical" href="https://mhzaly.pages.dev/mhzaly-ar" />
+    <link rel="canonical" href="https://mhzaly-fabric.surge.sh/mhzaly-ar.html" />
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="img/icon-192.png" />
     <link rel="stylesheet" href="fonts.css?v=1" />
-    <link rel="stylesheet" href="mhzaly-ar.css?v=20261111a" />
+    <link rel="stylesheet" href="mhzaly-ar.css?v=20261111d" />
     <script type="importmap">
       {
         "imports": {
@@ -162,7 +164,7 @@
                     <button type="button" class="ar-mode-btn" data-mode="fast">⚡ Fast AI (~7s)</button>
                     <button type="button" class="ar-mode-btn is-on" data-mode="best">✨ Best AI (design lock)</button>
                     <button type="button" class="ar-mode-btn" data-mode="exact">Same photo</button>
-                    <span class="ar-mode-note" id="ar-mode-note">Naya model, naya background — same kapda</span>
+                    <span class="ar-mode-note" id="ar-mode-note">New model, new background — same fabric</span>
                   </div>
                   <div class="foot">
                     <button class="ar-btn" id="ar-generate-btn" disabled>Generate with AI</button>
@@ -170,25 +172,25 @@
                   </div>
                   <div class="ar-tryon">
                     <div class="ar-tryon-head">
-                      <strong>AI try-on — same kapda, model pe</strong>
+                      <strong>AI try-on — same fabric, on a model</strong>
                       <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Free Gemini key →</a>
                     </div>
                     <div class="ar-tryon-row">
-                      <input id="ar-quick-key" type="password" autocomplete="off" spellcheck="false" placeholder="Gemini key paste karo (AIza...)" />
+                      <input id="ar-quick-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste a Gemini key (AIza…)" />
                       <button class="ar-btn ar-btn-ghost" id="ar-quick-save" type="button">Save &amp; try</button>
                     </div>
-                    <p class="ar-tryon-note" id="ar-tryon-note">Key ke bina bhi chalta hai — aapki photo ka studio render banega.</p>
+                    <p class="ar-tryon-note" id="ar-tryon-note">Works without a key — your photo still gets a studio render.</p>
                   </div>
                   <details class="ar-ai-settings">
-                    <summary>AI key pool — unlimited free keys, auto-failover</summary>
+                    <summary>Advanced — bring your own keys (optional)</summary>
                     <div class="ar-ai-body ar-ai-pool">
-                      <textarea id="ar-keys" rows="4" spellcheck="false" placeholder="Ek line me ek key, aise:&#10;gemini: AIza...&#10;groq: gsk_...&#10;openrouter: sk-or-...&#10;cerebras: csk-...&#10;mistral: ...&#10;huggingface: hf_..."></textarea>
+                      <textarea id="ar-keys" rows="4" spellcheck="false" placeholder="One key per line, like this:&#10;gemini: AIza...&#10;groq: gsk_...&#10;openrouter: sk-or-...&#10;cerebras: csk-...&#10;mistral: ...&#10;huggingface: hf_..."></textarea>
                       <div class="ar-ai-row">
                         <button class="ar-btn" id="ar-save-ai" type="button">Save keys</button>
                         <span class="ar-ai-status" id="ar-ai-status">free mode — no keys needed</span>
                       </div>
                       <input id="ar-backend" type="url" autocomplete="off" placeholder="Cloud backend URL (optional) — e.g. https://mhzaly-ai.you.workers.dev" />
-                      <p class="ar-ai-note">Jitni chahe keys daalo — app khud rotate karega. <strong>Same-design try-on</strong> ke liye ek <strong>Gemini</strong> key zaroori hai (free). Keys sirf aapke browser me save hoti hain.</p>
+                      <p class="ar-ai-note">Add as many keys as you like — the app rotates them automatically. A free <strong>Gemini</strong> key is required for same-design try-on. Keys stay in your browser.</p>
                     </div>
                   </details>
                 </div>
@@ -198,6 +200,13 @@
                 <div class="ar-result-media">
                   <img id="ar-result-img" alt="Generated AR asset preview" />
                   <canvas id="ar-3d-canvas"></canvas>
+                  <div class="ar-compare" id="ar-compare-view" hidden>
+                    <img id="ar-compare-after" alt="AI render" />
+                    <div class="ar-compare-before-wrap"><img id="ar-compare-before" alt="Original photo" /></div>
+                    <div class="ar-compare-handle"><span>⇄</span></div>
+                    <span class="ar-compare-label left">Original</span>
+                    <span class="ar-compare-label right">AI render</span>
+                  </div>
                   <span class="ar-card-tag">Render ready</span>
                   <div class="ar-progress" id="ar-progress" hidden><i></i></div>
                 </div>
@@ -206,17 +215,19 @@
                   <p id="ar-result-desc">Reading your image…</p>
                   <div class="ar-result-meta" id="ar-result-meta" hidden></div>
                   <div class="ar-steps" id="ar-steps">
-                    <span>Analyzing image</span>
-                    <span>Planning</span>
-                    <span>Building mesh</span>
+                    <span>Reading item</span>
+                    <span>Measuring colour</span>
+                    <span>Rendering</span>
                     <span>Ready</span>
                   </div>
                   <div class="foot">
-                    <a class="ar-btn" href="index.html#fabric-ai">Open in 3D Studio</a>
+                    <button class="ar-btn" id="ar-to-3d" type="button">Open in 3D Studio</button>
                     <a class="ar-btn ar-btn-ghost" id="ar-download" href="#" download="mhzaly-ar-asset.jpg" hidden>⬇ Save image</a>
                     <button class="ar-btn ar-btn-ghost" id="ar-share" type="button" hidden>↗ Share</button>
+                    <button class="ar-btn ar-btn-ghost" id="ar-wa" type="button" hidden>WhatsApp</button>
+                    <button class="ar-btn ar-btn-ghost" id="ar-copy" type="button" hidden>Copy caption</button>
                     <button class="ar-btn ar-btn-ghost" id="ar-reroll" type="button" hidden>🔄 New variation</button>
-                    <button class="ar-btn ar-btn-ghost" id="ar-compare" type="button" hidden>⇄ See original</button>
+                    <button class="ar-btn ar-btn-ghost" id="ar-compare" type="button" hidden>⇄ Compare original</button>
                     <button class="ar-btn ar-btn-ghost" id="ar-expand" type="button" hidden>⤢ View full</button>
                     <button class="ar-btn ar-btn-ghost" id="ar-glb" type="button" hidden>⬇ Download 3D (GLB)</button>
                     <button class="ar-btn ar-btn-ghost" id="ar-again-btn" type="button">Generate another</button>
@@ -370,7 +381,7 @@
                   <li>1024×1536 downloads, no watermark</li>
                   <li>3D preview + GLB export</li>
                   <li>No account, no card, no trial timer</li>
-                  <li>Commercial use of your own renders</li>
+                  <li>Personal &amp; commercial use, per model-provider terms</li>
                   <li>Fair use: roughly 40–60 AI renders/day, shared</li>
                 </ul>
                 <a class="ar-btn" href="#create">Open the studio</a>
@@ -429,12 +440,24 @@
     </div>
 
     <script>
-      const AR_API_BASE = (window.AR_API_BASE || localStorage.getItem("mhzaly_backend") || "https://mhzaly-ai.mhzaly.workers.dev").replace(/\/+$/, "");
+      const AR_API_BASE = (() => {
+        const raw = String(window.AR_API_BASE || localStorage.getItem("mhzaly_backend") || "https://mhzaly-ai.mhzaly.workers.dev").replace(/\/+$/, "");
+        // Never send an API key to a plain-http or malformed backend.
+        try {
+          const u = new URL(raw);
+          if (u.protocol === "https:" || u.hostname === "localhost" || u.hostname === "127.0.0.1") {
+            return u.origin + u.pathname.replace(/\/+$/, "");
+          }
+        } catch (e) {}
+        return "https://mhzaly-ai.mhzaly.workers.dev";
+      })();
+      const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
       const api = (p) => `${AR_API_BASE}${p}`;
       const FREE_AI = "https://text.pollinations.ai/openai";
       let lastRetryAfter = 0;
       let freeCooldownUntil = 0;
-      const GEN_IMG = (p, model = "flux") => `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=1024&height=1536&nologo=true&model=${model}&referrer=mhzaly.pages.dev&negative_prompt=${encodeURIComponent("blurry, deformed, extra limbs, extra fingers, watermark, text, logo, low quality, duplicate item")}&seed=${Math.floor(Math.random() * 1e9)}`;
+      const GEN_IMG = (p, model = "flux") => `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=1024&height=1536&nologo=true&model=${model}&referrer=mhzaly-fabric.surge.sh&negative_prompt=${encodeURIComponent("blurry, deformed, extra limbs, extra fingers, watermark, text, logo, low quality, duplicate item")}&seed=${Math.floor(Math.random() * 1e9)}`;
       const AGENT_SYSTEM = `You are a senior fashion art director and AR planner.
 The user uploads a photo and may pick an item or type a request.
 Read their words carefully and convert them into a precise image-generation brief.
@@ -532,9 +555,9 @@ Rules:
       (function initMode() {
         const btns = document.querySelectorAll(".ar-mode-btn");
         const note = {
-          fast: "⚡ Tez render — naya model, naya background",
-          best: "✨ Design lock — AI aapka asli item reference me leta hai (recommended)",
-          exact: "Aapki hi photo — design 100% same",
+          fast: "⚡ Fast render — new model, new background",
+          best: "✨ Design lock — the AI uses your actual item as a reference (recommended)",
+          exact: "Your own photo — design 100% identical",
         };
         btns.forEach((b) => {
           b.classList.toggle("is-on", b.dataset.mode === genMode);
@@ -555,7 +578,7 @@ Rules:
         arQuickSave.addEventListener("click", () => {
           const k = (arQuickKey.value || "").trim();
           if (!k) {
-            arTryonNote.textContent = "Pehle Gemini key paste karo — link upar hai.";
+            arTryonNote.textContent = "Paste a Gemini key first — the link is above.";
             return;
           }
           const kept = arKeys.value.split("\n").map((l) => l.trim()).filter(Boolean)
@@ -565,9 +588,9 @@ Rules:
           localStorage.setItem(AI_KEY, arKeys.value);
           localStorage.removeItem(AI_COOL);
           refreshPoolStatus();
-          arTryonNote.textContent = "Key saved. Ab photo upload karke Generate dabao — AI try-on chalega.";
+          arTryonNote.textContent = "Key saved. Upload a photo and press Generate to run the try-on.";
           if (selectedFile && !document.getElementById("ar-generate-btn").disabled) {
-            arTryonNote.textContent = "Key saved — try-on chalu…";
+            arTryonNote.textContent = "Key saved — starting try-on…";
             document.getElementById("ar-generate-btn").click();
           }
         });
@@ -593,14 +616,17 @@ Rules:
       const arLightboxImg = document.getElementById("ar-lightbox-img");
       const arDownload = document.getElementById("ar-download");
       const arShare = document.getElementById("ar-share");
+      const arWa = document.getElementById("ar-wa");
+      const arCopy = document.getElementById("ar-copy");
+      const arTo3d = document.getElementById("ar-to-3d");
       const arCamInput = document.getElementById("ar-cam-input");
 
       let selectedOption = "Auto";
       let selectedFile = null;
 
       function showStatus(status, extra, plan) {
-        const p = plan && plan.description ? `<br><span>${plan.description}</span>` : "";
-        arJobStatus.innerHTML = `Job status: <b>${status}</b>` + (extra ? ` — ${extra}` : "") + p;
+        const p = plan && plan.description ? `<br><span>${esc(plan.description)}</span>` : "";
+        arJobStatus.innerHTML = `Job status: <b>${esc(status)}</b>` + (extra ? ` — ${esc(extra)}` : "") + p;
       }
 
       function setStep(n) {
@@ -664,18 +690,22 @@ Rules:
       });
 
       arAgainBtn.addEventListener("click", () => {
-        selectedFile = null;
-        arImgInput.value = "";
-        arPreview.removeAttribute("src");
-        arDrop.classList.remove("has-image");
-        arFileName.textContent = "No image selected";
-        arGenerateBtn.disabled = true;
+        // Keep the uploaded photo — people usually want a second take of the same item.
         arResult.hidden = true;
         arResultMeta.hidden = true;
         arDownload.hidden = true;
         if (arShare) arShare.hidden = true;
+        if (arWa) arWa.hidden = true;
+        if (arCopy) arCopy.hidden = true;
+        if (arCompare) arCompare.hidden = true;
+        if (arReroll) arReroll.hidden = true;
+        if (arExpand) arExpand.hidden = true;
+        showCompare(false);
         arGlb.hidden = true;
-        showStatus("—");
+        arResultDesc.textContent = "Reading your image…";
+        arGenerateBtn.disabled = !selectedFile;
+        arPrompt.focus();
+        showStatus("Ready for another render.");
       });
 
       function fileToBase64(file) {
@@ -1474,6 +1504,7 @@ Rules:
         arResultImg.src = arPreview.src;
         arResultImg.classList.remove("is-empty");
         document.querySelector(".ar-result-media").classList.add("is-loading");
+        showCompare(false);
         if (arCompare) arCompare.hidden = true;
         if (arExpand) arExpand.hidden = true;
         startProgress();
@@ -1634,6 +1665,8 @@ Rules:
               : "AI is busy right now — press Generate with AI once more.";
             arDownload.hidden = true;
             if (arShare) arShare.hidden = true;
+          if (arWa) arWa.hidden = true;
+          if (arCopy) arCopy.hidden = true;
             arCompare.hidden = true;
             if (arReroll) arReroll.hidden = true;
             setStep(1);
@@ -1646,6 +1679,8 @@ Rules:
           arDownload.href = gen.url;
           arDownload.hidden = false;
           if (arShare) arShare.hidden = false;
+          if (arWa) arWa.hidden = false;
+          if (arCopy) arCopy.hidden = false;
           arCompare.hidden = !arPreview.src;
           arCompare.dataset.gen = gen.url;
           arCompare.dataset.orig = arPreview.src || "";
@@ -1665,7 +1700,7 @@ Rules:
           const capColour = (colourNames[0] || "").trim();
           arResultDesc.textContent = (capItem || capColour)
             ? `${[cap(capColour), capItem].filter(Boolean).join(" ")} — same design and colour as your photo.`
-            : (garment ? `Same design: ${stripColours(garment)}` : (plan.description || "3D AR asset ready."));
+            : (garment ? `Same design: ${stripColours(garment)}` : (plan.description || "Render ready."));
           const modelLabel = /design-lock/.test(gen.model || "") ? "design lock · exact pixels"
             : /flux-2/.test(gen.model || "") ? "FLUX.2 · reference"
             : /flux-1/.test(gen.model || "") ? "FLUX.1 · fast"
@@ -1677,7 +1712,7 @@ Rules:
             modelLabel || plan.style || "photoreal",
           ].filter(Boolean);
           arResultMeta.hidden = metaBits.length === 0;
-          arResultMeta.innerHTML = metaBits.map((x) => `<span>${x}</span>`).join("");
+          arResultMeta.innerHTML = metaBits.map((x) => `<span>${esc(x)}</span>`).join("");
           setStep(4);
           showStatus("ready", plan.style || "", plan);
         } catch (e) {
@@ -1685,6 +1720,8 @@ Rules:
           arResultImg.classList.add("is-empty");
           arDownload.hidden = true;
           if (arShare) arShare.hidden = true;
+          if (arWa) arWa.hidden = true;
+          if (arCopy) arCopy.hidden = true;
           arCompare.hidden = true;
           arResultDesc.textContent = "Could not finish this one — please try again.";
           showStatus("failed", "AI unavailable, try again");
@@ -1715,6 +1752,8 @@ Rules:
               arDownload.href = g.url;
               arDownload.hidden = false;
               if (arShare) arShare.hidden = false;
+          if (arWa) arWa.hidden = false;
+          if (arCopy) arCopy.hidden = false;
               arCompare.hidden = !arPreview.src;
               arCompare.dataset.gen = g.url;
               arCompare.dataset.orig = arPreview.src || "";
@@ -1737,13 +1776,104 @@ Rules:
         });
       }
 
-      // Before / after toggle — lets people compare the upload with the AI render.
+      // ---- before / after comparison slider -----------------------------
+      const compareView = document.getElementById("ar-compare-view");
+      const compareBefore = document.getElementById("ar-compare-before");
+      const compareAfter = document.getElementById("ar-compare-after");
+      let compareOn = false;
+
+      function setComparePos(clientX) {
+        const media = document.querySelector(".ar-result-media");
+        if (!compareView || !media) return;
+        const r = media.getBoundingClientRect();
+        let pct = ((clientX - r.left) / Math.max(1, r.width)) * 100;
+        pct = Math.max(2, Math.min(98, pct));
+        compareView.style.setProperty("--pos", pct + "%");
+      }
+      function showCompare(on) {
+        if (!compareView) return;
+        compareOn = !!on;
+        compareView.hidden = !on;
+        if (on) {
+          compareBefore.src = arPreview.getAttribute("src") || "";
+          compareAfter.src = arResultImg.getAttribute("src") || "";
+          compareView.style.setProperty("--pos", "50%");
+        }
+        if (arCompare) {
+          arCompare.dataset.mode = on ? "compare" : "ai";
+          arCompare.textContent = on ? "⇄ Hide comparison" : "⇄ Compare original";
+        }
+      }
+      if (compareView) {
+        let dragging = false;
+        compareView.addEventListener("pointerdown", (e) => {
+          dragging = true;
+          try { compareView.setPointerCapture(e.pointerId); } catch (err) {}
+          setComparePos(e.clientX);
+        });
+        compareView.addEventListener("pointermove", (e) => { if (dragging) setComparePos(e.clientX); });
+        ["pointerup", "pointercancel", "pointerleave"].forEach((ev) =>
+          compareView.addEventListener(ev, () => { dragging = false; })
+        );
+      }
       if (arCompare) {
         arCompare.addEventListener("click", () => {
-          const showOriginal = arCompare.dataset.mode === "ai";
-          arResultImg.src = showOriginal ? arCompare.dataset.orig : arCompare.dataset.gen;
-          arCompare.dataset.mode = showOriginal ? "orig" : "ai";
-          arCompare.textContent = showOriginal ? "⇄ See AI result" : "⇄ See original";
+          if (compareOn) return showCompare(false);
+          if (!arResultImg.getAttribute("src")) return;
+          showCompare(true);
+        });
+      }
+
+      // ---- share caption / WhatsApp -------------------------------------
+      function shareCaption() {
+        const desc = ((arResultDesc && arResultDesc.textContent) || "AI render").trim();
+        return desc + " — made with The Cloth Room · https://mhzaly-fabric.surge.sh/mhzaly-ar.html";
+      }
+      if (arWa) {
+        arWa.addEventListener("click", () => {
+          const text = encodeURIComponent(shareCaption());
+          window.open("https://wa.me/?text=" + text, "_blank", "noopener");
+        });
+      }
+      if (arCopy) {
+        arCopy.addEventListener("click", async () => {
+          const text = shareCaption();
+          try { await navigator.clipboard.writeText(text); } catch (e) {}
+          const old = arCopy.textContent;
+          arCopy.textContent = "✓ Copied";
+          setTimeout(() => { arCopy.textContent = old; }, 1600);
+        });
+      }
+
+      // ---- hand the render to the 3D room as a textile -------------------
+      if (arTo3d) {
+        arTo3d.addEventListener("click", async () => {
+          const src = arResultImg.getAttribute("src");
+          if (!src) return;
+          const old = arTo3d.textContent;
+          arTo3d.disabled = true;
+          arTo3d.textContent = "Preparing…";
+          try {
+            const blob = await (await fetch(src)).blob();
+            await new Promise((resolve, reject) => {
+              const r = indexedDB.open("mhzaly-handoff", 1);
+              r.onupgradeneeded = () => { try { r.result.createObjectStore("files"); } catch (e) {} };
+              r.onerror = () => reject(r.error);
+              r.onsuccess = () => {
+                const db = r.result;
+                try {
+                  const tx = db.transaction("files", "readwrite");
+                  tx.objectStore("files").put(blob, "fabric");
+                  tx.oncomplete = () => { db.close(); resolve(); };
+                  tx.onerror = () => { db.close(); reject(tx.error); };
+                } catch (e) { db.close(); reject(e); }
+              };
+            });
+            location.href = "index.html?fabric=1#studio";
+          } catch (e) {
+            arTo3d.disabled = false;
+            arTo3d.textContent = old;
+          }
         });
       }
 
@@ -1829,7 +1959,7 @@ Rules:
         if (arHistory) arHistory.hidden = historyItems.length < 2;
         if (arHistoryList) {
           arHistoryList.innerHTML = historyItems.map((h, i) =>
-            `<button class="ar-history-item" type="button" data-i="${i}" title="${h.model || "render"}"><img src="${h.url}" alt=""></button>`
+            `<button class="ar-history-item" type="button" data-i="${i}" title="${esc(h.model || "render")}"><img src="${esc(h.url)}" alt=""></button>`
           ).join("");
         }
       }
@@ -1861,6 +1991,7 @@ Rules:
           arResultImg.src = item.url;
           arResultImg.classList.remove("is-empty");
           arDownload.href = item.url;
+          showCompare(false);
           if (arCompare) arCompare.dataset.gen = item.url;
           if (window.__init3D) window.__init3D(item.url);
         });
@@ -2012,5 +2143,6 @@ Rules:
         });
       }
     </script>
-</body>
+    <script src="pwa.js" defer></script>
+  </body>
 </html>

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://mhzaly.pages.dev/sitemap.xml
+Sitemap: https://mhzaly-fabric.surge.sh/sitemap.xml

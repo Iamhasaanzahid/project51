@@ -16,6 +16,10 @@
 
 const UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
+// Only our own sites may call this API from a browser. Anything else gets a
+// 403 before it can burn the shared free quota.
+const ALLOWED_ORIGIN = /^(?:https:\/\/(?:[a-z0-9-]+\.)*(?:mhzaly-fabric\.surge\.sh|mhzaly\.surge\.sh|mhzaly\.pages\.dev)|http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?)$/i;
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
@@ -210,7 +214,7 @@ async function pollinations(prompt, w, h) {
   // best quality per second; `sana` is the last-resort fallback.
   for (const model of ["flux", "sana"]) {
     const seed = Math.floor(Math.random() * 1e9);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&model=${model}&referrer=mhzaly.pages.dev&seed=${seed}`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&model=${model}&referrer=mhzaly-fabric.surge.sh&seed=${seed}`;
     try {
       const r = await fetch(url, { headers: { "User-Agent": UA, "Accept": "image/*" } });
       const type = r.headers.get("content-type") || "";
@@ -278,6 +282,13 @@ export default {
   async fetch(request, env) {
     globalThis.__env = env;
     const url = new URL(request.url);
+    const origin = request.headers.get("Origin") || "";
+    if (origin && !ALLOWED_ORIGIN.test(origin)) {
+      return new Response(JSON.stringify({ error: "origin not allowed" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+      });
+    }
     if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
 
     if (url.pathname === "/health") {

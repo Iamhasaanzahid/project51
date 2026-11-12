@@ -476,3 +476,20 @@ html,body{background:linear-gradient(180deg,#f5efe5 0%,#f3ede2 48%,#efe7da 100%)
 .ar-capture-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--ar-line);border-radius:999px;background:var(--ar-panel);color:var(--ar-ink);font-size:.72rem;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:all .18s ease}
 .ar-capture-btn:hover{border-color:var(--ar-accent);color:var(--ar-accent)}
 .ar-capture-hint{color:var(--ar-muted);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase}
+
+/* before / after comparison slider */
+.ar-compare{position:absolute;inset:0;z-index:4;overflow:hidden;--pos:50%;cursor:ew-resize;touch-action:none;user-select:none}
+.ar-compare[hidden]{display:none}
+.ar-compare img{object-fit:cover;pointer-events:none;cursor:ew-resize}
+.ar-compare-before-wrap{position:absolute;inset:0;overflow:hidden;clip-path:inset(0 calc(100% - var(--pos)) 0 0)}
+.ar-compare-handle{position:absolute;top:0;bottom:0;left:var(--pos);width:2px;background:#fff;transform:translateX(-1px);box-shadow:0 0 0 1px rgba(24,20,15,.25);pointer-events:none}
+.ar-compare-handle span{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#fff;color:#211e19;font-size:.85rem;box-shadow:0 6px 18px rgba(24,20,15,.35)}
+.ar-compare-label{position:absolute;top:10px;z-index:2;padding:4px 9px;border-radius:999px;background:rgba(24,20,15,.72);color:#f7efe2;font-size:.55rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;pointer-events:none;backdrop-filter:blur(4px)}
+.ar-compare-label.left{left:10px}
+.ar-compare-label.right{right:10px}
+
+/* ---------------- Accessibility ---------------- */
+.ar a:focus-visible,.ar button:focus-visible,.ar input:focus-visible,.ar select:focus-visible,.ar textarea:focus-visible,.ar summary:focus-visible{outline:2px solid var(--ar-accent);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){
+  .ar *, .ar *::before, .ar *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}

@@ -1,6 +1,6 @@
 /* MHZALY service worker — instant loads + offline resilience.
    Only same-origin assets are cached; AI APIs are never intercepted. */
-const CACHE = "mhzaly-v8";
+const CACHE = "mhzaly-v11";
 const CORE = [
   "/",
   "/index.html",
@@ -17,6 +17,7 @@ const CORE = [
   "/mhzaly-ar.css",
   "/fonts.css",
   "/manifest.json",
+  "/pwa.js",
   "/vendor/three.module.js",
   "/vendor/addons/loaders/GLTFLoader.js",
   "/vendor/addons/environments/RoomEnvironment.js",

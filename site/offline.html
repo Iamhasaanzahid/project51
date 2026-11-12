@@ -2,14 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://mhzaly-ai.mhzaly.workers.dev https://mhzaly-ai.you.workers.dev https://generativelanguage.googleapis.com https://api.groq.com https://api.cerebras.ai https://api.deepinfra.com https://api-inference.huggingface.co https://api.mistral.ai https://api.sambanova.ai https://api.together.xyz https://openrouter.ai https://image.pollinations.ai https://text.pollinations.ai https://*.hf.space; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Offline | The Cloth Room</title>
     <meta name="robots" content="noindex" />
     <meta name="theme-color" content="#f5f0e8" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23fbf6ec'/%3E%3Crect x='9' y='9' width='46' height='46' fill='none' stroke='%23211e19' stroke-width='3'/%3E%3Ctext x='32' y='41' font-family='Georgia,serif' font-size='21' fill='%23a94e31' text-anchor='middle'%3ECR%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="fonts.css?v=1" />
-    <link rel="stylesheet" href="styles.css?v=20261102b" />
-    <link rel="stylesheet" href="pages.css?v=20261111a" />
+    <link rel="stylesheet" href="styles.css?v=20261111d" />
+    <link rel="stylesheet" href="pages.css?v=20261111b" />
   </head>
   <body>
     <div class="grain" aria-hidden="true"></div>
@@ -28,5 +30,6 @@
         </div>
       </section>
     </main>
+      <script src="pwa.js" defer></script>
   </body>
 </html>

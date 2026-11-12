@@ -2,6 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://mhzaly-ai.mhzaly.workers.dev https://mhzaly-ai.you.workers.dev https://generativelanguage.googleapis.com https://api.groq.com https://api.cerebras.ai https://api.deepinfra.com https://api-inference.huggingface.co https://api.mistral.ai https://api.sambanova.ai https://api.together.xyz https://openrouter.ai https://image.pollinations.ai https://text.pollinations.ai https://*.hf.space; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>The Cloth Room — AI Virtual Try-On Atelier</title>
     <meta name="description" content="AI virtual try-on. Upload a fabric or garment, pick a real 3D model and a real-world scene. Fitting, drape and styling run on-device." />
@@ -9,9 +11,9 @@
     <meta property="og:type" content="website" />
     <meta property="og:title" content="The Cloth Room — AI Virtual Try-On Atelier" />
     <meta property="og:description" content="Dress real 3D models in your fabric — South Asian suits, kurtas, sherwanis, lehengas and sarees — then set the look in a real-world scene." />
-    <meta property="og:image" content="https://mhzaly.pages.dev/hero-look.jpg" />
-    <meta property="og:url" content="https://mhzaly.pages.dev/" />
-    <link rel="canonical" href="https://mhzaly.pages.dev/" />
+    <meta property="og:image" content="https://mhzaly-fabric.surge.sh/hero-look.jpg" />
+    <meta property="og:url" content="https://mhzaly-fabric.surge.sh/" />
+    <link rel="canonical" href="https://mhzaly-fabric.surge.sh/" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23fbf6ec'/%3E%3Crect x='9' y='9' width='46' height='46' fill='none' stroke='%23211e19' stroke-width='3'/%3E%3Ctext x='32' y='41' font-family='Georgia,serif' font-size='21' fill='%23a94e31' text-anchor='middle'%3ECR%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="fonts.css?v=1" />
@@ -25,7 +27,7 @@
     </script>
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="img/icon-192.png" />
-    <link rel="stylesheet" href="styles.css?v=20261102b" />
+    <link rel="stylesheet" href="styles.css?v=20261111d" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -33,13 +35,13 @@
           {
             "@type": "Organization",
             "name": "MHZALY",
-            "url": "https://mhzaly.pages.dev/",
-            "logo": "https://mhzaly.pages.dev/img/icon-512.png"
+            "url": "https://mhzaly-fabric.surge.sh/",
+            "logo": "https://mhzaly-fabric.surge.sh/img/icon-512.png"
           },
           {
             "@type": "WebSite",
             "name": "The Cloth Room",
-            "url": "https://mhzaly.pages.dev/",
+            "url": "https://mhzaly-fabric.surge.sh/",
             "description": "Virtual try-on atelier with real 3D avatars and reference-guided AI renders."
           },
           {
@@ -47,7 +49,7 @@
             "name": "The Cloth Room",
             "applicationCategory": "DesignApplication",
             "operatingSystem": "Any (web browser)",
-            "url": "https://mhzaly.pages.dev/mhzaly-ar",
+            "url": "https://mhzaly-fabric.surge.sh/mhzaly-ar.html",
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
           }
         ]
@@ -102,7 +104,7 @@
         <div class="hero-visual" aria-hidden="true">
           <figure class="hero-frame">
             <img class="hero-img" src="hero-look.jpg" alt="A real 3D model wearing a cream shalwar kameez inside a designer boutique" loading="eager" />
-            <span class="hero-frame-tag">Live render · Shalwar kameez</span>
+            <span class="hero-frame-tag">Studio render · Shalwar kameez</span>
             <figcaption class="hero-frame-caption">
               <span>Fitted on a real avatar</span>
               <strong>Oat linen, boutique light</strong>
@@ -121,9 +123,9 @@
           </div>
 
           <div class="fit-badge">
-            <span>Fit score</span>
-            <strong>94</strong>
-            <em>drape · colour · occasion</em>
+            <span>Real-time</span>
+            <strong>3D</strong>
+            <em>rotate · drape · save</em>
           </div>
         </div>
       </section>
@@ -133,7 +135,7 @@
         <div class="stat"><strong>18</strong><span>garment cuts</span></div>
         <div class="stat"><strong>4</strong><span>photoreal models</span></div>
         <div class="stat"><strong>8</strong><span>real-world scenes</span></div>
-        <div class="stat"><strong>0</strong><span>files uploaded</span></div>
+        <div class="stat"><strong>0</strong><span>accounts needed</span></div>
       </section>
 
       <!-- ================= STUDIO ================= -->
@@ -416,8 +418,35 @@
           <article class="feature">
             <span class="feature-icon">⌂</span>
             <h3>Private by design</h3>
-            <p>Fitting, styling and export all run in your browser. Your photos never leave the device and there is no account to create.</p>
+            <p>In the 3D room, fitting, styling and export all run in your browser — your photos never leave the device. The AI studio sends an image only when you press Generate, and there is no account either way.</p>
           </article>
+        </div>
+      </section>
+
+      <!-- ================= FROM THE AI STUDIO ================= -->
+      <section class="render-strip" id="renders">
+        <div class="section-head">
+          <span class="eyebrow">From the AI studio</span>
+          <h2>Real renders, made in seconds.</h2>
+          <p>No photographer, no studio booking. Every frame below came from the same engine you can use right now.</p>
+        </div>
+        <div class="render-strip-grid">
+          <a href="lookbook.html">
+            <img src="img/lookbook/kurta-cream.jpg" alt="Ivory chikankari kurta render" loading="lazy" width="1000" height="1500" />
+            <span>Ivory chikankari kurta</span>
+          </a>
+          <a href="lookbook.html">
+            <img src="img/lookbook/saree-emerald.jpg" alt="Emerald silk saree render" loading="lazy" width="1000" height="1500" />
+            <span>Emerald silk saree</span>
+          </a>
+          <a href="lookbook.html">
+            <img src="img/lookbook/bag-tan.jpg" alt="Tan leather handbag render" loading="lazy" width="1000" height="1500" />
+            <span>Tan leather handbag</span>
+          </a>
+        </div>
+        <div class="render-strip-cta">
+          <a class="btn btn-ghost btn-lg" href="lookbook.html">Open the lookbook</a>
+          <a class="btn btn-ai btn-lg" href="mhzaly-ar.html">Make your own <span aria-hidden="true">→</span></a>
         </div>
       </section>
 
@@ -493,7 +522,7 @@
       <div class="footer-bottom"><span>© MHZALY</span></div>
     </footer>
 
-    <script type="module" src="app.js?v=20261102b"></script>
+    <script type="module" src="app.js?v=20261112a"></script>
     <script>
       (() => {
         const menuBtn = document.getElementById("menu-btn");
@@ -530,5 +559,6 @@
         });
       }
     </script>
-</body>
+    <script src="pwa.js" defer></script>
+  </body>
 </html>

@@ -140,6 +140,9 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   };
 
   const FIT = { slim: 0.94, regular: 1, relaxed: 1.08 };
+  // Escape anything that comes from a filename or the AI before it reaches innerHTML.
+  const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   const VIBE_PRESETS = [
     { vibe: "monsoon streetwear", scene: "street", garment: "shirt", tone: "charcoal", fit: "regular" },
@@ -542,6 +545,11 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
       if (g === "overshirt") {
         top(0.19, 0.20, 0.62, 1.13, 0.80, 7, 0.007, 0.62);
         lapels(1.34);
+      } else if (g === "shirt") {
+        // fitted shirt: hem sits on the hip so the belt never shows through,
+        // top edge reaches the shoulders so the avatar's own collar lines up.
+        top(0.168, 0.19, 0.56, 1.27, 0.80, 7, 0.006, 0.18);
+        band(0.19, 1.00, 0.80);
       } else if (g === "kurta") {
         tunic([[0.205,0.47],[0.20,0.60],[0.196,0.72],[0.19,0.84],[0.19,0.93],[0.175,1.00],[0.158,1.03],[0.143,1.06],[0.138,1.10]], 0.90, 9, 0.008);
         band(0.205, 0.47, 0.80);
@@ -566,7 +574,11 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
         band(0.175, 0.95, 0.78);
       }
     } else {
-      if (g === "kurti") {
+      if (g === "set") {
+        // fitted two-piece: covers the waist the same way the men's shirt does
+        top(0.158, 0.172, 0.52, 1.30, 0.82, 7, 0.005, 0.20);
+        band(0.172, 1.04, 0.82);
+      } else if (g === "kurti") {
         // short tunic — the avatar's own fitted top already sits at hip length
       } else if (g === "kurta") {
         tunic([[0.195,0.50],[0.192,0.62],[0.195,0.74],[0.196,0.86],[0.198,0.93],[0.198,0.96],[0.190,0.99],[0.180,1.02],[0.172,1.06],[0.160,1.10]], 0.90, 9, 0.008);
@@ -926,7 +938,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
         : "The value contrast is strong, so the silhouette reads clearly on camera.",
     ];
 
-    styleTips.innerHTML = tips.map((t) => `<li>${t}</li>`).join("");
+    styleTips.innerHTML = tips.map((t) => `<li>${esc(t)}</li>`).join("");
   }
 
   /* ---------------- Image helpers ---------------- */
@@ -1171,8 +1183,8 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     }
     lookGrid.innerHTML = looks.map((l, i) => `
       <div class="card" data-look="${i}">
-        <div class="card-media"><img src="${l.url}" alt="${l.title}" /></div>
-        <div class="card-copy"><h3>Look ${looks.length - i}</h3><p>${l.title}</p></div>
+        <div class="card-media"><img src="${esc(l.url)}" alt="${esc(l.title)}" /></div>
+        <div class="card-copy"><h3>Look ${looks.length - i}</h3><p>${esc(l.title)}</p></div>
       </div>
     `).join("");
     lookGrid.querySelectorAll("[data-look]").forEach((card) => {
@@ -1331,4 +1343,33 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     get avatar() { return avatar; },
     get overlay() { return overlayGroup; },
   };
+
+  /* ---------------- Handoff from the AI studio ----------------
+     ?fabric=1 loads the last AI render from IndexedDB and maps it
+     onto the 3D garment, so "Open in 3D Studio" really works. */
+  (async () => {
+    if (!new URLSearchParams(location.search).has("fabric")) return;
+    try {
+      const blob = await new Promise((resolve) => {
+        const r = indexedDB.open("mhzaly-handoff", 1);
+        r.onupgradeneeded = () => { try { r.result.createObjectStore("files"); } catch (e) {} };
+        r.onerror = () => resolve(null);
+        r.onsuccess = () => {
+          const db = r.result;
+          try {
+            const tx = db.transaction("files", "readonly");
+            const req = tx.objectStore("files").get("fabric");
+            req.onsuccess = () => { db.close(); resolve(req.result || null); };
+            req.onerror = () => { db.close(); resolve(null); };
+          } catch (e) { db.close(); resolve(null); }
+        };
+      });
+      if (!blob) return;
+      const file = new File([blob], "ai-render.jpg", { type: blob.type || "image/jpeg" });
+      await loadFabricFile(file);
+      setStatus("Fabric loaded from the AI studio.");
+      const studio = document.getElementById("studio");
+      if (studio) studio.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) {}
+  })();
 })();

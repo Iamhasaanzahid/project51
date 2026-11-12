@@ -359,3 +359,20 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
   .footer-grid{grid-template-columns:1fr;gap:22px}
   .footer-bottom{font-size:.56rem}
 }
+
+/* ---------------- From the AI studio ---------------- */
+.render-strip{max-width:var(--max);margin:0 auto;padding:clamp(40px,6vw,72px) clamp(16px,4vw,40px);border-top:1px solid var(--line)}
+.render-strip-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,2vw,20px);margin-top:26px}
+.render-strip-grid a{display:block;border:1px solid var(--line);background:var(--paper-white);box-shadow:var(--shadow);text-decoration:none;overflow:hidden;transition:transform .25s ease,box-shadow .25s ease}
+.render-strip-grid a:hover{transform:translateY(-3px);box-shadow:var(--shadow-deep)}
+.render-strip-grid img{display:block;width:100%;height:auto;aspect-ratio:2/3;object-fit:cover}
+.render-strip-grid span{display:block;padding:12px 14px;color:var(--ink);font-size:.78rem;font-weight:600}
+.render-strip-cta{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:24px}
+@media (max-width:720px){.render-strip-grid{grid-template-columns:1fr 1fr}.render-strip-grid a:last-child{display:none}}
+
+/* ---------------- Accessibility ---------------- */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--rust);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
