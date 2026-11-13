@@ -393,3 +393,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 .stage-overlay{ }
 .stage-overlay .btn{margin-top:14px}
 .stage-overlay p{margin:0 0 4px}
+
+/* ---- security: no inline styles, so style-src can stay strict ---- */
+.mt-26{margin-top:26px}
+.look-svg-tint{color:var(--muted)}

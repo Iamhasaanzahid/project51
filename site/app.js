@@ -1524,7 +1524,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     garmentGrid.innerHTML = list.map((g) => `
       <div class="card ${state.garment === g.id ? "is-selected" : ""}" data-garment="${g.id}">
         <div class="card-media garment-visual">
-          <svg width="86" height="108" viewBox="0 0 420 480" style="color:#786d5d">
+          <svg class="look-svg-tint" width="86" height="108" viewBox="0 0 420 480">
             <path d="${GARMENT_PATHS[g.id] || GARMENT_PATHS.shirt}" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" />
           </svg>
         </div>

@@ -7,5 +7,14 @@
   // Free Workers AI (FLUX / SDXL) — no API key needed, runs inside Cloudflare.
   "ai": {
     "binding": "AI"
-  }
+  },
+  // Per-IP rate limiting for the public API. Without it, anyone who can
+  // spoof an Origin header could spend the shared free quota.
+  "ratelimits": [
+    {
+      "name": "AI_LIMIT",
+      "namespace_id": "1001",
+      "simple": { "limit": 30, "period": 60 }
+    }
+  ]
 }

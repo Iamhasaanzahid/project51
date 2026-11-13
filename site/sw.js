@@ -1,6 +1,18 @@
 /* MHZALY service worker — instant loads + offline resilience.
    Only same-origin assets are cached; AI APIs are never intercepted. */
-const CACHE = "mhzaly-v18";
+const CACHE = "mhzaly-v19";
+// three.js is served from jsDelivr: the same 1.27 MB file is cut short by the
+// static host on slow links, and a truncated ES module cannot be recovered.
+// A pinned version is immutable, so it is safe to cache for as long as we like.
+const THREE_CDN = "https://cdn.jsdelivr.net/npm/three@0.160.0/";
+const VENDOR = [
+  THREE_CDN + "build/three.module.js",
+  THREE_CDN + "examples/jsm/loaders/GLTFLoader.js",
+  THREE_CDN + "examples/jsm/environments/RoomEnvironment.js",
+  THREE_CDN + "examples/jsm/exporters/GLTFExporter.js",
+  THREE_CDN + "examples/jsm/utils/BufferGeometryUtils.js",
+  THREE_CDN + "examples/jsm/utils/TextureUtils.js",
+];
 const CORE = [
   "/",
   "/index.html",
@@ -18,12 +30,6 @@ const CORE = [
   "/fonts.css",
   "/manifest.json",
   "/pwa.js",
-  "/vendor/three.module.js",
-  "/vendor/addons/loaders/GLTFLoader.js",
-  "/vendor/addons/environments/RoomEnvironment.js",
-  "/vendor/addons/exporters/GLTFExporter.js",
-  "/vendor/addons/utils/BufferGeometryUtils.js",
-  "/vendor/addons/utils/TextureUtils.js",
   "/hero-look.jpg",
   "/img/icon-192.png",
   "/img/icon-512.png",
@@ -40,7 +46,7 @@ self.addEventListener("install", (event) => {
     caches
       .open(CACHE)
       // Add individually so one 404 cannot abort the whole precache.
-      .then((cache) => Promise.allSettled(CORE.map((url) => cache.add(url))))
+      .then((cache) => Promise.allSettled(CORE.concat(VENDOR).map((url) => cache.add(url))))
       .then(() => self.skipWaiting())
   );
 });
@@ -59,6 +65,25 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
+
+  // three.js from the pinned CDN: cache-first so a repeat visit never waits
+  // and the 3D studio still opens with no network at all.
+  if (url.origin === "https://cdn.jsdelivr.net" && url.pathname.startsWith("/npm/three@0.160.0/")) {
+    event.respondWith(
+      caches.match(req).then((hit) =>
+        hit ||
+        fetch(req).then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => null);
+          }
+          return res;
+        })
+      )
+    );
+    return;
+  }
+
   if (url.origin !== self.location.origin) return; // never touch AI endpoints
   // Never intercept blob:/data: — the 3D loader fetches GLB textures from
   // blob: URLs and a service worker cannot fetch those; it would break the model.

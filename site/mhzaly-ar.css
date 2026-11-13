@@ -493,3 +493,6 @@ html,body{background:linear-gradient(180deg,#f5efe5 0%,#f3ede2 48%,#efe7da 100%)
 @media (prefers-reduced-motion: reduce){
   .ar *, .ar *::before, .ar *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
 }
+
+.ar-mt-16{margin-top:16px}
+.ar-center-18{text-align:center;margin-top:18px}

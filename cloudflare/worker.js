@@ -20,12 +20,63 @@ const UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Geck
 // 403 before it can burn the shared free quota.
 const ALLOWED_ORIGIN = /^(?:https:\/\/(?:[a-z0-9-]+\.)*(?:mhzaly-fabric\.surge\.sh|mhzaly\.surge\.sh|mhzaly\.pages\.dev)|http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?)$/i;
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type,Authorization",
-  "Access-Control-Expose-Headers": "X-Model,X-AI-Log,Retry-After",
-};
+// CORS is built per request and never uses "*": the allowed origin is echoed
+// back exactly, so no other site can read a response even if it can send one.
+function corsHeaders(origin) {
+  const h = {
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Max-Age": "600",
+    "Vary": "Origin",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+    "X-Robots-Tag": "noindex, nofollow",
+  };
+  if (origin && ALLOWED_ORIGIN.test(origin)) h["Access-Control-Allow-Origin"] = origin;
+  return h;
+}
+
+// Hard limits so a single request can never exhaust memory or quota.
+const MAX_BODY_BYTES = 8 * 1024 * 1024;      // 8 MB request body
+const MAX_IMAGE_B64 = 5_600_000;              // ~4 MB binary image, base64
+const MAX_PROMPT = 1500;
+
+// Decode base64 safely: reject anything that is not plain base64 and never
+// throw on a hostile payload.
+function decodeB64(input) {
+  const clean = String(input || "").replace(/\s+/g, "");
+  if (!clean || clean.length > MAX_IMAGE_B64) return null;
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(clean)) return null;
+  try { return Uint8Array.from(atob(clean), (c) => c.charCodeAt(0)); }
+  catch { return null; }
+}
+
+// Per-IP rate limiting. A Cloudflare rate-limit binding is used when it is
+// configured; an in-memory bucket is the fallback so the endpoint is never
+// unprotected.
+const buckets = new Map();
+function localBucket(ip, max, windowMs) {
+  const now = Date.now();
+  let b = buckets.get(ip);
+  if (!b || now > b.reset) { b = { count: 0, reset: now + windowMs }; buckets.set(ip, b); }
+  b.count++;
+  if (buckets.size > 4096) {
+    for (const [k, v] of buckets) if (now > v.reset) buckets.delete(k);
+  }
+  if (b.count > max) return { ok: false, retry: Math.max(1, Math.ceil((b.reset - now) / 1000)) };
+  return { ok: true, retry: 0 };
+}
+
+async function rateLimit(env, request, max, windowSec) {
+  const ip = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "anon";
+  if (env && env.AI_LIMIT && typeof env.AI_LIMIT.limit === "function") {
+    try {
+      const res = await env.AI_LIMIT.limit({ key: ip });
+      if (res && res.success === false) return { ok: false, retry: windowSec };
+    } catch {}
+  }
+  return localBucket(ip, max, windowSec * 1000);
+}
 
 const SYSTEM = `You are an AR asset planner. Reply with JSON only:
 {"assetType":"3d-model","category":"kurta|shirt|suit|dress|saree|shalwar kameez|curtains|sofa|bag|shoes|3d asset",
@@ -42,10 +93,10 @@ const PROVIDERS = {
   huggingface: { kind: "openai", base: "https://api-inference.huggingface.co/v1", model: "meta-llama/Llama-3.1-8B-Instruct" },
 };
 
-function json(body, status = 200) {
+function json(body, status = 200, origin = "") {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "no-store" },
+    headers: { ...corsHeaders(origin), "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
   });
 }
 
@@ -67,6 +118,7 @@ async function callOne(provider, key, prompt) {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(25000),
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM }] },
         contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -80,6 +132,7 @@ async function callOne(provider, key, prompt) {
   const res = await fetch(`${cfg.base}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    signal: AbortSignal.timeout(25000),
     body: JSON.stringify({
       model: cfg.model,
       messages: [{ role: "system", content: SYSTEM }, { role: "user", content: prompt }],
@@ -102,6 +155,7 @@ async function freePlan(prompt) {
   const res = await fetch("https://text.pollinations.ai/openai", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(25000),
     body: JSON.stringify({
       model: "openai",
       messages: [{ role: "system", content: SYSTEM }, { role: "user", content: prompt }],
@@ -129,31 +183,6 @@ const SPACES = [
   { id: "flux-dev", base: "https://black-forest-labs-flux-1-dev.hf.space", ep: "/infer", args: (p, s) => [p, s, true, 1024, 1536, 3.5, 25] },
   { id: "sd35", base: "https://stabilityai-stable-diffusion-3-5-large.hf.space", ep: "/infer", args: (p, s) => [p, "blurry, low quality, text, watermark", s, true, 1024, 1536, 4.5, 24] },
 ];
-
-async function hfImage(space, prompt) {
-  const seed = Math.floor(Math.random() * 1000000);
-  const call = `${space.base}/gradio_api/call${space.ep}`;
-  const res = await fetch(call, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "User-Agent": UA, "Accept": "application/json" },
-    body: JSON.stringify({ data: space.args(prompt, seed) }),
-  });
-  if (!res.ok) throw new Error(space.id + " http " + res.status + " " + (await res.text()).slice(0, 100));
-  const { event_id } = await res.json();
-  if (!event_id) throw new Error("no event");
-  const sse = await fetch(`${call}/${event_id}`, { headers: { "User-Agent": UA, "Accept": "text/event-stream" } });
-  const text = await sse.text();
-  let payload = null;
-  for (const line of text.split("\n")) {
-    if (!line.startsWith("data:")) continue;
-    try { const arr = JSON.parse(line.slice(5)); if (Array.isArray(arr)) payload = arr; } catch {}
-  }
-  const file = payload && payload.find((x) => x && x.url);
-  if (!file) throw new Error("no file");
-  const img = await fetch(file.url, { headers: { "User-Agent": UA } });
-  if (!img.ok) throw new Error("file " + img.status);
-  return new Response(img.body, { headers: { ...CORS, "Content-Type": "image/webp", "Cache-Control": "public, max-age=86400" } });
-}
 
 // ---- FLUX.2 [dev] multipart helper ------------------------------------------
 // The AI binding only accepts multipart via a raw stream + explicit boundary.
@@ -267,15 +296,11 @@ async function generateImageCore(env, { prompt, refBytes, w, h, steps, quality }
     else retryAfter = p.retryAfter || 45;
   }
 
-  if (!bytes) return { res: null, log, retryAfter };
+  if (!bytes) return { bytes: null, model: "", log, retryAfter };
 
-  return {
-    res: new Response(bytes, {
-      headers: { ...CORS, "Content-Type": "image/jpeg", "X-Model": model, "X-AI-Log": log.join("|").slice(0, 300), "Cache-Control": "public, max-age=86400" },
-    }),
-    log,
-    retryAfter: 0,
-  };
+  // The response is built by the caller so the CORS and security headers are
+  // always the ones for this request. No provider internals are exposed.
+  return { bytes, model, log, retryAfter: 0 };
 }
 
 export default {
@@ -283,37 +308,80 @@ export default {
     globalThis.__env = env;
     const url = new URL(request.url);
     const origin = request.headers.get("Origin") || "";
-    if (origin && !ALLOWED_ORIGIN.test(origin)) {
-      return new Response(JSON.stringify({ error: "origin not allowed" }), {
+    const cors = corsHeaders(origin);
+    const denied = () =>
+      new Response(JSON.stringify({ error: "not allowed" }), {
         status: 403,
-        headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+        headers: { ...cors, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
       });
+
+    // Only our own pages may use the API. A request with no Origin is a
+    // non-browser client: it passes the origin check but is rate limited
+    // exactly like a browser, so it can never burn the shared quota.
+    if (origin && !ALLOWED_ORIGIN.test(origin)) return denied();
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: cors });
     }
-    if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
 
     if (url.pathname === "/health") {
-      return json({ ok: true, keys: pool(env).length, providers: Object.keys(PROVIDERS) });
+      // Deliberately says nothing about keys, providers or quota.
+      return json({ ok: true }, 200, origin);
     }
 
+    const isApi = url.pathname.startsWith("/api/");
+
+    // Every API call must come from a browser page on our own domain. This
+    // blocks third-party sites from triggering renders through <img>, <form>
+    // or a background request, because those carry no Origin header.
+    if (isApi && !origin) return denied();
+
+    // Rate limits, per IP, per route.
+    if (isApi) {
+      const ip = request.headers.get("CF-Connecting-IP") || "anon";
+      const cap = url.pathname === "/api/image" ? 15 : 30;
+      const limit = await rateLimit(env, request, cap, 60);
+      if (!limit.ok) {
+        return new Response(
+          JSON.stringify({ error: "too many requests", retryAfter: limit.retry }),
+          { status: 429, headers: { ...cors, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "Retry-After": String(limit.retry) } }
+        );
+      }
+      void ip;
+    }
+
+    // Body limits: nothing big is ever read into memory.
+    const declared = Number(request.headers.get("content-length") || 0);
+    if (declared > MAX_BODY_BYTES) return json({ error: "payload too large" }, 413, origin);
+    const ctype = (request.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+    if (request.method === "POST" && ctype && ctype !== "application/json") {
+      return json({ error: "content type must be application/json" }, 415, origin);
+    }
+
+    const readJson = async () => {
+      try { return await request.json(); } catch { return null; }
+    };
+
     if (url.pathname === "/api/generate" && request.method === "POST") {
-      let body = {};
-      try { body = await request.json(); } catch {}
-      const prompt = String(body.prompt || "").slice(0, 1200);
-      if (!prompt) return json({ status: "failed", error: "prompt required" }, 400);
+      const body = await readJson();
+      if (!body) return json({ error: "invalid json" }, 400, origin);
+      const prompt = String(body.prompt || "").slice(0, MAX_PROMPT);
+      if (!prompt) return json({ status: "failed", error: "prompt required" }, 400, origin);
       const plan = await planFor(prompt);
-      return json({ status: "ready", plan });
+      return json({ status: "ready", plan }, 200, origin);
     }
 
     // Vision: read the uploaded garment so the generated model wears the SAME design.
     if (url.pathname === "/api/vision" && request.method === "POST") {
-      let body = {};
-      try { body = await request.json(); } catch {}
-      const b64 = String(body.image || "").replace(/^data:image\/[a-z]+;base64,/, "");
-      if (!b64) return json({ error: "image required" }, 400);
-      let bin;
-      try { bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)); } catch { return json({ error: "bad image" }, 400); }
-      if (bin.length > 4000000) return json({ error: "image too large" }, 413);
-      if (!env || !env.AI) return json({ ok: false, error: "vision unavailable" }, 502);
+      const body = await readJson();
+      if (!body) return json({ error: "invalid json" }, 400, origin);
+      const b64 = String(body.image || "").replace(/^data:image\/[a-z+]+;base64,/i, "");
+      if (!b64) return json({ error: "image required" }, 400, origin);
+      if (b64.length > MAX_IMAGE_B64) return json({ error: "image too large" }, 413, origin);
+      const bin = decodeB64(b64);
+      if (!bin) return json({ error: "bad image" }, 400, origin);
+      if (bin.length > 4_000_000) return json({ error: "image too large" }, 413, origin);
+      if (!env || !env.AI) return json({ ok: false, error: "vision unavailable" }, 502, origin);
       const ask = "You are a fashion buyer. Describe ONLY the garment in this photo with precision: type (kurta, kurti, saree, shirt, suit, dress, jacket...), exact colours, fabric, print or pattern, embroidery, borders, sleeves and neckline. One dense sentence. No preamble, no mention of the person.";
       const forced = String(body.model || "");
       const dataUrl = `data:image/jpeg;base64,${b64}`;
@@ -332,7 +400,7 @@ export default {
             max_tokens: 220,
           });
           const text = String(out.response || out.description || "").trim();
-          if (text.length > 8) return json({ ok: true, model: "llama-3.2-11b-vision", description: text });
+          if (text.length > 8) return json({ ok: true, model: "llama-3.2-11b-vision", description: text }, 200, origin);
         } catch {}
       }
 
@@ -340,36 +408,53 @@ export default {
         try {
           const out = await env.AI.run(m, { image: [...bin], prompt: ask, max_tokens: 220 });
           const text = String(out.description || out.response || "").trim();
-          if (text.length > 8) return json({ ok: true, model: m, description: text });
+          if (text.length > 8) return json({ ok: true, model: m, description: text }, 200, origin);
         } catch {}
       }
-      return json({ ok: false, error: "vision failed" }, 502);
+      return json({ ok: false, error: "vision failed" }, 502, origin);
     }
 
-    // FLUX.2 [dev] — best quality + optional reference image (true "same design" try-on).
+    // FLUX.2 [dev] - best quality + optional reference image (true "same design" try-on).
     if (url.pathname === "/api/image" && request.method === "POST") {
-      let body = {};
-      try { body = await request.json(); } catch {}
-      const prompt = String(body.prompt || "").slice(0, 1500);
-      if (!prompt) return json({ error: "prompt required" }, 400);
-      const ref = String(body.ref || "");
+      const body = await readJson();
+      if (!body) return json({ error: "invalid json" }, 400, origin);
+      const prompt = String(body.prompt || "").slice(0, MAX_PROMPT);
+      if (!prompt) return json({ error: "prompt required" }, 400, origin);
+      const refRaw = String(body.ref || "");
+      if (refRaw.length > MAX_IMAGE_B64) return json({ error: "reference image too large" }, 413, origin);
+      const refBytes = refRaw ? decodeB64(refRaw.replace(/^data:[^;]+;base64,/i, "")) : null;
+      if (refRaw && !refBytes) return json({ error: "bad reference image" }, 400, origin);
       const w = Math.min(1920, Math.max(256, parseInt(body.width || "1024", 10) || 1024));
       const h = Math.min(1920, Math.max(256, parseInt(body.height || "1536", 10) || 1536));
       const steps = Math.min(30, Math.max(4, parseInt(body.steps || "18", 10) || 18));
-      const refBytes = ref ? Uint8Array.from(atob(ref.replace(/^data:[^;]+;base64,/, "")), (c) => c.charCodeAt(0)) : null;
       const out = await generateImageCore(env, { prompt, refBytes, w, h, steps, quality: body.quality });
-      if (out.res) return out.res;
-      return json({ error: "image unavailable", retryAfter: out.retryAfter, detail: out.log }, out.retryAfter ? 429 : 502);
+      if (out.bytes) {
+        const res = new Response(out.bytes, {
+          headers: {
+            ...cors,
+            "Content-Type": "image/jpeg",
+            "Cache-Control": "public, max-age=86400",
+            "X-Content-Type-Options": "nosniff",
+          },
+        });
+        return res;
+      }
+      // No provider internals are returned to the caller.
+      return json({ error: "image unavailable", retryAfter: out.retryAfter }, out.retryAfter ? 429 : 502, origin);
     }
 
-    if (url.pathname === "/api/image") {
-      const prompt = String(url.searchParams.get("prompt") || "").slice(0, 1200);
-      if (!prompt) return json({ error: "prompt required" }, 400);
+    if (url.pathname === "/api/image" && request.method === "GET") {
+      const prompt = String(url.searchParams.get("prompt") || "").slice(0, MAX_PROMPT);
+      if (!prompt) return json({ error: "prompt required" }, 400, origin);
       const out = await generateImageCore(env, { prompt, refBytes: null, w: 1024, h: 1536, steps: 6 });
-      if (out.res) return out.res;
-      return json({ error: "image unavailable", retryAfter: out.retryAfter, detail: out.log }, out.retryAfter ? 429 : 502);
+      if (out.bytes) {
+        return new Response(out.bytes, {
+          headers: { ...cors, "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=86400", "X-Content-Type-Options": "nosniff" },
+        });
+      }
+      return json({ error: "image unavailable", retryAfter: out.retryAfter }, out.retryAfter ? 429 : 502, origin);
     }
 
-    return json({ error: "not found", routes: ["/health", "/api/generate", "/api/image"] }, 404);
+    return json({ error: "not found" }, 404, origin);
   },
 };

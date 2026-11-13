@@ -3,7 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://mhzaly-ai.mhzaly.workers.dev https://mhzaly-ai.you.workers.dev https://generativelanguage.googleapis.com https://api.groq.com https://api.cerebras.ai https://api.deepinfra.com https://api-inference.huggingface.co https://api.mistral.ai https://api.sambanova.ai https://api.together.xyz https://openrouter.ai https://image.pollinations.ai https://text.pollinations.ai https://*.hf.space; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'sha256-CA5crITKGahve43QGE67FGRCe/GEYEcy906iyMNlX3o=' 'sha256-kBwyqXUsJYyXFwu6xmpe/VHoAO33qbXtg+iFd3O56v4=' 'sha256-qJ7SbavKOIfBey7i+OyhE93TVZgymzPV13kIFQoK9z8=' 'sha256-IC2D1UJ7d+ba1pnsAAxMnMYVON/9YAs7s5y9Plcfl6w=' 'sha256-P3upB5nSJgaMZ66JypQ23kO70VzvIaT2MSedNexWFNk='; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://mhzaly-ai.mhzaly.workers.dev https://mhzaly-ai.you.workers.dev https://generativelanguage.googleapis.com https://api.groq.com https://api.cerebras.ai https://api.deepinfra.com https://api-inference.huggingface.co https://api.mistral.ai https://api.sambanova.ai https://api.together.xyz https://openrouter.ai https://image.pollinations.ai https://text.pollinations.ai https://*.hf.space; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
+    <script>if(window.top!==window.self){try{window.top.location=window.self.location;}catch(e){}}</script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AI studio — product shots &amp; try-on | MHZALY</title>
     <meta name="description" content="Upload a garment, bag, shoe or furniture photo. The MHZALY AI studio keeps the design and colour, then rebuilds the item in a new scene. Free, no account." />
@@ -22,8 +23,8 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "./vendor/three.module.js",
-          "three/addons/": "./vendor/addons/"
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
         }
       }
     </script>
@@ -117,7 +118,7 @@
                 <div class="ar-card-body"><h3>Terracotta linen sofa</h3><p>Same sofa, new room, real morning light.</p></div>
               </article>
             </div>
-            <p class="ar-muted" style="margin-top:16px">See the full set in the <a href="lookbook.html">lookbook</a>.</p>
+            <p class="ar-muted ar-mt-16">See the full set in the <a href="lookbook.html">lookbook</a>.</p>
           </div>
         </section>
 
@@ -387,7 +388,7 @@
                 <a class="ar-btn" href="#create">Open the studio</a>
               </article>
             </div>
-            <p class="ar-muted" style="text-align:center;margin-top:18px">No upgrade button, because there is nothing to upgrade to. If that ever changes, this page will say so.</p>
+            <p class="ar-muted ar-center-18">No upgrade button, because there is nothing to upgrade to. If that ever changes, this page will say so.</p>
           </div>
         </section>
 
@@ -494,6 +495,22 @@ Rules:
       const arAiStatus = document.getElementById("ar-ai-status");
       const AI_KEY = "mhzaly_ai_keys";
       const AI_COOL = "mhzaly_ai_cool";
+      // A pasted API key lives in sessionStorage only: it dies with the tab
+      // and is never left behind on a shared machine. Any copy that an
+      // older version left in localStorage is removed on load.
+      const keyStore = {
+        get() {
+          try { return sessionStorage.getItem(AI_KEY) || ""; } catch (e) { return ""; }
+        },
+        set(v) {
+          try { sessionStorage.setItem(AI_KEY, v); } catch (e) {}
+          try { localStorage.removeItem(AI_KEY); } catch (e) {}
+        },
+        clear() {
+          try { sessionStorage.removeItem(AI_KEY); } catch (e) {}
+          try { localStorage.removeItem(AI_KEY); } catch (e) {}
+        },
+      };
 
       // Supported free-tier providers (OpenAI-compatible unless kind=gemini).
       const PROVIDERS = {
@@ -508,8 +525,17 @@ Rules:
         sambanova:   { kind: "openai", base: "https://api.sambanova.ai/v1", model: "Meta-Llama-3.1-8B-Instruct" },
       };
 
+      // Only these schemes are ever put into an <img src> or an <a href>.
+      // A hostile backend cannot smuggle a javascript: URL into the page.
+      function safeUrl(u) {
+        const raw = String(u || "").trim();
+        if (/^(blob:|data:image\/(png|jpe?g|webp|gif);)/i.test(raw)) return raw;
+        if (/^https:\/\//i.test(raw)) return raw;
+        return "";
+      }
+
       function parseKeys() {
-        const raw = localStorage.getItem(AI_KEY) || "";
+        const raw = keyStore.get();
         const out = [];
         raw.split(/\r?\n/).forEach((line) => {
           const m = line.match(/^\s*([a-zA-Z]+)\s*[:=]\s*(\S+)\s*$/);
@@ -537,11 +563,11 @@ Rules:
         arAiStatus.textContent = `${keys.length} keys · ${Object.keys(groups).length} providers · ${active} ready`;
       }
       (function loadCfg() {
-        const saved = localStorage.getItem(AI_KEY);
+        const saved = keyStore.get();
         if (saved) arKeys.value = saved;
         const qk = document.getElementById("ar-quick-key");
         if (qk) {
-          const g = (localStorage.getItem(AI_KEY) || "").split("\n")
+          const g = (keyStore.get() || "").split("\n")
             .map((l) => l.trim()).find((l) => /^gemini\s*:/i.test(l));
           if (g) qk.value = g.replace(/^gemini\s*:\s*/i, "");
         }
@@ -585,7 +611,7 @@ Rules:
             .filter((l) => !/^gemini\s*:/i.test(l));
           kept.unshift("gemini: " + k);
           arKeys.value = kept.join("\n");
-          localStorage.setItem(AI_KEY, arKeys.value);
+          keyStore.set(arKeys.value);
           localStorage.removeItem(AI_COOL);
           refreshPoolStatus();
           arTryonNote.textContent = "Key saved. Upload a photo and press Generate to run the try-on.";
@@ -596,7 +622,7 @@ Rules:
         });
       }
       arSaveAi.addEventListener("click", () => {
-        localStorage.setItem(AI_KEY, arKeys.value.trim());
+        keyStore.set(arKeys.value.trim());
         if (arBackend) localStorage.setItem("mhzaly_backend", arBackend.value.trim());
         localStorage.removeItem(AI_COOL);
         refreshPoolStatus();
@@ -1674,9 +1700,9 @@ Rules:
             return;
           }
 
-          arResultImg.src = gen.url;
+          arResultImg.src = safeUrl(gen.url);
           arResultImg.classList.remove("is-empty");
-          arDownload.href = gen.url;
+          arDownload.href = safeUrl(gen.url);
           arDownload.hidden = false;
           if (arShare) arShare.hidden = false;
           if (arWa) arWa.hidden = false;
@@ -1747,9 +1773,9 @@ Rules:
           try {
             const g = await generateImage(lastGen.prompt, lastGen.ref);
             if (g) {
-              arResultImg.src = g.url;
+              arResultImg.src = safeUrl(g.url);
               arResultImg.classList.remove("is-empty");
-              arDownload.href = g.url;
+              arDownload.href = safeUrl(g.url);
               arDownload.hidden = false;
               if (arShare) arShare.hidden = false;
           if (arWa) arWa.hidden = false;
@@ -1988,9 +2014,9 @@ Rules:
           if (!b) return;
           const item = historyItems[parseInt(b.dataset.i, 10)];
           if (!item) return;
-          arResultImg.src = item.url;
+          arResultImg.src = safeUrl(item.url);
           arResultImg.classList.remove("is-empty");
-          arDownload.href = item.url;
+          arDownload.href = safeUrl(item.url);
           showCompare(false);
           if (arCompare) arCompare.dataset.gen = item.url;
           if (window.__init3D) window.__init3D(item.url);
@@ -2016,8 +2042,9 @@ Rules:
 
       // ---- full-size lightbox -------------------------------------------
       function openLightbox(src) {
-        if (!src || !arLightbox || !arLightboxImg) return;
-        arLightboxImg.src = src;
+        const safe = safeUrl(src);
+        if (!safe || !arLightbox || !arLightboxImg) return;
+        arLightboxImg.src = safe;
         arLightbox.hidden = false;
       }
       if (arExpand) arExpand.addEventListener("click", () => openLightbox(arResultImg.src));
