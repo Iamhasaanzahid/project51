@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # ---------------------------------------------------------------- cors
-    ALLOWED_ORIGINS: str = "https://aifabric.retail,https://app.aifabric.retail"
+    ALLOWED_ORIGINS: str = "https://aifabric.retail,https://app.aifabric.retail,https://mhzaly.pages.dev"
 
     # ----------------------------------------------------------- aws / s3
     AWS_REGION: str = "us-east-1"
