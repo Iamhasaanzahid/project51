@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
 (() => {
   /* ============================================================
@@ -379,7 +380,14 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
   }
 
   const loader = new GLTFLoader();
-  const AVATAR_URL = { him: "models/thanh.glb", her: "models/tham.glb" };
+  // The avatars are meshopt-compressed: 5 MB became 1.1 MB, which is the
+  // difference between a workable and an impossible bill at scale.
+  loader.setMeshoptDecoder(MeshoptDecoder);
+  // The version tag is part of the cache key: the service worker stores the
+  // model as 128 KB byte ranges, and a new file at the same URL would be
+  // stitched together from stale pieces.
+  const MODEL_V = "?v=mesh1";
+  const AVATAR_URL = { him: "models/thanh.glb" + MODEL_V, her: "models/tham.glb" + MODEL_V };
   const avatarCache = {};
   let avatar = null;
   let overlayGroup = null;
@@ -409,11 +417,11 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
         const pos = o.geometry.attributes.position;
         for (let i = 0; i < pos.count; i++) {
           const y = pos.getY(i);
-          if (y >= 0.93 && y <= 1.10) {
+          if (y >= 0.95 && y <= 1.08) {
             const x = pos.getX(i), z = pos.getZ(i);
             const r = Math.hypot(x, z);
-            if (r > 0.112) {
-              const k = 0.112 / r;
+            if (r > 0.130) {
+              const k = 0.130 / r;
               pos.setX(i, x * k);
               pos.setZ(i, z * k);
             }
@@ -750,7 +758,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
       } else if (g === "shirt") {
         // fitted shirt built on the measured body: hem on the hip so the belt
         // never shows, shoulders and waist follow the real silhouette.
-        if (!shell(0.93, 1.50, 0.016 * fitScale(), 8, 0.004)) {
+        if (!shell(0.93, 1.50, 0.013 * fitScale(), 8, 0.005)) {
           top(0.152, 0.152, 0.56, 1.27, 0.91, 7, 0.005, 0);
         }
       } else if (g === "kurta") {
@@ -779,7 +787,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     } else {
       if (g === "set") {
         // fitted two-piece, built on the measured body like the men's shirt
-        if (!shell(0.94, 1.48, 0.015 * fitScale(), 8, 0.004)) {
+        if (!shell(0.94, 1.48, 0.012 * fitScale(), 8, 0.005)) {
           top(0.146, 0.146, 0.52, 1.30, 0.90, 7, 0.005, 0);
         }
       } else if (g === "kurti") {

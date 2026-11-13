@@ -41,6 +41,29 @@ const MAX_BODY_BYTES = 8 * 1024 * 1024;      // 8 MB request body
 const MAX_IMAGE_B64 = 5_600_000;              // ~4 MB binary image, base64
 const MAX_PROMPT = 1500;
 
+// The free providers allow only a few dozen good renders a day. Once that is
+// gone, say so in one request instead of making every visitor wait through a
+// six-provider chain. The counter is per isolate, so it is a coarse guard on
+// top of the providers' own limits, not a hard quota.
+const DAILY_CAP = 400;
+let dayKey = "";
+let dayUsed = 0;
+function budgetLeft() {
+  const d = new Date().toISOString().slice(0, 10);
+  if (d !== dayKey) { dayKey = d; dayUsed = 0; }
+  return dayUsed < DAILY_CAP;
+}
+function spendBudget() {
+  const d = new Date().toISOString().slice(0, 10);
+  if (d !== dayKey) { dayKey = d; dayUsed = 0; }
+  dayUsed++;
+}
+function untilUtcMidnight() {
+  const now = Date.now();
+  const next = Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() + 1);
+  return Math.max(60, Math.round((next - now) / 1000));
+}
+
 // Decode base64 safely: reject anything that is not plain base64 and never
 // throw on a hostile payload.
 function decodeB64(input) {
@@ -427,8 +450,27 @@ export default {
       const w = Math.min(1920, Math.max(256, parseInt(body.width || "1024", 10) || 1024));
       const h = Math.min(1920, Math.max(256, parseInt(body.height || "1536", 10) || 1536));
       const steps = Math.min(30, Math.max(4, parseInt(body.steps || "18", 10) || 18));
+
+      // Prompt-only renders are cached at the edge: a popular look is generated
+      // once and then served to everyone, so traffic spikes cost no quota.
+      // Renders that include a customer photo are never cached.
+      let cacheKey = null;
+      if (!refBytes) {
+        const sig = await crypto.subtle.digest("SHA-256",
+          new TextEncoder().encode([prompt, w, h, steps, body.quality || "", "v2"].join("|")));
+        const hex = [...new Uint8Array(sig)].map((x) => x.toString(16).padStart(2, "0")).join("");
+        cacheKey = new Request("https://edge-cache.internal/render/" + hex);
+        const hit = await caches.default.match(cacheKey);
+        if (hit) return hit;
+      }
+
+      if (!budgetLeft()) {
+        return json({ error: "at capacity", retryAfter: untilUtcMidnight() }, 429, origin);
+      }
+
       const out = await generateImageCore(env, { prompt, refBytes, w, h, steps, quality: body.quality });
       if (out.bytes) {
+        spendBudget();
         const res = new Response(out.bytes, {
           headers: {
             ...cors,
@@ -437,6 +479,9 @@ export default {
             "X-Content-Type-Options": "nosniff",
           },
         });
+        if (cacheKey) {
+          await caches.default.put(cacheKey, res.clone()).catch(() => null);
+        }
         return res;
       }
       // No provider internals are returned to the caller.

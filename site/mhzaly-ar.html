@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'sha256-CA5crITKGahve43QGE67FGRCe/GEYEcy906iyMNlX3o=' 'sha256-kBwyqXUsJYyXFwu6xmpe/VHoAO33qbXtg+iFd3O56v4=' 'sha256-qJ7SbavKOIfBey7i+OyhE93TVZgymzPV13kIFQoK9z8=' 'sha256-IC2D1UJ7d+ba1pnsAAxMnMYVON/9YAs7s5y9Plcfl6w=' 'sha256-P3upB5nSJgaMZ66JypQ23kO70VzvIaT2MSedNexWFNk='; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://mhzaly-ai.mhzaly.workers.dev https://mhzaly-ai.you.workers.dev https://generativelanguage.googleapis.com https://api.groq.com https://api.cerebras.ai https://api.deepinfra.com https://api-inference.huggingface.co https://api.mistral.ai https://api.sambanova.ai https://api.together.xyz https://openrouter.ai https://image.pollinations.ai https://text.pollinations.ai https://*.hf.space; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net 'sha256-CA5crITKGahve43QGE67FGRCe/GEYEcy906iyMNlX3o=' 'sha256-kBwyqXUsJYyXFwu6xmpe/VHoAO33qbXtg+iFd3O56v4=' 'sha256-5rQNhR/ijcR/Gx4VvEAk9qcTH5TMB6SNfNF/PpsGx2E=' 'sha256-IC2D1UJ7d+ba1pnsAAxMnMYVON/9YAs7s5y9Plcfl6w=' 'sha256-P3upB5nSJgaMZ66JypQ23kO70VzvIaT2MSedNexWFNk='; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://mhzaly-ai.mhzaly.workers.dev https://mhzaly-ai.you.workers.dev https://generativelanguage.googleapis.com https://api.groq.com https://api.cerebras.ai https://api.deepinfra.com https://api-inference.huggingface.co https://api.mistral.ai https://api.sambanova.ai https://api.together.xyz https://openrouter.ai https://image.pollinations.ai https://text.pollinations.ai https://*.hf.space; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
     <script>if(window.top!==window.self){try{window.top.location=window.self.location;}catch(e){}}</script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AI studio — product shots &amp; try-on | MHZALY</title>
@@ -1294,7 +1294,10 @@ Rules:
                   return { url: URL.createObjectURL(blob), blob, model };
                 }
               } else if (r.status === 429 || r.status === 502) {
-                // Free daily AI quota is spent — remember it for 10 minutes.
+                // Free daily AI quota is spent — remember it for 10 minutes and
+                // pass the server's own wait time on to the user.
+                const wait = parseInt(r.headers.get("Retry-After") || "0", 10) || 0;
+                if (wait > 0) lastRetryAfter = Math.min(wait, 86400);
                 try { localStorage.setItem("mhzaly_ai_dead", String(Date.now() + 10 * 60 * 1000)); } catch (e) {}
               }
             } catch (e) {}
@@ -1687,7 +1690,9 @@ Rules:
             arResultImg.removeAttribute("src");
             arResultImg.classList.add("is-empty");
             arResultDesc.textContent = lastRetryAfter
-              ? `Free limit reached — ${lastRetryAfter}s baad dobara try karein.`
+              ? (lastRetryAfter > 300
+                  ? "Today's shared free renders are used up. They reset at midnight UTC — the 3D studio still works."
+                  : `Free capacity is shared — try again in ${lastRetryAfter}s.`)
               : "AI is busy right now — press Generate with AI once more.";
             arDownload.hidden = true;
             if (arShare) arShare.hidden = true;
@@ -1696,7 +1701,7 @@ Rules:
             arCompare.hidden = true;
             if (arReroll) arReroll.hidden = true;
             setStep(1);
-            showStatus("failed", lastRetryAfter ? `free limit — ${lastRetryAfter}s` : "AI busy — try again");
+            showStatus("failed", lastRetryAfter ? (lastRetryAfter > 300 ? "free renders used up today" : `free limit — ${lastRetryAfter}s`) : "AI busy — try again");
             return;
           }
 
