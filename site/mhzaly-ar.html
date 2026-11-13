@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net 'sha256-CA5crITKGahve43QGE67FGRCe/GEYEcy906iyMNlX3o=' 'sha256-kBwyqXUsJYyXFwu6xmpe/VHoAO33qbXtg+iFd3O56v4=' 'sha256-5rQNhR/ijcR/Gx4VvEAk9qcTH5TMB6SNfNF/PpsGx2E=' 'sha256-IC2D1UJ7d+ba1pnsAAxMnMYVON/9YAs7s5y9Plcfl6w=' 'sha256-P3upB5nSJgaMZ66JypQ23kO70VzvIaT2MSedNexWFNk='; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://mhzaly-ai.mhzaly.workers.dev https://mhzaly-ai.you.workers.dev https://generativelanguage.googleapis.com https://api.groq.com https://api.cerebras.ai https://api.deepinfra.com https://api-inference.huggingface.co https://api.mistral.ai https://api.sambanova.ai https://api.together.xyz https://openrouter.ai https://image.pollinations.ai https://text.pollinations.ai https://*.hf.space; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'sha256-CA5crITKGahve43QGE67FGRCe/GEYEcy906iyMNlX3o=' 'sha256-kBwyqXUsJYyXFwu6xmpe/VHoAO33qbXtg+iFd3O56v4=' 'sha256-YNcVAXCKon7xCTR1FMxdkzUIz9r6mAe2cyDv+uRyGj4=' 'sha256-IC2D1UJ7d+ba1pnsAAxMnMYVON/9YAs7s5y9Plcfl6w=' 'sha256-P3upB5nSJgaMZ66JypQ23kO70VzvIaT2MSedNexWFNk='; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://mhzaly-ai.mhzaly.workers.dev https://mhzaly-ai.you.workers.dev https://generativelanguage.googleapis.com https://api.groq.com https://api.cerebras.ai https://api.deepinfra.com https://api-inference.huggingface.co https://api.mistral.ai https://api.sambanova.ai https://api.together.xyz https://openrouter.ai https://image.pollinations.ai https://text.pollinations.ai https://*.hf.space; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
     <script>if(window.top!==window.self){try{window.top.location=window.self.location;}catch(e){}}</script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AI studio — product shots &amp; try-on | MHZALY</title>
@@ -40,6 +40,7 @@
           <nav class="ar-nav">
             <a href="index.html">3D room</a>
             <a href="#examples">Examples</a>
+            <a href="#photoshoot">Scene director</a>
             <a href="#how">How it works</a>
             <a href="#pricing">Free</a>
             <a href="lookbook.html">Lookbook</a>
@@ -241,6 +242,47 @@
               </div>
             </div>
             <p class="ar-job-status" id="ar-job-status">Job status: —</p>
+          </div>
+        </section>
+
+        <!-- ================= SCENE DIRECTOR ================= -->
+        <section class="ar-section ar-shoot" id="photoshoot">
+          <div class="ar-wrap">
+            <div class="ar-section-head">
+              <span class="ar-eyebrow">Scene director</span>
+              <h2>Same garment. Completely new scene.</h2>
+              <p>Add one clear photo of the piece, describe the shoot you want, and get a fresh campaign frame. Your prompt is sent exactly as written — never rewritten.</p>
+            </div>
+            <div class="shoot-grid">
+              <article class="shoot-card">
+                <label class="shoot-drop" for="shoot-file">
+                  <input id="shoot-file" type="file" accept="image/*" />
+                  <span class="shoot-drop-icon" aria-hidden="true">＋</span>
+                  <span class="shoot-drop-title">Add a garment photo</span>
+                  <span class="shoot-drop-sub">JPG, PNG or WEBP · up to 8 MB</span>
+                </label>
+                <label class="shoot-label" for="shoot-prompt">Describe the new scene (used verbatim)</label>
+                <textarea id="shoot-prompt" class="shoot-prompt" rows="3" maxlength="600"
+                  placeholder="e.g. full-length on a marble staircase at golden hour, soft editorial light, warm tones"></textarea>
+                <div class="shoot-actions">
+                  <button class="ar-btn" id="shoot-run" type="button" disabled>Render new scene</button>
+                  <span class="shoot-status" id="shoot-status" role="status" aria-live="polite">Nothing is generated until you press render.</span>
+                </div>
+                <p class="shoot-note">Honest limit: the free AI pool allows a limited number of renders per day. If it runs out, the exact reset time is shown here.</p>
+              </article>
+              <article class="shoot-out">
+                <div class="shoot-preview" id="shoot-preview" hidden>
+                  <span class="shoot-preview-label">Your photo</span>
+                  <img id="shoot-preview-img" alt="The photo you uploaded" />
+                </div>
+                <div class="shoot-result">
+                  <span class="shoot-preview-label">New AI scene</span>
+                  <div class="shoot-result-empty" id="shoot-empty">Your new scene appears here — never a copy of your photo.</div>
+                  <img id="shoot-img" alt="AI-generated scene using the same garment" hidden />
+                  <a class="ar-btn ar-btn-ghost" id="shoot-download" href="#" download="mhzaly-scene.jpg" hidden>⬇ Save scene</a>
+                </div>
+              </article>
+            </div>
           </div>
         </section>
 
@@ -672,40 +714,6 @@ Rules:
         arDrop.classList.add("has-image");
         arFileName.textContent = file.name;
         arGenerateBtn.disabled = false;
-      // 
-
-<!-- =================== PHOTOSHOOT MODE =================== -->
-<div id="arPhotoshoot" style="display:none; margin-top:2rem; padding-top:2rem; border-top:1px solid var(-- divider );
-  ">
-  <h3 style="margin-top:0;">📸 Virtual Photoshoot</h3>
-  <p style="margin-bottom:1rem; font-size:0.85rem;">
-    Take a photo below. The AI will generate the <strong>same garment design and colour</strong> in a new scene — <em>your photo is never the final result</em>; it only helps the AI understand the look you want.
-  </p>
-  <div style="margin-bottom:1rem;">
-    <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Upload photo:</label>
-    <input type="file" id="arPhotoUpload" accept="image/*" style="width:100%; padding:0.5rem; border:1px solid var(-- border ); border-radius:6px; font-size:0.9rem;">
-  </div>
-  <div style="margin-bottom:1rem;">
-    <label style="display:block; margin-bottom:0.5rem; font-size:0.85rem;">Your prompt (used verbatim):</label>
-    <input type="text" id="arPhotoPrompt" value="" style="width:100%; padding:0.5rem; border:1px solid var(-- border ); border-radius:6px; font-size:0.9rem; resize:vertical;" maxlength="500">
-    <small style="color:var(--muted); display:block; margin-top:0.5rem;">
-      Tip: Be specific — "a blue kurta with white embroidery, cotton fabric, flowing style"
-    </small>
-  </div>
-  <button id="arStartPhotoshoot" class="btn" style="width:100%; margin-top:0.5rem;">
-    Generate Photoshoot
-  </button>
-  <div id="arPhotoshootStatus" style="margin-top:0.5rem; font-size:0.9rem; color:var(--muted);"></div>
-  <div id="arPhotoshootResult" style="margin-top:1rem; display:none; min-height:200px;">
-    <img id="arPhotoshootImg" src="" alt="Photoshoot result" style="max-width:100%; height:auto; object-fit:contain; background:var(-- bg ); border-radius:8px; padding:1rem; display:block; margin:0 auto;">
-    <div style="margin-top:0.5rem; text-align:center;">
-      <button id="arSaveLookBtn" class="btn" style="margin-right:0.5rem;">Save Look</button>
-      <button id="arCopyLinkBtn" class="btn" style="margin-left:0.5rem;">Copy Link</button>
-    </div>
-  </div>
-</div>
-      // Photoshoot mode UI will be inserted here by the deployment script
-      // (this marker is replaced during deployment)
         showStatus("image ready", "press Generate with AI");
       }
 
@@ -2103,6 +2111,127 @@ Rules:
           if (e.key === "Escape") arLightbox.hidden = true;
         });
       }
+
+      // ---- Scene director: same garment, new scene, verbatim prompt ----
+      const shootFile = document.getElementById("shoot-file");
+      const shootPrompt = document.getElementById("shoot-prompt");
+      const shootRun = document.getElementById("shoot-run");
+      const shootStatus = document.getElementById("shoot-status");
+      const shootPreview = document.getElementById("shoot-preview");
+      const shootPreviewImg = document.getElementById("shoot-preview-img");
+      const shootImg = document.getElementById("shoot-img");
+      const shootEmpty = document.getElementById("shoot-empty");
+      const shootDownload = document.getElementById("shoot-download");
+      let shootBusy = false;
+      let shootUrl = null;
+      let shootPreviewUrl = null;
+
+      function shootReady() {
+        if (!shootRun) return;
+        const f = shootFile && shootFile.files && shootFile.files[0];
+        shootRun.disabled = shootBusy || !f || !shootPrompt.value.trim();
+      }
+
+      // Downscale before upload: keeps the request far under the 8 MB cap,
+      // saves the visitor's data and makes the render faster. The AI still
+      // sees the whole garment.
+      function shootPrepare(file) {
+        return new Promise((resolve) => {
+          const img = new Image();
+          const src = URL.createObjectURL(file);
+          const done = (v) => { URL.revokeObjectURL(src); resolve(v); };
+          img.onload = () => {
+            try {
+              const max = 1280;
+              const scale = Math.min(1, max / Math.max(img.width, img.height));
+              const w = Math.max(1, Math.round(img.width * scale));
+              const h = Math.max(1, Math.round(img.height * scale));
+              const c = document.createElement("canvas");
+              c.width = w;
+              c.height = h;
+              c.getContext("2d").drawImage(img, 0, 0, w, h);
+              done(c.toDataURL("image/jpeg", 0.88).split(",")[1] || "");
+            } catch (e) { done(""); }
+          };
+          img.onerror = () => done("");
+          img.src = src;
+        });
+      }
+
+      if (shootFile) {
+        shootFile.addEventListener("change", () => {
+          const f = shootFile.files && shootFile.files[0];
+          shootStatus.textContent = "";
+          if (!f) { shootPreview.hidden = true; shootReady(); return; }
+          if (!f.type.startsWith("image/")) {
+            shootStatus.textContent = "Please choose an image file.";
+            shootFile.value = "";
+            shootPreview.hidden = true;
+            shootReady();
+            return;
+          }
+          if (shootPreviewUrl) URL.revokeObjectURL(shootPreviewUrl);
+          shootPreviewUrl = URL.createObjectURL(f);
+          shootPreviewImg.src = shootPreviewUrl;
+          shootPreview.hidden = false;
+          shootStatus.textContent = "Photo ready. Describe the new scene.";
+          shootReady();
+        });
+      }
+      if (shootPrompt) shootPrompt.addEventListener("input", shootReady);
+
+      if (shootRun) {
+        shootRun.addEventListener("click", async () => {
+          const f = shootFile.files && shootFile.files[0];
+          const prompt = shootPrompt.value; // sent verbatim — never rewritten
+          if (!f || !prompt.trim()) return;
+          shootBusy = true;
+          shootReady();
+          shootRun.textContent = "Rendering…";
+          shootStatus.textContent = "Sending the photo to the AI studio. Usually 10–30 seconds.";
+          const started = Date.now();
+          try {
+            const b64 = await shootPrepare(f);
+            if (!b64) throw new Error("That image could not be read. Try a JPG or PNG.");
+            const r = await fetch(api("/api/image"), {
+              method: "POST",
+              mode: "cors",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ prompt, ref: b64, width: 1024, height: 1536, steps: 16, quality: "best" }),
+            });
+            if (!r.ok) {
+              let msg = "The AI studio is busy right now.";
+              try {
+                const j = await r.json();
+                if (r.status === 429 && j.error === "at capacity") {
+                  msg = "Today's shared free renders are used up. They reset at midnight UTC — the rest of the studio still works.";
+                } else if (r.status === 429) {
+                  msg = "Too many requests from this connection. Wait about " + (j.retryAfter || 60) + " seconds.";
+                } else if (r.status === 413) {
+                  msg = "That photo is too large. Try a smaller one.";
+                }
+              } catch (e) {}
+              throw new Error(msg);
+            }
+            const blob = await r.blob();
+            if (!blob.size) throw new Error("The studio returned an empty image.");
+            if (shootUrl) URL.revokeObjectURL(shootUrl);
+            shootUrl = URL.createObjectURL(blob);
+            shootImg.src = shootUrl;
+            shootImg.hidden = false;
+            shootEmpty.hidden = true;
+            shootDownload.href = shootUrl;
+            shootDownload.hidden = false;
+            shootStatus.textContent = "New scene ready in " + Math.max(1, Math.round((Date.now() - started) / 1000)) + " s. Same garment, different scene.";
+          } catch (err) {
+            shootStatus.textContent = String((err && err.message) || err);
+          } finally {
+            shootBusy = false;
+            shootRun.textContent = "Render new scene";
+            shootReady();
+          }
+        });
+      }
     </script>
 
     <script type="module">
@@ -2147,97 +2276,7 @@ Rules:
         const loop = () => {
           requestAnimationFrame(loop);
           const t = clock.getElapsedTime();
-          if (dragX === n
-
-// =================== PHOTOSHOOT HANDLER ===================
-async function handleArPhotoshoot() {
-  const prompt = document.getElementById("arPhotoPrompt").value.trim();
-  const fileInput = document.getElementById("arPhotoUpload");
-  if (!prompt) {
-    showStatus("prompt", "Please enter a prompt.");
-    return;
-  }
-  if (!fileInput.files || fileInput.files.length === 0) {
-    showStatus("prompt", "Please upload a photo.");
-    return;
-  }
-
-  const file = fileInput.files[0];
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const b64 = e.target.result.split(",")[1]; // strip data: URL prefix
-    arPhotoshootStatus.textContent = "AI working… please wait.";
-    arGenerateBtn.disabled = true;
-    arGenerateBtn.textContent = "Processing…";
-    arPhotoshoot.hidden = false;
-
-    try {
-      // Build the prompt: user's prompt + design context from the currently selected garment
-      const selectedGarment = document.querySelector("[data-garment].is-active");
-      let designContext = "";
-      if (selectedGarment) {
-        const g = selectedGarment.dataset.garment;
-        designContext = ` ${g} style garment`;
-      }
-      const fullPrompt = (prompt.trim() + designContext).trim();
-
-      // Call the worker API with the reference image + prompt
-      const r = await fetch("${window.AR_API_BASE}/api/image", {
-        method: "POST",
-        mode: "cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: fullPrompt,
-          ref: b64,
-          width: 1024,
-          height: 1536,
-          steps: 14,
-          quality: "best"
-        })
-      });
-
-      if (!r.ok) {
-        const txt = await r.text().slice(0, 100);
-        throw new Error("AI error: " + txt);
-      }
-
-      const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-
-      // Show result — NOTE: this is NOT the user's photo.
-      // It is a new AI-generated image with the same design/colour/pattern.
-      arPhotoshootImg.src = url;
-      arPhotoshootImg.alt = "AI-generated photoshoot result";
-      arPhotoshootResult.hidden = false;
-      arDownload.hidden = false;
-      arDownload.href = url;
-      if (arShare) arShare.hidden = false;
-      if (arWa) arWa.hidden = false;
-      if (arCopy) arCopy.hidden = false;
-      arCompare.hidden = arPreview.src ? false : true;
-
-      showStatus("photoshoot", "Photoshoot ready.");
-    } catch (err) {
-      console.error(err);
-      showStatus("photoshoot", "Photoshoot failed — try again or use AI Generate mode.");
-      setStep(1);
-    } finally {
-      arGenerateBtn.disabled = false;
-      arGenerateBtn.textContent = "Generate with AI";
-      startFreeCooldown();
-      arPhotoshootStatus.textContent = "";
-      // keep arPhotoshoot visible so user can retry
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-document.getElementById("arStartPhotoshoot").addEventListener("click", handleArPhotoshoot);
-document.getElementById("arPhotoUpload").addEventListener("change", () => {
-  const prompt = document.getElementById("arPhotoPrompt");
-  if (prompt.value) return; // user already entered prompt
-});
-ull) {
+          if (dragX === null) {
             card.rotation.y = Math.sin(t * 0.55) * 0.35;
             card.rotation.x = Math.sin(t * 0.4) * 0.07;
           }

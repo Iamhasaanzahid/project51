@@ -1,6 +1,6 @@
 /* MHZALY service worker — instant loads + offline resilience.
    Only same-origin assets are cached; AI APIs are never intercepted. */
-const CACHE = "mhzaly-v19";
+const CACHE = "mhzaly-v20";
 // three.js is served from jsDelivr: the same 1.27 MB file is cut short by the
 // static host on slow links, and a truncated ES module cannot be recovered.
 // A pinned version is immutable, so it is safe to cache for as long as we like.
