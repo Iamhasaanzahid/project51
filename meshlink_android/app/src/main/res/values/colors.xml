@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mesh_purple">#6750A4</color>
+    <color name="mesh_purple_light">#EADDFF</color>
+    <color name="mesh_purple_dark">#381E72</color>
+    <color name="mesh_background">#FEF7FF</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

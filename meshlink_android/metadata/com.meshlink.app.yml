@@ -1,0 +1,46 @@
+Categories:
+  - Internet
+  - Security
+  - Phone & SMS
+License: GPL-3.0-or-later
+AuthorName: MeshLink
+AuthorEmail: meshlink@example.com
+SourceCode: https://github.com/YOURNAME/meshlink
+IssueTracker: https://github.com/YOURNAME/meshlink/issues
+Changelog: https://github.com/YOURNAME/meshlink/blob/main/CHANGELOG.md
+
+AutoName: MeshLink
+Summary: Free end-to-end encrypted messenger that works over radio
+Description: |
+  MeshLink is a free, secure, offline-first messenger.
+
+  Sign up with email only — no phone number required. Every device gets an
+  auto-assigned unique ID (UIN).
+
+  Messages are end-to-end encrypted (X25519 + HKDF-SHA256 + AES-256-GCM) and
+  can travel over three real radios without any internet connection:
+
+  * Cellular radio (SMS) — works with only a SIM and operator signal
+  * Bluetooth LE — local 2.4 GHz mesh
+  * Wi-Fi Direct — higher-throughput local mesh
+
+  Multi-hop TTL forwarding lets a message travel phone to phone to phone.
+  Text, images and voice notes are supported. No ads, no subscriptions,
+  no tracking, no paid services.
+
+RepoType: git
+Repo: https://github.com/YOURNAME/meshlink
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 1
+    commit: v1.0.0
+    subdir: meshlink_android
+    gradle:
+      - yes
+    prebuild: echo "nothing to prebuild"
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.0
+CurrentVersionCode: 1

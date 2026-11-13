@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeshLink - Purple UI Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #FEF7FF 0%, #E8DEF8 50%, #F3EDF7 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 420px;
+            width: 100%;
+            padding: 40px 24px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 42px;
+            font-weight: 800;
+            color: #6750A4;
+            margin-bottom: 4px;
+            letter-spacing: -1px;
+        }
+        .subtitle {
+            font-size: 16px;
+            color: #625B71;
+            margin-bottom: 40px;
+            font-weight: 400;
+        }
+        .input-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6750A4;
+            margin-bottom: 6px;
+            padding-left: 4px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #CAC4D0;
+            border-radius: 14px;
+            font-size: 16px;
+            background: #F3EDF7;
+            color: #1D1B20;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .input-group input:focus {
+            border-color: #6750A4;
+            background: #EADDFF;
+            box-shadow: 0 0 0 4px rgba(103, 80, 164, 0.1);
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6750A4 0%, #9C88FF 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(103, 80, 164, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(103, 80, 164, 0.4);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .uin-card {
+            margin-top: 32px;
+            padding: 24px;
+            background: linear-gradient(135deg, #EADDFF 0%, #F3EDF7 100%);
+            border-radius: 20px;
+            border: 2px solid rgba(103, 80, 164, 0.2);
+            display: none;
+        }
+        .uin-card.show {
+            display: block;
+            animation: slideUp 0.4s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .uin-label {
+            font-size: 13px;
+            color: #625B71;
+            margin-bottom: 8px;
+        }
+        .uin-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: #6750A4;
+            letter-spacing: 1px;
+        }
+        .uin-hint {
+            font-size: 12px;
+            color: #625B71;
+            margin-top: 12px;
+        }
+        .features {
+            margin-top: 32px;
+            text-align: left;
+            display: inline-block;
+        }
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #1D1B20;
+        }
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #EADDFF;
+            color: #6750A4;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .version {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #CAC4D0;
+        }
+        .radio-panel {
+            margin-top: 26px;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid rgba(103, 80, 164, 0.15);
+            border-radius: 18px;
+            text-align: left;
+        }
+        .radio-title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            color: #6750A4;
+            margin-bottom: 12px;
+        }
+        .radio-row {
+            display: flex;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 13px;
+            color: #1D1B20;
+        }
+        .radio-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #CAC4D0;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .radio-dot.on {
+            background: #2E7D32;
+            box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.15);
+        }
+        .radio-name { flex: 1; }
+        .radio-range {
+            font-size: 11px;
+            color: #625B71;
+            background: #EADDFF;
+            padding: 3px 9px;
+            border-radius: 999px;
+        }
+        .loading-spinner {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">MeshLink</div>
+        <div class="subtitle">Free Secure Messaging</div>
+        
+        <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="your@email.com" value="user@example.com">
+        </div>
+        
+        <div class="input-group">
+            <label>Display Name</label>
+            <input type="text" id="displayName" placeholder="Your Name" value="Ahmed Hassan">
+        </div>
+        
+        <button class="btn-primary" id="signupBtn" onclick="signup()">
+            <span id="btnText">Create Free Account</span>
+            <div class="loading-spinner" id="spinner"></div>
+        </button>
+        
+        <div class="uin-card" id="uinCard">
+            <div class="uin-label">Your Unique ID</div>
+            <div class="uin-value" id="uinValue">+92-MZ-847291</div>
+            <div class="uin-hint">Share this with friends to connect securely</div>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">✓</div>
+                No phone number needed
+            </div>
+            <div class="feature">
+                <div class="feature-icon">✓</div>
+                End-to-End Encrypted
+            </div>
+            <div class="feature">
+                <div class="feature-icon">✓</div>
+                Works offline via radio mesh
+            </div>
+        </div>
+
+        <div class="radio-panel">
+            <div class="radio-title">Radio mesh — no internet required</div>
+            <div class="radio-row">
+                <span class="radio-dot on"></span>
+                <span class="radio-name">Radio (SMS / cellular)</span>
+                <span class="radio-range">city-wide</span>
+            </div>
+            <div class="radio-row">
+                <span class="radio-dot on"></span>
+                <span class="radio-name">Bluetooth LE</span>
+                <span class="radio-range">10–50 m</span>
+            </div>
+            <div class="radio-row">
+                <span class="radio-dot on"></span>
+                <span class="radio-name">Wi-Fi Direct</span>
+                <span class="radio-range">50–200 m</span>
+            </div>
+        </div>
+        
+        <div class="version">v1.0.0 · Free Forever</div>
+    </div>
+    
+    <script>
+        function signup() {
+            const btn = document.getElementById('signupBtn');
+            const spinner = document.getElementById('spinner');
+            const btnText = document.getElementById('btnText');
+            const uinCard = document.getElementById('uinCard');
+            
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'block';
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btnText.style.display = 'inline';
+                spinner.style.display = 'none';
+                uinCard.classList.add('show');
+            }, 1500);
+        }
+    </script>
+</body>
+</html>

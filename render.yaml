@@ -1,0 +1,16 @@
+# Free deployment on Render.com (no credit card needed for free web service)
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: meshlink-api
+    runtime: python
+    plan: free
+    rootDir: meshlink_app
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MESHLINK_DB
+        value: /tmp/meshlink.db
+      - key: PYTHON_VERSION
+        value: 3.11.9
+    healthCheckPath: /health

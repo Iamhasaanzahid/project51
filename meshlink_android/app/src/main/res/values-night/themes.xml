@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MeshLink" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@color/mesh_purple_dark</item>
+        <item name="android:windowBackground">#141218</item>
+    </style>
+</resources>

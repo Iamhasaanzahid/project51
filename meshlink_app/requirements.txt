@@ -1,0 +1,8 @@
+fastapi==0.162.5
+uvicorn[standard]==0.54.0
+SQLAlchemy==2.1.8
+pydantic==2.14.3
+websockets==17.4
+python-multipart==0.0.9
+cryptography==42.0.8
+email-validator==2.1.1

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base app theme; Compose draws the real Material 3 theme at runtime. -->
+    <style name="Theme.MeshLink" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@color/mesh_purple</item>
+        <item name="android:windowBackground">@color/mesh_background</item>
+    </style>
+</resources>

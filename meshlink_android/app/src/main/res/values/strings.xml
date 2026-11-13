@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MeshLink</string>
+    <string name="app_tagline">Free Secure Messaging</string>
+
+    <string name="signup_title">MeshLink</string>
+    <string name="signup_subtitle">Free Secure Messaging</string>
+    <string name="email_label">Email</string>
+    <string name="display_name_label">Display Name</string>
+    <string name="create_account">Create Free Account</string>
+    <string name="your_unique_id">Your Unique ID</string>
+    <string name="share_uin_hint">Share this with friends to connect securely</string>
+    <string name="feature_no_phone">No phone number needed</string>
+    <string name="feature_e2ee">End-to-End Encrypted</string>
+    <string name="feature_offline">Works offline via radio mesh</string>
+    <string name="version_label">v1.0.0 · Free Forever</string>
+
+    <string name="mesh_channel_name">MeshLink radio mesh</string>
+    <string name="mesh_channel_description">Keeps Bluetooth, Wi-Fi Direct and radio (SMS) mesh active</string>
+    <string name="mesh_notification_title">MeshLink is connected</string>
+    <string name="mesh_notification_text">Listening on radio, Bluetooth and Wi-Fi Direct</string>
+</resources>

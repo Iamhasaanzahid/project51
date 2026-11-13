@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeshLink — Free Secure Messaging</title>
+    <meta name="description" content="MeshLink: Free, secure, offline-first messaging app with radio, Bluetooth and Wi-Fi Direct mesh networking">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Iconic fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/min.css">
+    
+    <style>
+        :root {
+            --primary: #6750A4;
+            --primary-light: #EADDFF;
+            --primary-dark: #381E72;
+            --secondary: #625B71;
+            --accent: #9C88FF;
+            --bg: #FEF7FF;
+            --bg-dark: #141218;
+            --text: #1D1B20;
+            --text-light: #625B71;
+            --success: #2E7D32;
+            --warning: #F57C00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 5%;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            letter-spacing: -1px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-cta {
+            background: var(--primary);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .nav-cta:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 5% 60px;
+            position: relative;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg) 100%);
+            z-index: -1;
+        }
+
+        .hero-content {
+            max-width: 900px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .badge-icon {
+            width: 20px;
+            height: 20px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--primary-dark);
+            margin-bottom: 24px;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .hero h1 .highlight {
+            color: var(--primary);
+            background: linear-gradient(135deg, rgba(103,80,164,0.1) 0%, transparent 50%);
+            padding: 0 4px;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto 60px;
+            font-weight: 300;
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        /* Features Grid */
+        .features {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 5%;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom 60px;
+        }
+
+        .section-title h2 {
+            font-size: 40px;
+            color: var(--primary-dark);
+            margin-bottom: 16px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .section-title p {
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 16px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 20px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(103, 80, 164, 0.15);
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--primary-light);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 28px;
+            color: var(--primary);
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: var(--primary-dark);
+        }
+
+        .feature-card p {
+            color: var(--text-light);
+            font-size: 15px;
+        }
+
+        /* Radio Mesh Section */
+        .radio-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 5%;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--bg) 100%);
+        }
+
+        .radio-section .section-title h2 {
+            color: var(--primary-dark);
+        }
+
+        .radio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .radio-card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .radio-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .radio-icon {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 24px;
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(103, 80, 164, 0.15);
+        }
+
+        .radio-card h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--primary-dark);
+        }
+
+        .radio-card p {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .range-badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        /* Download Section */
+        .download-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 100px 5%;
+            text-align: center;
+        }
+
+        .download-section .section-title h2 {
+            color: var(--primary-dark);
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 20px 50px;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: 700;
+            text-decoration: none;
+            margin: 30px 10px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none;
+            cursor: pointer;
+            min-width: 280px;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(103, 80, 164, 0.3);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .download-btn .btn-text {
+            display: inline;
+        }
+
+        .download-btn .btn-icon {
+            display: inline-block;
+            margin-left: 12px;
+            font-size: 24px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .download-alt {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .alt-store {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--text);
+            transition: background 0.3s;
+        }
+
+        .alt-store:hover {
+            background: var(--primary-light);
+        }
+
+        /* How It Works */
+        .how-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 5%;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .step {
+            text-align: center;
+            padding: 30px;
+            position: relative;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 auto 20px;
+        }
+
+        .step h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--primary-dark);
+        }
+
+        .step p {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--primary-dark);
+            color: white;
+            padding: 60px 5% 20px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-brand h3 {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .footer-brand p {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .footer-links h4 {
+            font-size: 14px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-bottom p {
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+        }
+
+        .social-links a {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .social-links a:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero h1 {
+                font-size: 36px;
+            }
+            
+            .hero p {
+                font-size: 16px;
+            }
+            
+            .features-grid,
+            .radio-grid,
+            .steps {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="nav-logo">MeshLink</a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#download">Download</a></li>
+            </ul>
+            <a href="#download" class="nav-cta">Get the App</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <div class="badge-icon"></div>
+                <span>100% Free</span>
+            </div>
+            <h1>MeshLink</h1>
+            <p>Free, secure, offline-first messaging that works over radio, Bluetooth and Wi-Fi Direct. No phone number needed. Auto-assigned UIN.</p>
+            <div class="download-btn" onclick="window.location.href='#download'">
+                <span class="btn-text">Download APK</span>
+                <span class="btn-icon">↓</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Features</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">✕</div>
+                    <h3>No Phone Number</h3>
+                    <p>Sign up with email only. System auto-assigns a UIN (Unique Identity Number).</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>End-to-End Encrypted</h3>
+                    <p>X25519 ECDH + AES-256-GCM + HKDF-SHA256. Server stores only ciphertext.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📡</div>
+                    <h3>Radio Mesh</h3>
+                    <p>Works over cellular SMS, Bluetooth LE and Wi-Fi Direct. No internet required.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Media Sharing</h3>
+                    <p>Share images, voice notes and files. Encrypted end-to-end before leaving your device.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Radio Mesh Section -->
+    <section class="radio-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>Mesh Over Any Radio</h2>
+            </div>
+            <div class="radio-grid">
+                <div class="radio-card">
+                    <div class="radio-icon">📱</div>
+                    <h3>Cellular (SMS)</h3>
+                    <p>Uses your SIM card's radio. Works with any phone having a SIM. City-wide coverage.</p>
+                    <span class="range-badge">City-wide</span>
+                </div>
+                <div class="radio-card">
+                    <div class="radio-icon">✨</div>
+                    <h3>Bluetooth LE</h3>
+                    <p>2.4 GHz radio mesh. 10–50m per hop. Multi-hop TTL forwarding extends range.</p>
+                    <span class="range-badge">10–50 m</span>
+                </div>
+                <div class="radio-card">
+                    <div class="radio-icon">📶</div>
+                    <h3>Wi-Fi Direct</h3>
+                    <p>Ad-hoc wireless mesh. 50–200m per hop. Higher throughput for images and voice notes.</p>
+                    <span class="range-badge">50–200 m</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section class="download-section" id="download">
+        <div class="container">
+            <div class="section-title">
+                <h2>Get MeshLink</h2>
+            </div>
+            <div class="download-btn" onclick="alert('Click install to download the APK')" style="background: var(--primary);">
+                <span class="btn-text">Download APK (Free)</span>
+                <span class="btn-icon">↓</span>
+            </div>
+            <div class="download-alt">
+                <div class="alt-store">📦</div>
+                <div class="alt-store">🛡️</div>
+                <div class="alt-store">📱</div>
+            </div>
+            <p style="margin-top: 30px; color: var(--text-light); font-size: 14px;">
+                Also available on F-Droid (free & open source) and direct APK download.<br>
+                No Play Store fees — 100% free forever.
+            </p>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>How It Works</h2>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Sign Up</h3>
+                    <p>Enter email. System assigns UIN (+92-MZ-NNNNNN). No phone number needed.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Connect</h3>
+                    <p>Choose radio: Bluetooth (nearby), Wi-Fi Direct (local), or Cellular (SMS).</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Message</h3>
+                    <p>Type text or share images. E2EE encryption. Sent over chosen radio mesh.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Mesh Relay</h3>
+                    <p>Messages hop phone-to-phone. TTL=5 hops extends range beyond direct range.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>MeshLink</h3>
+                    <p>Free secure messaging that works over radio, Bluetooth and Wi-Fi Direct. No phone number. No subscriptions. No tracking.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#">Features</a></li>
+                        <li><a href="#">Privacy</a></li>
+                        <li><a href="#">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Community</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>MeshLink v1.0.0 · 2026 · <a href="#" style="color: rgba(255,255,255,0.8); text-decoration: underline;">Free Forever</a></p>
+                <div class="social-links">
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fa-brands fa-github"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle (for responsiveness)
+        const navToggle = document.createElement('button');
+        navToggle.className = 'nav-toggle';
+        navToggle.innerHTML = '☰';
+        navToggle.style.display = 'none';
+        navToggle.style.fontSize = '24px';
+        navToggle.style.cursor = 'pointer';
+        
+        const navLinks = document.querySelector('.nav-links');
+        const navContainer = document.querySelector('.nav-container');
+        
+        navContainer.insertBefore(navToggle, navLinks);
+        
+        navToggle.addEventListener('click', () => {
+            navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rising: true
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-card, .radio-card, .step').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s, transform 0.6s';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
