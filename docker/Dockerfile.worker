@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------
 # GPU worker - non-root, read-only rootfs (enforced at runtime), no shell tools.
 # ---------------------------------------------------------------------------
-FROM python:3.11-slim AS builder
+FROM python:3.15-slim AS builder
 
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN apt-get update \
@@ -14,7 +14,7 @@ COPY requirements-worker.txt requirements-api.txt ./
 RUN pip wheel --wheel-dir /wheels -r requirements-worker.txt
 
 # ---------------------------------------------------------------------------
-FROM python:3.11-slim AS runtime
+FROM python:3.15-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
