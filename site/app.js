@@ -409,11 +409,11 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
         const pos = o.geometry.attributes.position;
         for (let i = 0; i < pos.count; i++) {
           const y = pos.getY(i);
-          if (y >= 0.95 && y <= 1.08) {
+          if (y >= 0.93 && y <= 1.10) {
             const x = pos.getX(i), z = pos.getZ(i);
             const r = Math.hypot(x, z);
-            if (r > 0.130) {
-              const k = 0.130 / r;
+            if (r > 0.112) {
+              const k = 0.112 / r;
               pos.setX(i, x * k);
               pos.setZ(i, z * k);
             }
@@ -750,7 +750,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
       } else if (g === "shirt") {
         // fitted shirt built on the measured body: hem on the hip so the belt
         // never shows, shoulders and waist follow the real silhouette.
-        if (!shell(0.93, 1.50, 0.013 * fitScale(), 8, 0.005)) {
+        if (!shell(0.93, 1.50, 0.016 * fitScale(), 8, 0.004)) {
           top(0.152, 0.152, 0.56, 1.27, 0.91, 7, 0.005, 0);
         }
       } else if (g === "kurta") {
@@ -779,7 +779,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
     } else {
       if (g === "set") {
         // fitted two-piece, built on the measured body like the men's shirt
-        if (!shell(0.94, 1.48, 0.012 * fitScale(), 8, 0.005)) {
+        if (!shell(0.94, 1.48, 0.015 * fitScale(), 8, 0.004)) {
           top(0.146, 0.146, 0.52, 1.30, 0.90, 7, 0.005, 0);
         }
       } else if (g === "kurti") {

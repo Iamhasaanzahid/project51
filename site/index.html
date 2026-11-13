@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'sha256-CA5crITKGahve43QGE67FGRCe/GEYEcy906iyMNlX3o=' 'sha256-kBwyqXUsJYyXFwu6xmpe/VHoAO33qbXtg+iFd3O56v4=' 'sha256-HeZKfM//6I19BnTNCLxnK6gZhwUd4L23yaBdPwQw3Is=' 'sha256-y1ZaUnCuGYbGP9s2xTq4otziHzaoAF8jtgf/H1yvW44=' 'sha256-P3upB5nSJgaMZ66JypQ23kO70VzvIaT2MSedNexWFNk='; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://mhzaly-ai.mhzaly.workers.dev https://mhzaly-ai.you.workers.dev; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'sha256-CA5crITKGahve43QGE67FGRCe/GEYEcy906iyMNlX3o=' 'sha256-kBwyqXUsJYyXFwu6xmpe/VHoAO33qbXtg+iFd3O56v4=' 'sha256-HeZKfM//6I19BnTNCLxnK6gZhwUd4L23yaBdPwQw3Is=' 'sha256-6uAxDX8fMpRfYM76gUPMN2TwEj1YAwRrJ6EAjG0Llt8=' 'sha256-y1ZaUnCuGYbGP9s2xTq4otziHzaoAF8jtgf/H1yvW44=' 'sha256-P3upB5nSJgaMZ66JypQ23kO70VzvIaT2MSedNexWFNk='; style-src 'self'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' blob: data: https://mhzaly-ai.mhzaly.workers.dev https://mhzaly-ai.you.workers.dev; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests" />
     <script>if(window.top!==window.self){try{window.top.location=window.self.location;}catch(e){}}</script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>The Cloth Room — AI Virtual Try-On Atelier</title>
@@ -538,7 +538,35 @@
       <div class="footer-bottom"><span>© MHZALY</span></div>
     </footer>
 
-    <script type="module" src="app.js?v=20261112k"></script>
+    <script type="module">
+      // A flaky network can cut the download short, and a module that fails to
+      // load would leave the stage on its loading screen forever. Retry, then
+      // say plainly what happened instead of hanging.
+      const V = "20261112m";
+      let ok = false;
+      for (let i = 0; i < 4 && !ok; i++) {
+        try {
+          await import("./app.js?v=" + V + "&r=" + i);
+          ok = true;
+        } catch (err) {
+          await new Promise((r) => setTimeout(r, 500 * (i + 1)));
+        }
+      }
+      if (!ok) {
+        const ov = document.getElementById("stage-overlay");
+        if (ov) {
+          ov.textContent = "";
+          const p = document.createElement("p");
+          p.textContent = "The 3D studio could not load. Check your connection and try again.";
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "btn";
+          b.textContent = "Reload";
+          b.addEventListener("click", () => location.reload());
+          ov.append(p, b);
+        }
+      }
+    </script>
     <script>
       (() => {
         const menuBtn = document.getElementById("menu-btn");
